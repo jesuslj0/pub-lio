@@ -1,0 +1,60 @@
+---
+const items = [
+  "Copas",
+  "Tapas",
+  "Cañas",
+  "Futbolín",
+  "Diana",
+  "Música en directo",
+  "Finde en El Bonillo",
+  "Premios foto",
+];
+---
+
+<div class="ticker">
+  <div class="ticker-track">
+    {items.map((item) => <span class="ticker-item">{item}</span>)}
+    {/* duplicado para loop continuo */}
+    {items.map((item) => <span class="ticker-item">{item}</span>)}
+  </div>
+</div>
+
+<style>
+  .ticker {
+    border-top: 1px solid var(--border);
+    border-bottom: 1px solid var(--border);
+    background: var(--surface);
+    overflow: hidden;
+    padding: 14px 0;
+    position: relative;
+  }
+  .ticker-track {
+    display: flex;
+    gap: 0;
+    animation: tickerScroll 22s linear infinite;
+    white-space: nowrap;
+  }
+  .ticker-item {
+    font-family: var(--font-mono);
+    font-size: 0.72rem;
+    letter-spacing: 0.12em;
+    text-transform: uppercase;
+    color: var(--muted);
+    padding: 0 40px;
+    display: flex;
+    align-items: center;
+    gap: 16px;
+  }
+  .ticker-item::after {
+    content: "//";
+    color: var(--accent);
+  }
+  @keyframes tickerScroll {
+    from {
+      transform: translateX(0);
+    }
+    to {
+      transform: translateX(-50%);
+    }
+  }
+</style>

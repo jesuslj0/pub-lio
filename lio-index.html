@@ -1,0 +1,965 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8"/>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Lío El Bonillo</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com"/>
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin/>
+  <link href="https://fonts.googleapis.com/css2?family=Bebas+Neue&family=DM+Sans:ital,wght@0,300;0,400;0,500;1,300&family=Space+Mono:wght@400;700&display=swap" rel="stylesheet"/>
+  <style>
+    :root {
+      --bg:       #080810;
+      --bg2:      #0e0e1a;
+      --surface:  #13131f;
+      --border:   rgba(255,255,255,0.07);
+      --accent:   #c8f026;
+      --accent2:  #7b2fff;
+      --accent3:  #ff2d6e;
+      --text:     #e8e8f0;
+      --muted:    #6b6b80;
+      --font-display: 'Bebas Neue', sans-serif;
+      --font-body:    'DM Sans', sans-serif;
+      --font-mono:    'Space Mono', monospace;
+    }
+
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+    html { scroll-behavior: smooth; }
+
+    body {
+      background: var(--bg);
+      color: var(--text);
+      font-family: var(--font-body);
+      font-size: 16px;
+      line-height: 1.6;
+      overflow-x: hidden;
+      cursor: none;
+    }
+
+    /* Custom cursor */
+    .cursor {
+      position: fixed;
+      width: 10px; height: 10px;
+      background: var(--accent);
+      border-radius: 50%;
+      pointer-events: none;
+      z-index: 9999;
+      transform: translate(-50%, -50%);
+      transition: transform 0.08s ease, width 0.2s ease, height 0.2s ease, background 0.2s ease;
+      mix-blend-mode: exclusion;
+    }
+    .cursor-ring {
+      position: fixed;
+      width: 36px; height: 36px;
+      border: 1px solid var(--accent);
+      border-radius: 50%;
+      pointer-events: none;
+      z-index: 9998;
+      transform: translate(-50%, -50%);
+      transition: transform 0.18s ease, width 0.2s ease, height 0.2s ease, opacity 0.2s ease;
+      opacity: 0.5;
+    }
+
+    /* Noise overlay */
+    body::before {
+      content: '';
+      position: fixed;
+      inset: 0;
+      background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 256 256' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='noise'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23noise)' opacity='1'/%3E%3C/svg%3E");
+      opacity: 0.03;
+      pointer-events: none;
+      z-index: 1000;
+    }
+
+    /* ─── NAV ─── */
+    nav {
+      position: fixed;
+      top: 0; left: 0; right: 0;
+      z-index: 100;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 0 40px;
+      height: 68px;
+      border-bottom: 1px solid var(--border);
+      background: rgba(8,8,16,0.85);
+      backdrop-filter: blur(16px);
+    }
+    .nav-logo {
+      font-family: var(--font-display);
+      font-size: 2rem;
+      letter-spacing: 0.05em;
+      color: var(--accent);
+      text-decoration: none;
+    }
+    .nav-logo span { color: var(--text); }
+    .nav-links {
+      display: flex;
+      gap: 36px;
+      list-style: none;
+    }
+    .nav-links a {
+      font-family: var(--font-mono);
+      font-size: 0.7rem;
+      letter-spacing: 0.15em;
+      text-transform: uppercase;
+      color: var(--muted);
+      text-decoration: none;
+      transition: color 0.2s;
+    }
+    .nav-links a:hover { color: var(--accent); }
+    .nav-cta {
+      font-family: var(--font-mono);
+      font-size: 0.7rem;
+      letter-spacing: 0.1em;
+      text-transform: uppercase;
+      background: var(--accent);
+      color: var(--bg);
+      padding: 9px 20px;
+      border: none;
+      cursor: none;
+      font-weight: 700;
+      transition: transform 0.15s, box-shadow 0.15s;
+    }
+    .nav-cta:hover {
+      transform: translateY(-1px);
+      box-shadow: 0 0 24px rgba(200,240,38,0.35);
+    }
+
+    /* ─── HERO ─── */
+    .hero {
+      min-height: 100vh;
+      display: flex;
+      flex-direction: column;
+      justify-content: flex-end;
+      padding: 0 40px 72px;
+      position: relative;
+      overflow: hidden;
+    }
+
+    /* Animated grid background */
+    .hero-grid {
+      position: absolute;
+      inset: 0;
+      background-image:
+        linear-gradient(rgba(200,240,38,0.04) 1px, transparent 1px),
+        linear-gradient(90deg, rgba(200,240,38,0.04) 1px, transparent 1px);
+      background-size: 60px 60px;
+      animation: gridShift 20s linear infinite;
+    }
+    @keyframes gridShift {
+      0%   { transform: perspective(600px) rotateX(20deg) translateY(0); }
+      100% { transform: perspective(600px) rotateX(20deg) translateY(60px); }
+    }
+
+    /* Glow orbs */
+    .orb {
+      position: absolute;
+      border-radius: 50%;
+      filter: blur(80px);
+      pointer-events: none;
+    }
+    .orb-1 {
+      width: 500px; height: 500px;
+      background: rgba(123,47,255,0.18);
+      top: -100px; right: -100px;
+      animation: float1 12s ease-in-out infinite;
+    }
+    .orb-2 {
+      width: 400px; height: 400px;
+      background: rgba(255,45,110,0.12);
+      bottom: 0; left: 20%;
+      animation: float2 16s ease-in-out infinite;
+    }
+    @keyframes float1 {
+      0%,100% { transform: translate(0,0) scale(1); }
+      50%      { transform: translate(-40px, 40px) scale(1.1); }
+    }
+    @keyframes float2 {
+      0%,100% { transform: translate(0,0); }
+      50%      { transform: translate(60px,-30px); }
+    }
+
+    .hero-eyebrow {
+      font-family: var(--font-mono);
+      font-size: 0.7rem;
+      letter-spacing: 0.25em;
+      text-transform: uppercase;
+      color: var(--accent);
+      margin-bottom: 20px;
+      opacity: 0;
+      animation: fadeUp 0.8s 0.2s forwards;
+    }
+    .hero-title {
+      font-family: var(--font-display);
+      font-size: clamp(5rem, 14vw, 13rem);
+      line-height: 0.88;
+      letter-spacing: -0.01em;
+      color: var(--text);
+      position: relative;
+      opacity: 0;
+      animation: fadeUp 0.8s 0.4s forwards;
+    }
+    .hero-title .accent-word {
+      color: var(--accent);
+      display: block;
+    }
+    .hero-title .stroke-text {
+      -webkit-text-stroke: 1px rgba(232,232,240,0.25);
+      color: transparent;
+      display: block;
+    }
+    .hero-sub {
+      margin-top: 32px;
+      display: flex;
+      align-items: center;
+      gap: 48px;
+      opacity: 0;
+      animation: fadeUp 0.8s 0.6s forwards;
+    }
+    .hero-sub p {
+      font-size: 1rem;
+      color: var(--muted);
+      max-width: 340px;
+      font-weight: 300;
+      font-style: italic;
+    }
+    .hero-sub p strong { color: var(--text); font-weight: 500; font-style: normal; }
+    .hero-scroll {
+      font-family: var(--font-mono);
+      font-size: 0.65rem;
+      letter-spacing: 0.2em;
+      text-transform: uppercase;
+      color: var(--muted);
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 10px;
+      margin-left: auto;
+    }
+    .hero-scroll::after {
+      content: '';
+      width: 1px;
+      height: 60px;
+      background: linear-gradient(var(--muted), transparent);
+      animation: scrollLine 2s ease-in-out infinite;
+    }
+    @keyframes scrollLine {
+      0%,100% { opacity: 0.3; }
+      50%      { opacity: 1; }
+    }
+
+    @keyframes fadeUp {
+      from { opacity: 0; transform: translateY(30px); }
+      to   { opacity: 1; transform: translateY(0); }
+    }
+
+    /* ─── TICKER ─── */
+    .ticker {
+      border-top: 1px solid var(--border);
+      border-bottom: 1px solid var(--border);
+      background: var(--surface);
+      overflow: hidden;
+      padding: 14px 0;
+      position: relative;
+    }
+    .ticker-track {
+      display: flex;
+      gap: 0;
+      animation: tickerScroll 22s linear infinite;
+      white-space: nowrap;
+    }
+    .ticker-item {
+      font-family: var(--font-mono);
+      font-size: 0.72rem;
+      letter-spacing: 0.12em;
+      text-transform: uppercase;
+      color: var(--muted);
+      padding: 0 40px;
+      display: flex;
+      align-items: center;
+      gap: 16px;
+    }
+    .ticker-item::after {
+      content: '//';
+      color: var(--accent);
+    }
+    @keyframes tickerScroll {
+      from { transform: translateX(0); }
+      to   { transform: translateX(-50%); }
+    }
+
+    /* ─── CARTEL SECTION ─── */
+    .section {
+      padding: 100px 40px;
+      position: relative;
+    }
+    .section-label {
+      font-family: var(--font-mono);
+      font-size: 0.65rem;
+      letter-spacing: 0.25em;
+      text-transform: uppercase;
+      color: var(--accent);
+      margin-bottom: 16px;
+    }
+    .section-title {
+      font-family: var(--font-display);
+      font-size: clamp(2.5rem, 6vw, 5rem);
+      line-height: 0.95;
+      letter-spacing: 0.02em;
+      margin-bottom: 48px;
+    }
+
+    .cartel-grid {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 2px;
+      background: var(--border);
+      border: 1px solid var(--border);
+    }
+    .cartel-main {
+      grid-row: span 2;
+      position: relative;
+      background: var(--surface);
+      min-height: 520px;
+      display: flex;
+      flex-direction: column;
+      justify-content: flex-end;
+      padding: 32px;
+      overflow: hidden;
+    }
+    .cartel-placeholder {
+      position: absolute;
+      inset: 0;
+      background:
+        repeating-linear-gradient(
+          45deg,
+          transparent,
+          transparent 30px,
+          rgba(200,240,38,0.02) 30px,
+          rgba(200,240,38,0.02) 31px
+        );
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
+    .cartel-placeholder-text {
+      font-family: var(--font-display);
+      font-size: 5rem;
+      color: rgba(200,240,38,0.06);
+      letter-spacing: 0.1em;
+      text-align: center;
+    }
+    .cartel-badge {
+      display: inline-block;
+      font-family: var(--font-mono);
+      font-size: 0.6rem;
+      letter-spacing: 0.2em;
+      text-transform: uppercase;
+      background: var(--accent);
+      color: var(--bg);
+      padding: 5px 12px;
+      font-weight: 700;
+      margin-bottom: 12px;
+      width: fit-content;
+    }
+    .cartel-title {
+      font-family: var(--font-display);
+      font-size: 2.5rem;
+      line-height: 1;
+      color: var(--text);
+      position: relative;
+    }
+    .cartel-date {
+      font-family: var(--font-mono);
+      font-size: 0.7rem;
+      color: var(--muted);
+      letter-spacing: 0.1em;
+      margin-top: 8px;
+      position: relative;
+    }
+
+    .cartel-side {
+      background: var(--surface);
+      padding: 32px;
+      min-height: 259px;
+      display: flex;
+      flex-direction: column;
+      justify-content: space-between;
+      position: relative;
+      overflow: hidden;
+      transition: background 0.2s;
+    }
+    .cartel-side:hover { background: #181826; }
+    .cartel-side-num {
+      font-family: var(--font-display);
+      font-size: 5rem;
+      color: rgba(255,255,255,0.04);
+      line-height: 1;
+      position: absolute;
+      right: 20px;
+      bottom: 10px;
+    }
+    .cartel-side-label {
+      font-family: var(--font-mono);
+      font-size: 0.6rem;
+      letter-spacing: 0.2em;
+      text-transform: uppercase;
+      color: var(--accent2);
+    }
+    .cartel-side-title {
+      font-family: var(--font-display);
+      font-size: 1.6rem;
+      line-height: 1;
+      margin-top: 8px;
+    }
+    .cartel-side-meta {
+      font-size: 0.85rem;
+      color: var(--muted);
+      font-weight: 300;
+    }
+
+    /* ─── FOTOS SECTION ─── */
+    .fotos-header {
+      display: flex;
+      align-items: flex-end;
+      justify-content: space-between;
+      margin-bottom: 32px;
+      gap: 24px;
+    }
+    .fotos-grid {
+      display: grid;
+      grid-template-columns: repeat(4, 1fr);
+      gap: 2px;
+      background: var(--border);
+    }
+    .foto-card {
+      background: var(--surface);
+      aspect-ratio: 3/4;
+      position: relative;
+      overflow: hidden;
+      cursor: none;
+    }
+    .foto-card:hover .foto-overlay { opacity: 1; }
+    .foto-placeholder {
+      width: 100%;
+      height: 100%;
+      background:
+        repeating-linear-gradient(
+          -45deg,
+          var(--surface),
+          var(--surface) 20px,
+          rgba(255,255,255,0.015) 20px,
+          rgba(255,255,255,0.015) 21px
+        );
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      gap: 8px;
+    }
+    .foto-placeholder-icon {
+      font-size: 2rem;
+      color: rgba(255,255,255,0.08);
+      font-family: var(--font-mono);
+    }
+    .foto-overlay {
+      position: absolute;
+      inset: 0;
+      background: linear-gradient(to top, rgba(8,8,16,0.9) 0%, transparent 60%);
+      opacity: 0;
+      transition: opacity 0.25s;
+      display: flex;
+      flex-direction: column;
+      justify-content: flex-end;
+      padding: 20px;
+    }
+    .foto-vote {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      font-family: var(--font-mono);
+      font-size: 0.7rem;
+      letter-spacing: 0.1em;
+      color: var(--accent);
+    }
+    .foto-vote-btn {
+      background: var(--accent);
+      color: var(--bg);
+      border: none;
+      padding: 6px 14px;
+      font-family: var(--font-mono);
+      font-size: 0.65rem;
+      font-weight: 700;
+      letter-spacing: 0.1em;
+      text-transform: uppercase;
+      cursor: none;
+      transition: transform 0.15s;
+    }
+    .foto-vote-btn:hover { transform: scale(1.04); }
+
+    /* ─── UPLOAD CTA ─── */
+    .upload-section {
+      padding: 80px 40px;
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 2px;
+      background: var(--border);
+    }
+    .upload-left {
+      background: var(--accent);
+      padding: 60px 48px;
+      display: flex;
+      flex-direction: column;
+      justify-content: space-between;
+    }
+    .upload-left-title {
+      font-family: var(--font-display);
+      font-size: clamp(2.5rem, 5vw, 4.5rem);
+      line-height: 0.92;
+      color: var(--bg);
+      letter-spacing: 0.02em;
+    }
+    .upload-left-sub {
+      font-size: 0.9rem;
+      color: rgba(8,8,16,0.6);
+      font-weight: 300;
+      max-width: 300px;
+      margin-top: 16px;
+    }
+    .upload-btn {
+      display: inline-flex;
+      align-items: center;
+      gap: 12px;
+      background: var(--bg);
+      color: var(--accent);
+      font-family: var(--font-mono);
+      font-size: 0.75rem;
+      font-weight: 700;
+      letter-spacing: 0.12em;
+      text-transform: uppercase;
+      padding: 16px 28px;
+      border: none;
+      cursor: none;
+      width: fit-content;
+      transition: transform 0.15s, box-shadow 0.15s;
+    }
+    .upload-btn:hover {
+      transform: translateY(-2px);
+      box-shadow: 0 8px 32px rgba(0,0,0,0.4);
+    }
+    .upload-right {
+      background: var(--surface);
+      padding: 60px 48px;
+      display: flex;
+      flex-direction: column;
+      justify-content: center;
+      gap: 28px;
+    }
+    .upload-rule {
+      display: flex;
+      gap: 20px;
+      align-items: flex-start;
+    }
+    .upload-rule-num {
+      font-family: var(--font-display);
+      font-size: 3rem;
+      line-height: 1;
+      color: rgba(255,255,255,0.06);
+      flex-shrink: 0;
+      width: 50px;
+    }
+    .upload-rule-text strong {
+      display: block;
+      font-size: 0.85rem;
+      font-weight: 500;
+      margin-bottom: 4px;
+    }
+    .upload-rule-text span {
+      font-size: 0.8rem;
+      color: var(--muted);
+      font-weight: 300;
+    }
+
+    /* ─── INFO STRIP ─── */
+    .info-strip {
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: 2px;
+      background: var(--border);
+      border-top: 1px solid var(--border);
+    }
+    .info-item {
+      background: var(--bg2);
+      padding: 48px 40px;
+    }
+    .info-item-label {
+      font-family: var(--font-mono);
+      font-size: 0.6rem;
+      letter-spacing: 0.25em;
+      text-transform: uppercase;
+      color: var(--accent);
+      margin-bottom: 12px;
+    }
+    .info-item-value {
+      font-family: var(--font-display);
+      font-size: 2rem;
+      line-height: 1.1;
+      color: var(--text);
+    }
+    .info-item-sub {
+      font-size: 0.82rem;
+      color: var(--muted);
+      margin-top: 6px;
+      font-weight: 300;
+    }
+
+    /* ─── FOOTER ─── */
+    footer {
+      border-top: 1px solid var(--border);
+      padding: 40px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+    }
+    .footer-logo {
+      font-family: var(--font-display);
+      font-size: 1.8rem;
+      color: var(--accent);
+      letter-spacing: 0.05em;
+    }
+    .footer-logo span { color: var(--muted); }
+    .footer-meta {
+      font-family: var(--font-mono);
+      font-size: 0.65rem;
+      color: var(--muted);
+      letter-spacing: 0.1em;
+      text-align: right;
+    }
+
+    /* ─── RESPONSIVE ─── */
+    @media (max-width: 768px) {
+      nav { padding: 0 20px; }
+      .nav-links { display: none; }
+      .hero { padding: 0 20px 60px; }
+      .hero-title { font-size: clamp(4rem, 18vw, 7rem); }
+      .hero-sub { flex-direction: column; gap: 24px; }
+      .hero-scroll { display: none; }
+      .section { padding: 60px 20px; }
+      .cartel-grid { grid-template-columns: 1fr; }
+      .cartel-main { grid-row: span 1; min-height: 320px; }
+      .fotos-grid { grid-template-columns: repeat(2, 1fr); }
+      .fotos-header { flex-direction: column; align-items: flex-start; }
+      .upload-section { grid-template-columns: 1fr; padding: 0; }
+      .upload-left, .upload-right { padding: 48px 24px; }
+      .info-strip { grid-template-columns: 1fr; }
+      footer { flex-direction: column; gap: 20px; text-align: center; }
+      .footer-meta { text-align: center; }
+      body { cursor: auto; }
+      .cursor, .cursor-ring { display: none; }
+    }
+  </style>
+</head>
+<body>
+
+  <div class="cursor" id="cursor"></div>
+  <div class="cursor-ring" id="cursorRing"></div>
+
+  <!-- NAV -->
+  <nav>
+    <a href="#" class="nav-logo">LÍO<span> EL BONILLO</span></a>
+    <ul class="nav-links">
+      <li><a href="#carteles">Carteles</a></li>
+      <li><a href="#fotos">Fotos</a></li>
+      <li><a href="#info">Info</a></li>
+    </ul>
+    <button class="nav-cta">Subir foto</button>
+  </nav>
+
+  <!-- HERO -->
+  <section class="hero">
+    <div class="hero-grid"></div>
+    <div class="orb orb-1"></div>
+    <div class="orb orb-2"></div>
+
+    <p class="hero-eyebrow">// Disco Pub · El Bonillo · Albacete</p>
+    <h1 class="hero-title">
+      <span class="stroke-text">Donde</span>
+      <span class="accent-word">pasa</span>
+      el lío
+    </h1>
+    <div class="hero-sub">
+      <p>Sonido y luz de <strong>última generación.</strong> Copas, tapas y cañas. El plan del finde en El Bonillo.</p>
+      <div class="hero-scroll">scroll</div>
+    </div>
+  </section>
+
+  <!-- TICKER -->
+  <div class="ticker">
+    <div class="ticker-track">
+      <span class="ticker-item">Copas</span>
+      <span class="ticker-item">Tapas</span>
+      <span class="ticker-item">Cañas</span>
+      <span class="ticker-item">Futbolín</span>
+      <span class="ticker-item">Diana</span>
+      <span class="ticker-item">Música en directo</span>
+      <span class="ticker-item">Finde en El Bonillo</span>
+      <span class="ticker-item">Premios foto</span>
+      <!-- duplicado para loop continuo -->
+      <span class="ticker-item">Copas</span>
+      <span class="ticker-item">Tapas</span>
+      <span class="ticker-item">Cañas</span>
+      <span class="ticker-item">Futbolín</span>
+      <span class="ticker-item">Diana</span>
+      <span class="ticker-item">Música en directo</span>
+      <span class="ticker-item">Finde en El Bonillo</span>
+      <span class="ticker-item">Premios foto</span>
+    </div>
+  </div>
+
+  <!-- CARTELES -->
+  <section class="section" id="carteles">
+    <p class="section-label">// 01 — Esta semana</p>
+    <h2 class="section-title">Cartel<br>del finde</h2>
+
+    <div class="cartel-grid">
+      <!-- Cartel principal -->
+      <div class="cartel-main">
+        <div class="cartel-placeholder">
+          <div class="cartel-placeholder-text">CARTEL<br>FINDE</div>
+        </div>
+        <span class="cartel-badge">Esta semana</span>
+        <h3 class="cartel-title">Viernes & Sábado</h3>
+        <p class="cartel-date">// Próximamente · Pdte. confirmar</p>
+      </div>
+      <!-- Finde anterior -->
+      <div class="cartel-side">
+        <div>
+          <span class="cartel-side-label">// Finde anterior</span>
+          <h4 class="cartel-side-title">Sesión especial</h4>
+        </div>
+        <p class="cartel-side-meta">Consulta los carteles pasados en la galería</p>
+        <div class="cartel-side-num">01</div>
+      </div>
+      <!-- Próximamente -->
+      <div class="cartel-side">
+        <div>
+          <span class="cartel-side-label" style="color:var(--accent3)">// Próximamente</span>
+          <h4 class="cartel-side-title">Evento especial</h4>
+        </div>
+        <p class="cartel-side-meta">Pendiente de confirmar. Síguenos.</p>
+        <div class="cartel-side-num">02</div>
+      </div>
+    </div>
+  </section>
+
+  <!-- FOTOS -->
+  <section class="section" id="fotos" style="padding-top: 0;">
+    <div class="fotos-header">
+      <div>
+        <p class="section-label">// 02 — Galería</p>
+        <h2 class="section-title">Fotos<br>del finde</h2>
+      </div>
+      <div style="text-align:right; padding-bottom: 8px;">
+        <p style="font-family:var(--font-mono); font-size:0.65rem; letter-spacing:0.15em; color:var(--muted); text-transform:uppercase;">La más votada gana el finde siguiente</p>
+        <p style="font-family:var(--font-mono); font-size:0.65rem; letter-spacing:0.1em; color:var(--accent); margin-top:6px;">Premio activo en temporada ↗</p>
+      </div>
+    </div>
+
+    <div class="fotos-grid">
+      <!-- 8 placeholders de foto -->
+      <div class="foto-card">
+        <div class="foto-placeholder"><span class="foto-placeholder-icon">▣</span></div>
+        <div class="foto-overlay">
+          <div class="foto-vote">
+            <button class="foto-vote-btn">♥ Votar</button>
+            <span>24 votos</span>
+          </div>
+        </div>
+      </div>
+      <div class="foto-card">
+        <div class="foto-placeholder"><span class="foto-placeholder-icon">▣</span></div>
+        <div class="foto-overlay">
+          <div class="foto-vote">
+            <button class="foto-vote-btn">♥ Votar</button>
+            <span>18 votos</span>
+          </div>
+        </div>
+      </div>
+      <div class="foto-card" style="position:relative">
+        <!-- ganadora badge -->
+        <div style="position:absolute;top:12px;left:12px;z-index:2;background:var(--accent);color:var(--bg);font-family:var(--font-mono);font-size:0.55rem;font-weight:700;letter-spacing:0.15em;text-transform:uppercase;padding:4px 10px;">★ Más votada</div>
+        <div class="foto-placeholder"><span class="foto-placeholder-icon">▣</span></div>
+        <div class="foto-overlay">
+          <div class="foto-vote">
+            <button class="foto-vote-btn">♥ Votar</button>
+            <span>61 votos</span>
+          </div>
+        </div>
+      </div>
+      <div class="foto-card">
+        <div class="foto-placeholder"><span class="foto-placeholder-icon">▣</span></div>
+        <div class="foto-overlay">
+          <div class="foto-vote">
+            <button class="foto-vote-btn">♥ Votar</button>
+            <span>9 votos</span>
+          </div>
+        </div>
+      </div>
+      <div class="foto-card">
+        <div class="foto-placeholder"><span class="foto-placeholder-icon">▣</span></div>
+        <div class="foto-overlay">
+          <div class="foto-vote">
+            <button class="foto-vote-btn">♥ Votar</button>
+            <span>33 votos</span>
+          </div>
+        </div>
+      </div>
+      <div class="foto-card">
+        <div class="foto-placeholder"><span class="foto-placeholder-icon">▣</span></div>
+        <div class="foto-overlay">
+          <div class="foto-vote">
+            <button class="foto-vote-btn">♥ Votar</button>
+            <span>7 votos</span>
+          </div>
+        </div>
+      </div>
+      <div class="foto-card">
+        <div class="foto-placeholder"><span class="foto-placeholder-icon">▣</span></div>
+        <div class="foto-overlay">
+          <div class="foto-vote">
+            <button class="foto-vote-btn">♥ Votar</button>
+            <span>15 votos</span>
+          </div>
+        </div>
+      </div>
+      <div class="foto-card">
+        <div class="foto-placeholder"><span class="foto-placeholder-icon">▣</span></div>
+        <div class="foto-overlay">
+          <div class="foto-vote">
+            <button class="foto-vote-btn">♥ Votar</button>
+            <span>41 votos</span>
+          </div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- SUBIR FOTO -->
+  <div class="upload-section">
+    <div class="upload-left">
+      <div>
+        <h2 class="upload-left-title">¿Estuviste<br>esta semana?</h2>
+        <p class="upload-left-sub">Sube tu foto del finde, consigue votos y gana el premio de la semana siguiente.</p>
+      </div>
+      <button class="upload-btn">
+        <span>↑</span> Subir foto
+      </button>
+    </div>
+    <div class="upload-right">
+      <div class="upload-rule">
+        <div class="upload-rule-num">01</div>
+        <div class="upload-rule-text">
+          <strong>Sin registro</strong>
+          <span>Solo tu foto y un nombre. Máximo 3 fotos por semana.</span>
+        </div>
+      </div>
+      <div style="width:100%; height:1px; background:var(--border);"></div>
+      <div class="upload-rule">
+        <div class="upload-rule-num">02</div>
+        <div class="upload-rule-text">
+          <strong>La comunidad vota</strong>
+          <span>Cada persona puede votar una vez por foto. Votos visibles en tiempo real.</span>
+        </div>
+      </div>
+      <div style="width:100%; height:1px; background:var(--border);"></div>
+      <div class="upload-rule">
+        <div class="upload-rule-num">03</div>
+        <div class="upload-rule-text">
+          <strong>Premio el finde siguiente</strong>
+          <span>La foto ganadora se anuncia cada viernes. Premio en el local.</span>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- INFO STRIP -->
+  <div class="info-strip" id="info">
+    <div class="info-item">
+      <p class="info-item-label">// Horario</p>
+      <p class="info-item-value">Vie · Sáb<br>Noche</p>
+      <p class="info-item-sub">Abre al caer la tarde. Cierra cuando toca.</p>
+    </div>
+    <div class="info-item">
+      <p class="info-item-label">// Ubicación</p>
+      <p class="info-item-value">Plaza Mayor<br>El Bonillo</p>
+      <p class="info-item-sub">Albacete, Castilla-La Mancha</p>
+    </div>
+    <div class="info-item">
+      <p class="info-item-label">// Servicios</p>
+      <p class="info-item-value">Copas · Tapas<br>Cañas</p>
+      <p class="info-item-sub">Futbolín · Diana · Sonido & luz pro</p>
+    </div>
+  </div>
+
+  <!-- FOOTER -->
+  <footer>
+    <div class="footer-logo">LÍO<span> EL BONILLO</span></div>
+    <div class="footer-meta">
+      <p>Plaza Mayor · El Bonillo · Albacete</p>
+      <p style="margin-top:4px; color: rgba(107,107,128,0.5);">© 2025 Lío El Bonillo</p>
+    </div>
+  </footer>
+
+  <script>
+    // Custom cursor
+    const cursor = document.getElementById('cursor');
+    const ring = document.getElementById('cursorRing');
+    let mx = 0, my = 0, rx = 0, ry = 0;
+    document.addEventListener('mousemove', e => { mx = e.clientX; my = e.clientY; });
+    function animateCursor() {
+      cursor.style.left = mx + 'px';
+      cursor.style.top  = my + 'px';
+      rx += (mx - rx) * 0.12;
+      ry += (my - ry) * 0.12;
+      ring.style.left = rx + 'px';
+      ring.style.top  = ry + 'px';
+      requestAnimationFrame(animateCursor);
+    }
+    animateCursor();
+
+    // Hover effect on interactive elements
+    document.querySelectorAll('a, button, .foto-card, .cartel-side').forEach(el => {
+      el.addEventListener('mouseenter', () => {
+        cursor.style.width = '20px';
+        cursor.style.height = '20px';
+        ring.style.width = '56px';
+        ring.style.height = '56px';
+        ring.style.opacity = '0.8';
+      });
+      el.addEventListener('mouseleave', () => {
+        cursor.style.width = '10px';
+        cursor.style.height = '10px';
+        ring.style.width = '36px';
+        ring.style.height = '36px';
+        ring.style.opacity = '0.5';
+      });
+    });
+
+    // Vote buttons
+    document.querySelectorAll('.foto-vote-btn').forEach(btn => {
+      btn.addEventListener('click', function() {
+        const countEl = this.nextElementSibling;
+        if (this.dataset.voted) return;
+        this.dataset.voted = '1';
+        this.textContent = '♥ Votado';
+        this.style.background = 'var(--accent2)';
+        this.style.color = '#fff';
+        const n = parseInt(countEl.textContent) + 1;
+        countEl.textContent = n + ' votos';
+      });
+    });
+  </script>
+</body>
+</html>

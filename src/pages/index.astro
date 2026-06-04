@@ -1,17 +1,38 @@
 ---
+import Base from "../layouts/Base.astro";
+import Nav from "../components/Nav.astro";
+import Hero from "../components/Hero.astro";
+import Ticker from "../components/Ticker.astro";
+import CartelFinde from "../components/CartelFinde.astro";
+import FotosGrid from "../components/FotosGrid.astro";
+import UploadCTA from "../components/UploadCTA.astro";
+import InfoStrip from "../components/InfoStrip.astro";
+import Footer from "../components/Footer.astro";
 
+// Datos de ejemplo — se sustituirán por Supabase
+const photos = [
+  { id: 1, votes: 24 },
+  { id: 2, votes: 18 },
+  { id: 3, votes: 61, winner: true },
+  { id: 4, votes: 9 },
+  { id: 5, votes: 33 },
+  { id: 6, votes: 7 },
+  { id: 7, votes: 15 },
+  { id: 8, votes: 41 },
+];
 ---
 
-<html lang="en">
-	<head>
-		<meta charset="utf-8" />
-		<link rel="icon" type="image/svg+xml" href="/favicon.svg" />
-		<link rel="icon" href="/favicon.ico" />
-		<meta name="viewport" content="width=device-width" />
-		<meta name="generator" content={Astro.generator} />
-		<title>Astro</title>
-	</head>
-	<body>
-		<h1>Astro</h1>
-	</body>
-</html>
+<Base title="Lío El Bonillo">
+  <Nav />
+  <Hero />
+  <Ticker />
+  <CartelFinde
+    titulo="Viernes & Sábado"
+    fecha="// Próximamente · Pdte. confirmar"
+    badge="Esta semana"
+  />
+  <FotosGrid photos={photos} />
+  <UploadCTA />
+  <InfoStrip />
+  <Footer />
+</Base>

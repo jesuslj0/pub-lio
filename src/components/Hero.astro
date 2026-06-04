@@ -1,0 +1,200 @@
+---
+---
+
+<section class="hero">
+  <div class="hero-grid"></div>
+  <div class="orb orb-1"></div>
+  <div class="orb orb-2"></div>
+
+  <p class="hero-eyebrow">// Disco Pub · El Bonillo · Albacete</p>
+  <h1 class="hero-title">
+    <span class="stroke-text">Donde</span>
+    <span class="accent-word">pasa</span>
+    el lío
+  </h1>
+  <div class="hero-sub">
+    <p>
+      Sonido y luz de <strong>última generación.</strong> Copas, tapas y cañas. El
+      plan del finde en El Bonillo.
+    </p>
+    <div class="hero-scroll">scroll</div>
+  </div>
+</section>
+
+<style>
+  .hero {
+    min-height: 100vh;
+    display: flex;
+    flex-direction: column;
+    justify-content: flex-end;
+    padding: 0 40px 72px;
+    position: relative;
+    overflow: hidden;
+  }
+
+  /* Animated grid background */
+  .hero-grid {
+    position: absolute;
+    inset: 0;
+    background-image:
+      linear-gradient(rgba(200, 240, 38, 0.04) 1px, transparent 1px),
+      linear-gradient(90deg, rgba(200, 240, 38, 0.04) 1px, transparent 1px);
+    background-size: 60px 60px;
+    animation: gridShift 20s linear infinite;
+  }
+  @keyframes gridShift {
+    0% {
+      transform: perspective(600px) rotateX(20deg) translateY(0);
+    }
+    100% {
+      transform: perspective(600px) rotateX(20deg) translateY(60px);
+    }
+  }
+
+  /* Glow orbs */
+  .orb {
+    position: absolute;
+    border-radius: 50%;
+    filter: blur(80px);
+    pointer-events: none;
+  }
+  .orb-1 {
+    width: 500px;
+    height: 500px;
+    background: rgba(123, 47, 255, 0.18);
+    top: -100px;
+    right: -100px;
+    animation: float1 12s ease-in-out infinite;
+  }
+  .orb-2 {
+    width: 400px;
+    height: 400px;
+    background: rgba(255, 45, 110, 0.12);
+    bottom: 0;
+    left: 20%;
+    animation: float2 16s ease-in-out infinite;
+  }
+  @keyframes float1 {
+    0%,
+    100% {
+      transform: translate(0, 0) scale(1);
+    }
+    50% {
+      transform: translate(-40px, 40px) scale(1.1);
+    }
+  }
+  @keyframes float2 {
+    0%,
+    100% {
+      transform: translate(0, 0);
+    }
+    50% {
+      transform: translate(60px, -30px);
+    }
+  }
+
+  .hero-eyebrow {
+    font-family: var(--font-mono);
+    font-size: 0.7rem;
+    letter-spacing: 0.25em;
+    text-transform: uppercase;
+    color: var(--accent);
+    margin-bottom: 20px;
+    opacity: 0;
+    animation: fadeUp 0.8s 0.2s forwards;
+  }
+  .hero-title {
+    font-family: var(--font-display);
+    font-size: clamp(5rem, 14vw, 13rem);
+    line-height: 0.88;
+    letter-spacing: -0.01em;
+    color: var(--text);
+    position: relative;
+    opacity: 0;
+    animation: fadeUp 0.8s 0.4s forwards;
+  }
+  .hero-title .accent-word {
+    color: var(--accent);
+    display: block;
+  }
+  .hero-title .stroke-text {
+    -webkit-text-stroke: 1px rgba(232, 232, 240, 0.25);
+    color: transparent;
+    display: block;
+  }
+  .hero-sub {
+    margin-top: 32px;
+    display: flex;
+    align-items: center;
+    gap: 48px;
+    opacity: 0;
+    animation: fadeUp 0.8s 0.6s forwards;
+  }
+  .hero-sub p {
+    font-size: 1rem;
+    color: var(--muted);
+    max-width: 340px;
+    font-weight: 300;
+    font-style: italic;
+  }
+  .hero-sub p strong {
+    color: var(--text);
+    font-weight: 500;
+    font-style: normal;
+  }
+  .hero-scroll {
+    font-family: var(--font-mono);
+    font-size: 0.65rem;
+    letter-spacing: 0.2em;
+    text-transform: uppercase;
+    color: var(--muted);
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 10px;
+    margin-left: auto;
+  }
+  .hero-scroll::after {
+    content: "";
+    width: 1px;
+    height: 60px;
+    background: linear-gradient(var(--muted), transparent);
+    animation: scrollLine 2s ease-in-out infinite;
+  }
+  @keyframes scrollLine {
+    0%,
+    100% {
+      opacity: 0.3;
+    }
+    50% {
+      opacity: 1;
+    }
+  }
+
+  @keyframes fadeUp {
+    from {
+      opacity: 0;
+      transform: translateY(30px);
+    }
+    to {
+      opacity: 1;
+      transform: translateY(0);
+    }
+  }
+
+  @media (max-width: 768px) {
+    .hero {
+      padding: 0 20px 60px;
+    }
+    .hero-title {
+      font-size: clamp(4rem, 18vw, 7rem);
+    }
+    .hero-sub {
+      flex-direction: column;
+      gap: 24px;
+    }
+    .hero-scroll {
+      display: none;
+    }
+  }
+</style>

@@ -1,0 +1,60 @@
+---
+---
+
+<div class="info-strip" id="info">
+  <div class="info-item">
+    <p class="info-item-label">// Horario</p>
+    <p class="info-item-value">Vie · Sáb<br />Noche</p>
+    <p class="info-item-sub">Abre al caer la tarde. Cierra cuando toca.</p>
+  </div>
+  <div class="info-item">
+    <p class="info-item-label">// Ubicación</p>
+    <p class="info-item-value">Plaza Mayor<br />El Bonillo</p>
+    <p class="info-item-sub">Albacete, Castilla-La Mancha</p>
+  </div>
+  <div class="info-item">
+    <p class="info-item-label">// Servicios</p>
+    <p class="info-item-value">Copas · Tapas<br />Cañas</p>
+    <p class="info-item-sub">Futbolín · Diana · Sonido & luz pro</p>
+  </div>
+</div>
+
+<style>
+  .info-strip {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 2px;
+    background: var(--border);
+    border-top: 1px solid var(--border);
+  }
+  .info-item {
+    background: var(--bg2);
+    padding: 48px 40px;
+  }
+  .info-item-label {
+    font-family: var(--font-mono);
+    font-size: 0.6rem;
+    letter-spacing: 0.25em;
+    text-transform: uppercase;
+    color: var(--accent);
+    margin-bottom: 12px;
+  }
+  .info-item-value {
+    font-family: var(--font-display);
+    font-size: 2rem;
+    line-height: 1.1;
+    color: var(--text);
+  }
+  .info-item-sub {
+    font-size: 0.82rem;
+    color: var(--muted);
+    margin-top: 6px;
+    font-weight: 300;
+  }
+
+  @media (max-width: 768px) {
+    .info-strip {
+      grid-template-columns: 1fr;
+    }
+  }
+</style>
