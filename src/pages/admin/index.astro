@@ -1,0 +1,590 @@
+---
+import { supabaseAdmin } from "../../lib/supabaseAdmin";
+import { getCurrentWeek } from "../../lib/supabase";
+import { isAdmin } from "../../lib/adminAuth";
+import type { Foto } from "../../lib/database.types";
+
+export const prerender = false;
+
+// ─── Autenticación por cookie ───
+const authed = isAdmin(Astro.cookies);
+const loginError = Astro.url.searchParams.get("error") === "1";
+
+// Config pública de Cloudinary para subir la imagen del cartel desde el panel.
+const cloudName = import.meta.env.PUBLIC_CLOUDINARY_CLOUD_NAME;
+const uploadPreset = import.meta.env.PUBLIC_CLOUDINARY_UPLOAD_PRESET;
+
+// ─── Datos (solo si está autenticado) ───
+let pendientes: Foto[] = [];
+let aprobadas: Foto[] = [];
+let loadError = false;
+const semana = getCurrentWeek();
+
+if (authed) {
+  try {
+    const [pend, aprob] = await Promise.all([
+      supabaseAdmin
+        .from("fotos")
+        .select("*")
+        .eq("estado", "pendiente")
+        .order("created_at", { ascending: false }),
+      supabaseAdmin
+        .from("fotos")
+        .select("*")
+        .eq("estado", "aprobada")
+        .eq("semana", semana)
+        .order("votos_count", { ascending: false }),
+    ]);
+    if (pend.error) throw pend.error;
+    if (aprob.error) throw aprob.error;
+    pendientes = pend.data ?? [];
+    aprobadas = aprob.data ?? [];
+  } catch (err) {
+    console.error("[admin] cargar fotos", err);
+    loadError = true;
+  }
+}
+
+const fmt = (iso: string) =>
+  new Date(iso).toLocaleString("es-ES", {
+    day: "2-digit",
+    month: "2-digit",
+    hour: "2-digit",
+    minute: "2-digit",
+  });
+---
+
+<!DOCTYPE html>
+<html lang="es">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Admin · Lío El Bonillo</title>
+  </head>
+  <body>
+    {
+      !authed ? (
+        <main class="login-wrap">
+          <form class="login-box" method="POST" action="/api/admin/login">
+            <span class="tag">Lío El Bonillo</span>
+            <h1>Acceso admin</h1>
+            <p class="muted">Introduce la clave de administración.</p>
+            <input
+              type="password"
+              name="secret"
+              placeholder="Clave de administración"
+              autocomplete="current-password"
+              required
+              autofocus
+            />
+            {loginError && <p class="error">Clave incorrecta.</p>}
+            <button type="submit" class="btn btn-primary">Entrar</button>
+          </form>
+        </main>
+      ) : (
+        <main>
+          <header class="head">
+            <div>
+              <h1>Panel de administración</h1>
+              <span class="tag">Lío El Bonillo · {semana}</span>
+            </div>
+            <form method="POST" action="/api/admin/logout">
+              <button type="submit" class="btn btn-ghost">Cerrar sesión</button>
+            </form>
+          </header>
+
+          {loadError && <p class="error">No se pudieron cargar las fotos.</p>}
+
+          {/* A) FOTOS PENDIENTES */}
+          <section>
+            <h2>
+              Fotos pendientes <span class="count">{pendientes.length}</span>
+            </h2>
+            {!loadError && pendientes.length === 0 && (
+              <p class="muted">No hay fotos pendientes de revisión.</p>
+            )}
+            <div class="foto-list">
+              {pendientes.map((foto) => (
+                <div class="foto-row" data-foto-id={foto.id}>
+                  <img src={foto.cloudinary_url} alt="thumbnail" class="thumb" />
+                  <div class="foto-info">
+                    <strong>{foto.nombre_autor ?? "Anónimo"}</strong>
+                    <span class="muted">{fmt(foto.created_at)}</span>
+                    <span class="muted small">{foto.semana}</span>
+                  </div>
+                  <div class="foto-actions">
+                    <button class="btn btn-approve" data-accion="aprobar">
+                      Aprobar
+                    </button>
+                    <button class="btn btn-reject" data-accion="rechazar">
+                      Rechazar
+                    </button>
+                  </div>
+                </div>
+              ))}
+            </div>
+          </section>
+
+          {/* B) FOTOS APROBADAS — marcar ganadora */}
+          <section>
+            <h2>
+              Fotos aprobadas (esta semana){" "}
+              <span class="count">{aprobadas.length}</span>
+            </h2>
+            {!loadError && aprobadas.length === 0 && (
+              <p class="muted">Aún no hay fotos aprobadas esta semana.</p>
+            )}
+            <div class="foto-list">
+              {aprobadas.map((foto) => (
+                <div
+                  class:list={["foto-row", "winner-row", { "is-winner": foto.ganadora }]}
+                  data-foto-id={foto.id}
+                >
+                  <img src={foto.cloudinary_url} alt="thumbnail" class="thumb" />
+                  <div class="foto-info">
+                    <strong>{foto.nombre_autor ?? "Anónimo"}</strong>
+                    <span class="muted">{foto.votos_count} votos</span>
+                    <span class="winner-flag">🏆 Ganadora</span>
+                  </div>
+                  <div class="foto-actions">
+                    <button
+                      class:list={["btn", "btn-winner", foto.ganadora ? "btn-ghost" : "btn-primary"]}
+                    >
+                      {foto.ganadora ? "Quitar ganadora" : "Marcar ganadora"}
+                    </button>
+                  </div>
+                </div>
+              ))}
+            </div>
+          </section>
+
+          {/* C) CARTELES */}
+          <section>
+            <h2>Nuevo cartel</h2>
+            <form id="cartel-form" class="cartel-form">
+              <label>
+                Título *
+                <input name="titulo" type="text" required />
+              </label>
+              <label>
+                Subtítulo
+                <input name="subtitulo" type="text" />
+              </label>
+              <label>
+                Imagen del cartel
+                <input id="cartel-imagen" name="imagen" type="file" accept="image/*" />
+              </label>
+              <img id="cartel-preview" class="cartel-preview" alt="Vista previa" hidden />
+              <div class="row">
+                <label>
+                  Fecha inicio
+                  <input name="fecha_inicio" type="date" />
+                </label>
+                <label>
+                  Fecha fin
+                  <input name="fecha_fin" type="date" />
+                </label>
+              </div>
+              <label class="checkbox">
+                <input name="activo" type="checkbox" checked />
+                Activar este cartel (desactiva los demás)
+              </label>
+              <button type="submit" class="btn btn-primary">
+                Guardar cartel
+              </button>
+              <p id="cartel-msg" class="msg" />
+            </form>
+          </section>
+        </main>
+      )
+    }
+
+    {
+      authed && (
+        <script is:inline define:vars={{ cloudName, uploadPreset }}>
+          {/* Las llamadas usan la cookie httpOnly automáticamente; no hay secreto en el cliente. */}
+          // ─── Moderación de fotos pendientes ───
+          document
+            .querySelectorAll(".foto-row:not(.winner-row)")
+            .forEach((row) => {
+              row.querySelectorAll(".btn").forEach((btn) => {
+                btn.addEventListener("click", async () => {
+                  const fotoId = row.getAttribute("data-foto-id");
+                  const accion = btn.getAttribute("data-accion");
+                  row.querySelectorAll(".btn").forEach((b) => (b.disabled = true));
+                  try {
+                    const res = await fetch("/api/admin/moderate", {
+                      method: "POST",
+                      headers: { "Content-Type": "application/json" },
+                      body: JSON.stringify({ fotoId, accion }),
+                    });
+                    const data = await res.json();
+                    if (data.success) row.remove();
+                    else {
+                      alert("Error: " + (data.error || "no se pudo procesar"));
+                      row
+                        .querySelectorAll(".btn")
+                        .forEach((b) => (b.disabled = false));
+                    }
+                  } catch {
+                    alert("Error de red");
+                    row
+                      .querySelectorAll(".btn")
+                      .forEach((b) => (b.disabled = false));
+                  }
+                });
+              });
+            });
+
+          // ─── Marcar / quitar ganadora (toggle) ───
+          function pintarBotonGanadora(btn, esGanadora) {
+            btn.textContent = esGanadora ? "Quitar ganadora" : "Marcar ganadora";
+            btn.classList.toggle("btn-ghost", esGanadora);
+            btn.classList.toggle("btn-primary", !esGanadora);
+          }
+          document.querySelectorAll(".btn-winner").forEach((btn) => {
+            btn.addEventListener("click", async () => {
+              const row = btn.closest(".foto-row");
+              const fotoId = row.getAttribute("data-foto-id");
+              const marcar = !row.classList.contains("is-winner");
+              btn.disabled = true;
+              try {
+                const res = await fetch("/api/admin/set-winner", {
+                  method: "POST",
+                  headers: { "Content-Type": "application/json" },
+                  body: JSON.stringify({ fotoId, ganadora: marcar }),
+                });
+                const data = await res.json();
+                if (data.success) {
+                  if (marcar) {
+                    // Solo una ganadora por semana: resetea el resto en la UI.
+                    document.querySelectorAll(".winner-row").forEach((r) => {
+                      r.classList.remove("is-winner");
+                      const b = r.querySelector(".btn-winner");
+                      if (b) pintarBotonGanadora(b, false);
+                    });
+                    row.classList.add("is-winner");
+                  } else {
+                    row.classList.remove("is-winner");
+                  }
+                  pintarBotonGanadora(btn, marcar);
+                } else {
+                  alert("Error: " + (data.error || "no se pudo actualizar"));
+                }
+              } catch {
+                alert("Error de red");
+              } finally {
+                btn.disabled = false;
+              }
+            });
+          });
+
+          // ─── Vista previa de la imagen del cartel ───
+          const imagenInput = document.getElementById("cartel-imagen");
+          const preview = document.getElementById("cartel-preview");
+          imagenInput?.addEventListener("change", () => {
+            const file = imagenInput.files && imagenInput.files[0];
+            if (file) {
+              preview.src = URL.createObjectURL(file);
+              preview.hidden = false;
+            } else {
+              preview.hidden = true;
+              preview.removeAttribute("src");
+            }
+          });
+
+          // ─── Formulario de cartel ───
+          const form = document.getElementById("cartel-form");
+          const msg = document.getElementById("cartel-msg");
+          form?.addEventListener("submit", async (e) => {
+            e.preventDefault();
+            const fd = new FormData(form);
+            msg.className = "msg";
+
+            try {
+              // Sube la imagen a Cloudinary (si se eligió una) y usa su secure_url.
+              let imagenUrl = null;
+              const file = fd.get("imagen");
+              if (file && file.size > 0) {
+                msg.textContent = "Subiendo imagen...";
+                const cloudData = new FormData();
+                cloudData.append("file", file);
+                cloudData.append("upload_preset", uploadPreset);
+                const up = await fetch(
+                  "https://api.cloudinary.com/v1_1/" + cloudName + "/image/upload",
+                  { method: "POST", body: cloudData },
+                );
+                if (!up.ok) throw new Error("cloudinary");
+                const upJson = await up.json();
+                imagenUrl = upJson.secure_url;
+              }
+
+              const payload = {
+                titulo: fd.get("titulo"),
+                subtitulo: fd.get("subtitulo"),
+                imagen_url: imagenUrl,
+                fecha_inicio: fd.get("fecha_inicio"),
+                fecha_fin: fd.get("fecha_fin"),
+                activo: fd.get("activo") === "on",
+              };
+              msg.textContent = "Guardando...";
+              const res = await fetch("/api/admin/cartel", {
+                method: "POST",
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify(payload),
+              });
+              const data = await res.json();
+              if (data.success) {
+                msg.textContent = "✓ Cartel guardado";
+                msg.className = "msg ok";
+                form.reset();
+                preview.hidden = true;
+                preview.removeAttribute("src");
+              } else {
+                msg.textContent =
+                  "Error: " + (data.error || "no se pudo guardar");
+                msg.className = "msg err";
+              }
+            } catch {
+              msg.textContent = "Error de red";
+              msg.className = "msg err";
+            }
+          });
+        </script>
+      )
+    }
+
+    <style>
+      :root {
+        --bg: #080810;
+        --surface: #13131f;
+        --border: rgba(255, 255, 255, 0.1);
+        --accent: #c8f026;
+        --text: #e8e8f0;
+        --muted: #6b6b80;
+        --green: #3ad17a;
+        --red: #ff2d6e;
+      }
+      * {
+        box-sizing: border-box;
+        margin: 0;
+        padding: 0;
+      }
+      body {
+        background: var(--bg);
+        color: var(--text);
+        font-family: system-ui, sans-serif;
+        padding: 32px;
+        line-height: 1.5;
+      }
+      main {
+        max-width: 760px;
+        margin: 0 auto;
+        display: flex;
+        flex-direction: column;
+        gap: 48px;
+      }
+      /* Login */
+      .login-wrap {
+        min-height: 80vh;
+        justify-content: center;
+        align-items: center;
+      }
+      .login-box {
+        width: 100%;
+        max-width: 360px;
+        display: flex;
+        flex-direction: column;
+        gap: 14px;
+        background: var(--surface);
+        border: 1px solid var(--border);
+        padding: 32px;
+      }
+      .login-box input {
+        background: var(--bg);
+        border: 1px solid var(--border);
+        color: var(--text);
+        padding: 12px 14px;
+        font-size: 0.95rem;
+      }
+      .head {
+        display: flex;
+        align-items: flex-start;
+        justify-content: space-between;
+        gap: 16px;
+        border-bottom: 1px solid var(--border);
+        padding-bottom: 16px;
+      }
+      h1 {
+        font-size: 1.4rem;
+      }
+      .tag {
+        color: var(--accent);
+        font-size: 0.75rem;
+        text-transform: uppercase;
+        letter-spacing: 0.15em;
+      }
+      h2 {
+        font-size: 1.05rem;
+        margin-bottom: 16px;
+        display: flex;
+        align-items: center;
+        gap: 10px;
+      }
+      .count {
+        background: var(--surface);
+        border: 1px solid var(--border);
+        color: var(--muted);
+        font-size: 0.7rem;
+        padding: 2px 8px;
+        border-radius: 999px;
+      }
+      .muted {
+        color: var(--muted);
+        font-size: 0.85rem;
+      }
+      .small {
+        font-size: 0.7rem;
+      }
+      .error {
+        color: var(--red);
+        font-size: 0.85rem;
+      }
+      .foto-list {
+        display: flex;
+        flex-direction: column;
+        gap: 2px;
+      }
+      .foto-row {
+        display: flex;
+        align-items: center;
+        gap: 16px;
+        background: var(--surface);
+        border: 1px solid var(--border);
+        padding: 12px;
+      }
+      .thumb {
+        width: 64px;
+        height: 80px;
+        object-fit: cover;
+        flex-shrink: 0;
+        background: var(--bg);
+      }
+      .foto-info {
+        display: flex;
+        flex-direction: column;
+        gap: 2px;
+        flex: 1;
+        min-width: 0;
+      }
+      .foto-actions {
+        display: flex;
+        gap: 8px;
+      }
+      /* Estado ganadora */
+      .winner-flag {
+        display: none;
+        color: var(--accent);
+        font-size: 0.75rem;
+        font-weight: 700;
+      }
+      .winner-row.is-winner {
+        border-color: var(--accent);
+      }
+      .winner-row.is-winner .winner-flag {
+        display: inline;
+      }
+      .btn {
+        border: none;
+        padding: 9px 16px;
+        font-size: 0.8rem;
+        font-weight: 600;
+        cursor: pointer;
+        color: #fff;
+      }
+      .btn:disabled {
+        opacity: 0.5;
+        cursor: default;
+      }
+      .btn-approve {
+        background: var(--green);
+        color: #04140a;
+      }
+      .btn-reject {
+        background: var(--red);
+      }
+      .btn-primary {
+        background: var(--accent);
+        color: var(--bg);
+      }
+      .btn-ghost {
+        background: transparent;
+        border: 1px solid var(--border);
+        color: var(--muted);
+      }
+      .cartel-form {
+        display: flex;
+        flex-direction: column;
+        gap: 16px;
+        background: var(--surface);
+        border: 1px solid var(--border);
+        padding: 24px;
+      }
+      .cartel-form .btn-primary {
+        align-self: flex-start;
+      }
+      .cartel-preview {
+        max-width: 240px;
+        border: 1px solid var(--border);
+        object-fit: cover;
+      }
+      label {
+        display: flex;
+        flex-direction: column;
+        gap: 6px;
+        font-size: 0.8rem;
+        color: var(--muted);
+      }
+      label.checkbox {
+        flex-direction: row;
+        align-items: center;
+        gap: 10px;
+        color: var(--text);
+      }
+      input[type="text"],
+      input[type="url"],
+      input[type="date"] {
+        background: var(--bg);
+        border: 1px solid var(--border);
+        color: var(--text);
+        padding: 10px 12px;
+        font-size: 0.9rem;
+      }
+      .row {
+        display: flex;
+        gap: 16px;
+      }
+      .row label {
+        flex: 1;
+      }
+      .msg {
+        font-size: 0.85rem;
+        min-height: 1.2em;
+      }
+      .msg.ok {
+        color: var(--green);
+      }
+      .msg.err {
+        color: var(--red);
+      }
+      @media (max-width: 600px) {
+        .foto-row {
+          flex-wrap: wrap;
+        }
+        .row {
+          flex-direction: column;
+        }
+      }
+    </style>
+  </body>
+</html>

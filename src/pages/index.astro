@@ -3,36 +3,121 @@ import Base from "../layouts/Base.astro";
 import Nav from "../components/Nav.astro";
 import Hero from "../components/Hero.astro";
 import Ticker from "../components/Ticker.astro";
-import CartelFinde from "../components/CartelFinde.astro";
-import FotosGrid from "../components/FotosGrid.astro";
-import UploadCTA from "../components/UploadCTA.astro";
+import CartelFinde from "../components/CartelFinde.tsx";
+import PhotoGrid from "../components/PhotoGrid.tsx";
+import PhotoUploader from "../components/PhotoUploader.tsx";
 import InfoStrip from "../components/InfoStrip.astro";
 import Footer from "../components/Footer.astro";
-
-// Datos de ejemplo — se sustituirán por Supabase
-const photos = [
-  { id: 1, votes: 24 },
-  { id: 2, votes: 18 },
-  { id: 3, votes: 61, winner: true },
-  { id: 4, votes: 9 },
-  { id: 5, votes: 33 },
-  { id: 6, votes: 7 },
-  { id: 7, votes: 15 },
-  { id: 8, votes: 41 },
-];
 ---
 
 <Base title="Lío El Bonillo">
   <Nav />
   <Hero />
   <Ticker />
-  <CartelFinde
-    titulo="Viernes & Sábado"
-    fecha="// Próximamente · Pdte. confirmar"
-    badge="Esta semana"
-  />
-  <FotosGrid photos={photos} />
-  <UploadCTA />
+
+  <!-- CARTELES -->
+  <section class="section" id="carteles">
+    <p class="section-label">// 01 — Esta semana</p>
+    <h2 class="section-title">Cartel<br />del finde</h2>
+    <div class="cartel-wrap">
+      <CartelFinde client:load />
+    </div>
+  </section>
+
+  <!-- FOTOS -->
+  <section class="section" id="fotos" style="padding-top: 0;">
+    <div class="fotos-header">
+      <div>
+        <p class="section-label">// 02 — Galería</p>
+        <h2 class="section-title">Fotos<br />del finde</h2>
+      </div>
+      <div style="text-align:right; padding-bottom: 8px;">
+        <p class="fotos-note">La más votada gana el finde siguiente</p>
+        <p class="fotos-note accent">Premio activo en temporada ↗</p>
+      </div>
+    </div>
+    <PhotoGrid client:load mostrarGanadora={true} />
+  </section>
+
+  <!-- SUBIR FOTO -->
+  <section class="section upload-section" id="subir" style="padding-top: 0;">
+    <div class="upload-left">
+      <h2 class="upload-left-title">¿Estuviste<br />esta semana?</h2>
+      <p class="upload-left-sub">
+        Sube tu foto del finde, consigue votos y gana el premio de la semana
+        siguiente. Sin registro: solo tu foto y un nombre. Máximo 3 fotos por
+        semana.
+      </p>
+    </div>
+    <div class="upload-right">
+      <PhotoUploader client:load />
+    </div>
+  </section>
+
   <InfoStrip />
   <Footer />
 </Base>
+
+<style>
+  .cartel-wrap {
+    max-width: 560px;
+  }
+  .fotos-header {
+    display: flex;
+    align-items: flex-end;
+    justify-content: space-between;
+    margin-bottom: 32px;
+    gap: 24px;
+  }
+  .fotos-note {
+    font-family: var(--font-mono);
+    font-size: 0.65rem;
+    letter-spacing: 0.15em;
+    color: var(--muted);
+    text-transform: uppercase;
+  }
+  .fotos-note.accent {
+    color: var(--accent);
+    letter-spacing: 0.1em;
+    margin-top: 6px;
+  }
+
+  .upload-section {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 40px;
+    align-items: center;
+  }
+  .upload-left-title {
+    font-family: var(--font-display);
+    font-size: clamp(2.5rem, 5vw, 4.5rem);
+    line-height: 0.92;
+    color: var(--text);
+    letter-spacing: 0.02em;
+  }
+  .upload-left-sub {
+    font-size: 0.9rem;
+    color: var(--muted);
+    font-weight: 300;
+    max-width: 360px;
+    margin-top: 16px;
+  }
+  .upload-right {
+    display: flex;
+    justify-content: flex-end;
+  }
+
+  @media (max-width: 768px) {
+    .fotos-header {
+      flex-direction: column;
+      align-items: flex-start;
+    }
+    .upload-section {
+      grid-template-columns: 1fr;
+      gap: 28px;
+    }
+    .upload-right {
+      justify-content: flex-start;
+    }
+  }
+</style>
