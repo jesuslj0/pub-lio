@@ -1,4 +1,5 @@
 import { useEffect, useState, type CSSProperties } from "react";
+import { Heart } from "lucide-react";
 import FingerprintJS from "@fingerprintjs/fingerprintjs";
 import { supabase, getCurrentWeek } from "../lib/supabase";
 import type { Foto } from "../lib/database.types";
@@ -151,7 +152,7 @@ export default function PhotoGrid({
           localStorage.getItem(`voted_${foto.id}`) !== null;
         const esMasVotada = foto.votos_count === maxVotos && maxVotos > 0;
         return (
-          <div key={foto.id} style={styles.card}>
+          <div key={foto.id} className="foto-card" style={styles.card}>
             {esMasVotada && <div style={styles.badgeTop}>★ Más votada</div>}
             {mostrarGanadora && foto.ganadora && (
               <div style={styles.badgeWinner}>🏆 Ganadora</div>
@@ -163,10 +164,21 @@ export default function PhotoGrid({
               loading="lazy"
             />
             <div style={styles.overlay}>
-              {foto.nombre_autor && (
-                <span style={styles.autor}>{foto.nombre_autor}</span>
-              )}
-              <div style={styles.voteRow}>
+              {/* Arriba izquierda: nombre + fecha */}
+              <div style={styles.topInfo}>
+                {foto.nombre_autor && (
+                  <span style={styles.autor}>{foto.nombre_autor}</span>
+                )}
+                <span style={styles.fecha}>
+                  · {new Date(foto.created_at).toLocaleDateString("es-ES", { day: "numeric", month: "short" })}
+                </span>
+              </div>
+              {/* Abajo: votos izquierda, botón derecha */}
+              <div style={styles.bottomRow}>
+                <span style={styles.count}>
+                  <Heart size={13} strokeWidth={2} fill="currentColor" />
+                  {foto.votos_count}
+                </span>
                 <button
                   style={{
                     ...styles.voteBtn,
@@ -175,9 +187,9 @@ export default function PhotoGrid({
                   onClick={() => handleVote(foto.id)}
                   disabled={yaVotada || voting[foto.id]}
                 >
-                  {yaVotada ? "♥ Votado" : "♥ Votar"}
+                  <Heart size={13} strokeWidth={2} fill={yaVotada ? "currentColor" : "none"} />
+                  {yaVotada ? "Votado" : "Votar"}
                 </button>
-                <span style={styles.count}>{foto.votos_count} votos</span>
               </div>
             </div>
           </div>
@@ -197,6 +209,13 @@ const gridResponsive = `
   }
   @media (max-width: 600px) {
     .lio-photo-grid { grid-template-columns: 1fr !important; }
+  }
+  .lio-photo-grid .foto-card {
+    transition: box-shadow 0.25s ease;
+  }
+  .lio-photo-grid .foto-card:hover {
+    box-shadow: 0 0 0 1px var(--accent), 0 0 24px 4px color-mix(in srgb, var(--accent) 30%, transparent);
+    z-index: 1;
   }
 `;
 
@@ -223,22 +242,35 @@ const styles: Record<string, CSSProperties> = {
     position: "absolute",
     inset: 0,
     background:
-      "linear-gradient(to top, rgba(8,8,16,0.92) 0%, transparent 55%)",
+      "linear-gradient(to bottom, rgba(8,8,16,0.7) 0%, transparent 35%, transparent 55%, rgba(8,8,16,0.88) 100%)",
     display: "flex",
     flexDirection: "column",
-    justifyContent: "flex-end",
+    justifyContent: "space-between",
+    padding: "12px",
+  },
+  topInfo: {
+    display: "flex",
+    flexDirection: "row",
+    alignItems: "center",
     gap: "8px",
-    padding: "16px",
   },
   autor: {
     fontFamily: "var(--font-mono)",
-    fontSize: "0.7rem",
+    fontSize: "0.65rem",
     color: "var(--text)",
     letterSpacing: "0.05em",
   },
-  voteRow: {
+  fecha: {
+    fontFamily: "var(--font-mono)",
+    fontSize: "0.6rem",
+    color: "var(--text)",
+    letterSpacing: "0.05em",
+    opacity: 0.6,
+  },
+  bottomRow: {
     display: "flex",
     alignItems: "center",
+    justifyContent: "space-between",
     gap: "8px",
   },
   voteBtn: {
@@ -263,11 +295,14 @@ const styles: Record<string, CSSProperties> = {
     fontSize: "0.65rem",
     color: "var(--accent)",
     letterSpacing: "0.05em",
+    display: "flex",
+    alignItems: "center",
+    gap: "4px",
   },
   badgeTop: {
     position: "absolute",
     top: "12px",
-    left: "12px",
+    right: "12px",
     zIndex: 2,
     background: "var(--accent)",
     color: "var(--bg)",

@@ -6,18 +6,20 @@ import Ticker from "../components/Ticker.astro";
 import CartelFinde from "../components/CartelFinde.tsx";
 import PhotoGrid from "../components/PhotoGrid.tsx";
 import PhotoUploader from "../components/PhotoUploader.tsx";
+import NacionSection from "../components/NacionSection.astro";
 import InfoStrip from "../components/InfoStrip.astro";
 import Footer from "../components/Footer.astro";
+import { CalendarDays, Images } from "@lucide/astro";
 ---
 
-<Base title="Lío El Bonillo">
+<Base title="Lío Music Pub - El Bonillo">
   <Nav />
   <Hero />
   <Ticker />
 
   <!-- CARTELES -->
   <section class="section" id="carteles">
-    <p class="section-label">// 01 — Esta semana</p>
+    <p class="section-label"><CalendarDays size={14} stroke-width={2} />· Esta semana</p>
     <h2 class="section-title">Cartel<br />del finde</h2>
     <div class="cartel-wrap">
       <CartelFinde client:load />
@@ -28,7 +30,7 @@ import Footer from "../components/Footer.astro";
   <section class="section" id="fotos" style="padding-top: 0;">
     <div class="fotos-header">
       <div>
-        <p class="section-label">// 02 — Galería</p>
+        <p class="section-label"><Images size={14} stroke-width={2} />· Galería</p>
         <h2 class="section-title">Fotos<br />del finde</h2>
       </div>
       <div style="text-align:right; padding-bottom: 8px;">
@@ -44,9 +46,9 @@ import Footer from "../components/Footer.astro";
     <div class="upload-left">
       <h2 class="upload-left-title">¿Estuviste<br />esta semana?</h2>
       <p class="upload-left-sub">
-        Sube tu foto del finde, consigue votos y gana el premio de la semana
+        Sube tu <span class="mark">mejor foto del finde</span> en el Lío, consigue votos y gana el <span class="mark">premio</span> de la semana
         siguiente. Sin registro: solo tu foto y un nombre. Máximo 3 fotos por
-        semana.
+        semana. <span class="mark" style="font-style: italic">Comparte tu momento!</span>
       </p>
     </div>
     <div class="upload-right">
@@ -54,6 +56,7 @@ import Footer from "../components/Footer.astro";
     </div>
   </section>
 
+  <NacionSection />
   <InfoStrip />
   <Footer />
 </Base>
@@ -61,6 +64,7 @@ import Footer from "../components/Footer.astro";
 <style>
   .cartel-wrap {
     max-width: 560px;
+    margin: 0 auto;
   }
   .fotos-header {
     display: flex;
@@ -105,6 +109,11 @@ import Footer from "../components/Footer.astro";
   .upload-right {
     display: flex;
     justify-content: flex-end;
+  }
+
+  .mark {
+    color: var(--color-text);
+    opacity: 0.8;
   }
 
   @media (max-width: 768px) {

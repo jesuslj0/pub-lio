@@ -1,0 +1,113 @@
+---
+import { LocateFixed } from "lucide-react";
+---
+
+<section class="nacion">
+  <div class="nacion-bg">
+    <img src="/img/neon2.png" alt="La Nación neon" class="nacion-img" />
+    <div class="nacion-overlay"></div>
+  </div>
+
+  <div class="nacion-content">
+    <p class="nacion-eyebrow"><LocateFixed size={14} strokeWidth={2} /> El lugar</p>
+    <h2 class="nacion-title">La Nación<br />del <span class="accent-word">buen rollo</span></h2>
+    <p class="nacion-body">
+      Entrás por la puerta y ya no querés irte. Barras con carácter, una pista
+      que se llena sola y esa mezcla de caras conocidas y gente nueva que solo
+      pasa en el Lío. El plan del finde en El Bonillo lleva aquí desde siempre.
+    </p>
+  </div>
+</section>
+
+<style>
+  .nacion {
+    position: relative;
+    min-height: 80vh;
+    display: flex;
+    align-items: flex-end;
+    overflow: hidden;
+    margin-bottom: 60px;
+  }
+
+  .nacion-bg {
+    position: absolute;
+    inset: 0;
+  }
+
+  .nacion-img {
+    width: 100%;
+    height: 100%;
+    object-fit: contain;
+    object-position: center;
+    display: block;
+  }
+
+  .nacion-overlay {
+    position: absolute;
+    inset: 0;
+    background: linear-gradient(
+      to top,
+      var(--bg) 0%,
+      rgba(8, 8, 16, 0.50) 50%,
+      rgba(8, 8, 16, 0.15) 100%
+    );
+  }
+
+  .nacion-content {
+    position: relative;
+    z-index: 1;
+    padding: 0 80px 80px;
+    max-width: 720px;
+    transform: translateY(80px);
+  }
+
+  .nacion-eyebrow {
+    display: inline-flex; 
+    align-items: center;
+    gap: 0.7rem;
+    font-family: var(--font-mono);
+    font-size: 0.65rem;
+    letter-spacing: 0.3em;
+    text-transform: uppercase;
+    color: var(--accent);
+    margin-bottom: 16px;
+  }
+
+  .nacion-title {
+    font-family: var(--font-display);
+    font-size: clamp(3.5rem, 8vw, 8rem);
+    line-height: 0.9;
+    letter-spacing: -0.01em;
+    color: var(--text);
+    margin-bottom: 28px;
+  }
+
+  .nacion-body {
+    font-size: 1rem;
+    color: var(--muted);
+    font-weight: 300;
+    font-style: italic;
+    max-width: 480px;
+    line-height: 1.7;
+  }
+
+  .nacion-body strong {
+    color: var(--text);
+    font-weight: 500;
+    font-style: normal;
+  }
+
+  .accent-word {
+    color: var(--color-accent)
+  }
+
+  @media (max-width: 768px) {
+    .nacion {
+      min-height: 70vh;
+    }
+    .nacion-content {
+      padding: 0 24px 60px;
+      transform: translateY(56px);
+    }
+  }
+</style>

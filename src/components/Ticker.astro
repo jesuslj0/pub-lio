@@ -1,21 +1,46 @@
 ---
+import {
+  Wine,
+  UtensilsCrossed,
+  Beer,
+  Gamepad2,
+  Target,
+  Music,
+  Headphones,
+  Trophy,
+} from "@lucide/astro";
+
 const items = [
-  "Copas",
-  "Tapas",
-  "Cañas",
-  "Futbolín",
-  "Diana",
-  "Música en directo",
-  "Finde en El Bonillo",
-  "Premios foto",
+  { label: "Copas", icon: Wine },
+  { label: "Tapas", icon: UtensilsCrossed },
+  { label: "Cañas", icon: Beer },
+  { label: "Futbolín", icon: Gamepad2 },
+  { label: "Diana", icon: Target },
+  { label: "Música en directo", icon: Music },
+  { label: "DJ invitados", icon: Headphones },
+  { label: "Premios semanales", icon: Trophy },
 ];
 ---
 
 <div class="ticker">
   <div class="ticker-track">
-    {items.map((item) => <span class="ticker-item">{item}</span>)}
+    {
+      items.map(({ label, icon: Icon }) => (
+        <span class="ticker-item">
+          <Icon size={15} stroke-width={2} />
+          {label}
+        </span>
+      ))
+    }
     {/* duplicado para loop continuo */}
-    {items.map((item) => <span class="ticker-item">{item}</span>)}
+    {
+      items.map(({ label, icon: Icon }) => (
+        <span class="ticker-item">
+          <Icon size={15} stroke-width={2} />
+          {label}
+        </span>
+      ))
+    }
   </div>
 </div>
 
@@ -43,11 +68,15 @@ const items = [
     padding: 0 40px;
     display: flex;
     align-items: center;
-    gap: 16px;
+    gap: 12px;
+  }
+  .ticker-item svg {
+    color: var(--accent);
   }
   .ticker-item::after {
-    content: "//";
+    content: "·";
     color: var(--accent);
+    margin-left: 12px;
   }
   @keyframes tickerScroll {
     from {

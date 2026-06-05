@@ -1,4 +1,5 @@
 import { useEffect, useState, type CSSProperties } from "react";
+import { CalendarClock, CalendarRange } from "lucide-react";
 import { supabase } from "../lib/supabase";
 import type { Cartel } from "../lib/database.types";
 
@@ -56,7 +57,8 @@ export default function CartelFinde() {
           FINDE
         </div>
         <span style={styles.placeholderSub}>
-          // Próximamente · Pdte. confirmar
+          <CalendarClock size={14} strokeWidth={2} />
+          Próximamente · Pdte. confirmar
         </span>
       </div>
     );
@@ -75,7 +77,12 @@ export default function CartelFinde() {
         <span style={styles.badge}>Esta semana</span>
         <h3 style={styles.titulo}>{cartel.titulo}</h3>
         {cartel.subtitulo && <p style={styles.subtitulo}>{cartel.subtitulo}</p>}
-        {rango && <p style={styles.fecha}>// {rango}</p>}
+        {rango && (
+          <p style={styles.fecha}>
+            <CalendarRange size={14} strokeWidth={2} />
+            {rango}
+          </p>
+        )}
       </div>
     </div>
   );
@@ -137,6 +144,9 @@ const styles: Record<string, CSSProperties> = {
     color: "var(--muted)",
     letterSpacing: "0.1em",
     marginTop: "8px",
+    display: "flex",
+    alignItems: "center",
+    gap: "7px",
   },
   placeholder: {
     position: "relative",
@@ -149,12 +159,12 @@ const styles: Record<string, CSSProperties> = {
     justifyContent: "center",
     gap: "16px",
     backgroundImage:
-      "repeating-linear-gradient(45deg, transparent, transparent 30px, rgba(200,240,38,0.02) 30px, rgba(200,240,38,0.02) 31px)",
+      "repeating-linear-gradient(45deg, transparent, transparent 30px, color-mix(in srgb, var(--accent) 2%, transparent) 30px, color-mix(in srgb, var(--accent) 2%, transparent) 31px)",
   },
   placeholderText: {
     fontFamily: "var(--font-display)",
     fontSize: "5rem",
-    color: "rgba(200,240,38,0.06)",
+    color: "color-mix(in srgb, var(--accent) 6%, transparent)",
     letterSpacing: "0.1em",
     textAlign: "center",
     lineHeight: 0.9,
@@ -164,6 +174,9 @@ const styles: Record<string, CSSProperties> = {
     fontSize: "0.7rem",
     color: "var(--muted)",
     letterSpacing: "0.1em",
+    display: "flex",
+    alignItems: "center",
+    gap: "7px",
   },
   skeleton: {
     animation: "lio-pulse 1.4s ease-in-out infinite",

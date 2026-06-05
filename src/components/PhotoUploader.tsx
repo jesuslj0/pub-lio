@@ -1,4 +1,5 @@
 import { useRef, useState, type CSSProperties } from "react";
+import { Camera, Images } from "lucide-react";
 import FingerprintJS from "@fingerprintjs/fingerprintjs";
 import { uploadToCloudinary } from "../lib/cloudinary";
 
@@ -129,13 +130,15 @@ export default function PhotoUploader() {
             style={styles.primaryBtn}
             onClick={() => camaraRef.current?.click()}
           >
-            📷 Usar cámara
+            <Camera size={28} strokeWidth={1.5} />
+            Usar cámara
           </button>
           <button
             style={styles.secondaryBtn}
             onClick={() => galeriaRef.current?.click()}
           >
-            🖼 Subir de galería
+            <Images size={28} strokeWidth={1.5} />
+            Subir de galería
           </button>
         </div>
       )}
@@ -236,26 +239,34 @@ const styles: Record<string, CSSProperties> = {
     background: "var(--accent)",
     color: "var(--bg)",
     border: "none",
-    padding: "14px 18px",
+    padding: "20px 18px",
     fontFamily: "var(--font-mono)",
     fontSize: "0.75rem",
     fontWeight: 700,
     letterSpacing: "0.1em",
     textTransform: "uppercase",
     cursor: "pointer",
+    display: "flex",
+    flexDirection: "column",
+    alignItems: "center",
+    gap: "10px",
   },
   secondaryBtn: {
     flex: 1,
     background: "transparent",
     color: "var(--text)",
     border: "1px solid var(--border)",
-    padding: "14px 18px",
+    padding: "20px 18px",
     fontFamily: "var(--font-mono)",
     fontSize: "0.75rem",
     fontWeight: 700,
     letterSpacing: "0.1em",
     textTransform: "uppercase",
     cursor: "pointer",
+    display: "flex",
+    flexDirection: "column",
+    alignItems: "center",
+    gap: "10px",
   },
   ghostBtn: {
     background: "transparent",

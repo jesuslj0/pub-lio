@@ -1,1 +1,18 @@
 @import "tailwindcss";
+
+
+@theme {
+  --color-bg: #080810;
+  --color-bg2: #0e0e1a;
+  --color-surface: #13131f;
+  --color-border: rgba(255, 255, 255, 0.07);
+  --color-accent: #f22c8f;
+  --color-accent2: #00e5a8;
+  --color-accent3: #00cfff;
+  --color-text: #e8e8f0;
+  --color-muted: #6b6b80;
+
+  --font-display: "Bebas Neue", sans-serif;
+  --font-body: "DM Sans", sans-serif;
+  --font-mono: "Space Mono", monospace;
+}

@@ -1,19 +1,20 @@
 ---
+import { Clock, MapPin, Martini } from "@lucide/astro";
 ---
 
 <div class="info-strip" id="info">
   <div class="info-item">
-    <p class="info-item-label">// Horario</p>
+    <p class="info-item-label"><Clock size={13} stroke-width={2} /> Horario</p>
     <p class="info-item-value">Vie · Sáb<br />Noche</p>
     <p class="info-item-sub">Abre al caer la tarde. Cierra cuando toca.</p>
   </div>
   <div class="info-item">
-    <p class="info-item-label">// Ubicación</p>
+    <p class="info-item-label"><MapPin size={13} stroke-width={2} /> Ubicación</p>
     <p class="info-item-value">Plaza Mayor<br />El Bonillo</p>
     <p class="info-item-sub">Albacete, Castilla-La Mancha</p>
   </div>
   <div class="info-item">
-    <p class="info-item-label">// Servicios</p>
+    <p class="info-item-label"><Martini size={13} stroke-width={2} /> Servicios</p>
     <p class="info-item-value">Copas · Tapas<br />Cañas</p>
     <p class="info-item-sub">Futbolín · Diana · Sonido & luz pro</p>
   </div>
@@ -38,6 +39,9 @@
     text-transform: uppercase;
     color: var(--accent);
     margin-bottom: 12px;
+    display: inline-flex;
+    align-items: center;
+    gap: 7px;
   }
   .info-item-value {
     font-family: var(--font-display);

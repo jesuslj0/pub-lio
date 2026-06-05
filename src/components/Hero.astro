@@ -1,16 +1,16 @@
 ---
+import { Disc3 } from "@lucide/astro";
 ---
 
 <section class="hero">
+  <div class="hero-bg"></div>
   <div class="hero-grid"></div>
-  <div class="orb orb-1"></div>
-  <div class="orb orb-2"></div>
 
-  <p class="hero-eyebrow">// Disco Pub · El Bonillo · Albacete</p>
+  <p class="hero-eyebrow"><Disc3 size={14} stroke-width={2} /> Music Pub · El Bonillo (AB)</p>
   <h1 class="hero-title">
-    <span class="stroke-text">Donde</span>
-    <span class="accent-word">pasa</span>
-    el lío
+    <span class="stroke-text">Te</span>
+    <span class="accent-word">vas</span>
+    a liar
   </h1>
   <div class="hero-sub">
     <p>
@@ -32,13 +32,41 @@
     overflow: hidden;
   }
 
+  /* Photo background */
+  .hero-bg {
+    position: absolute;
+    inset: 0;
+    background: url("/img/lio-barra.png") center/cover no-repeat;
+    opacity: 0.85;
+    z-index: -1;
+  }
+  /* Darkening overlay so the title stays legible */
+  .hero-bg::after {
+    content: "";
+    position: absolute;
+    inset: 0;
+    background: linear-gradient(
+      to top,
+      var(--bg) 0%,
+      rgba(8, 8, 16, 0.3) 45%,
+      rgba(8, 8, 16, 0.9) 100%
+    );
+  }
+
   /* Animated grid background */
   .hero-grid {
     position: absolute;
     inset: 0;
     background-image:
-      linear-gradient(rgba(200, 240, 38, 0.04) 1px, transparent 1px),
-      linear-gradient(90deg, rgba(200, 240, 38, 0.04) 1px, transparent 1px);
+      linear-gradient(
+        color-mix(in srgb, var(--accent) 4%, transparent) 1px,
+        transparent 1px
+      ),
+      linear-gradient(
+        90deg,
+        color-mix(in srgb, var(--accent) 4%, transparent) 1px,
+        transparent 1px
+      );
     background-size: 60px 60px;
     animation: gridShift 20s linear infinite;
   }
@@ -51,29 +79,6 @@
     }
   }
 
-  /* Glow orbs */
-  .orb {
-    position: absolute;
-    border-radius: 50%;
-    filter: blur(80px);
-    pointer-events: none;
-  }
-  .orb-1 {
-    width: 500px;
-    height: 500px;
-    background: rgba(123, 47, 255, 0.18);
-    top: -100px;
-    right: -100px;
-    animation: float1 12s ease-in-out infinite;
-  }
-  .orb-2 {
-    width: 400px;
-    height: 400px;
-    background: rgba(255, 45, 110, 0.12);
-    bottom: 0;
-    left: 20%;
-    animation: float2 16s ease-in-out infinite;
-  }
   @keyframes float1 {
     0%,
     100% {
@@ -102,6 +107,9 @@
     margin-bottom: 20px;
     opacity: 0;
     animation: fadeUp 0.8s 0.2s forwards;
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
   }
   .hero-title {
     font-family: var(--font-display);
@@ -118,7 +126,7 @@
     display: block;
   }
   .hero-title .stroke-text {
-    -webkit-text-stroke: 1px rgba(232, 232, 240, 0.25);
+    -webkit-text-stroke: 2.5px rgba(232, 232, 240, 0.4);
     color: transparent;
     display: block;
   }
@@ -184,7 +192,8 @@
 
   @media (max-width: 768px) {
     .hero {
-      padding: 0 20px 60px;
+      padding: 0 20px;
+      justify-content: center;
     }
     .hero-title {
       font-size: clamp(4rem, 18vw, 7rem);

@@ -1,4 +1,5 @@
 ---
+import "../../styles/global.css";
 import { supabaseAdmin } from "../../lib/supabaseAdmin";
 import { getCurrentWeek } from "../../lib/supabase";
 import { isAdmin } from "../../lib/adminAuth";
@@ -356,14 +357,14 @@ const fmt = (iso: string) =>
 
     <style>
       :root {
-        --bg: #080810;
-        --surface: #13131f;
+        --bg: var(--color-bg);
+        --surface: var(--color-surface);
         --border: rgba(255, 255, 255, 0.1);
-        --accent: #c8f026;
-        --text: #e8e8f0;
-        --muted: #6b6b80;
+        --accent: var(--color-accent);
+        --text: var(--color-text);
+        --muted: var(--color-muted);
         --green: #3ad17a;
-        --red: #ff2d6e;
+        --red: var(--color-accent3);
       }
       * {
         box-sizing: border-box;
