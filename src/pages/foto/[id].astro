@@ -1,0 +1,179 @@
+---
+import "../../styles/global.css";
+import { supabase } from "../../lib/supabase";
+import type { Foto } from "../../lib/database.types";
+
+export const prerender = false;
+
+const { id } = Astro.params;
+
+let foto: Foto | null = null;
+if (id) {
+  const { data } = await supabase
+    .from("fotos")
+    .select("*")
+    .eq("id", id)
+    .eq("estado", "aprobada")
+    .maybeSingle();
+  foto = data ?? null;
+}
+
+// Si la foto no existe o no está aprobada, llevamos al usuario al inicio.
+if (!foto) {
+  return Astro.redirect("/#fotos", 302);
+}
+
+const origin = Astro.url.origin;
+const pageUrl = `${origin}/foto/${foto.id}`;
+const autor = foto.nombre_autor ?? "Anónimo";
+const titulo = `Foto de ${autor} · Lío El Bonillo`;
+const descripcion = `Mira esta foto del finde en el Lío y vota la tuya. ${foto.votos_count} votos.`;
+---
+
+<!DOCTYPE html>
+<html lang="es">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>{titulo}</title>
+    <meta name="description" content={descripcion} />
+    <link rel="canonical" href={pageUrl} />
+
+    <!-- Open Graph (WhatsApp, Instagram, Facebook…) -->
+    <meta property="og:type" content="website" />
+    <meta property="og:site_name" content="Lío El Bonillo" />
+    <meta property="og:title" content={titulo} />
+    <meta property="og:description" content={descripcion} />
+    <meta property="og:url" content={pageUrl} />
+    <meta property="og:image" content={foto.cloudinary_url} />
+    <meta property="og:image:alt" content={`Foto de ${autor} en Lío El Bonillo`} />
+
+    <!-- Twitter / X -->
+    <meta name="twitter:card" content="summary_large_image" />
+    <meta name="twitter:title" content={titulo} />
+    <meta name="twitter:description" content={descripcion} />
+    <meta name="twitter:image" content={foto.cloudinary_url} />
+
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link
+      href="https://fonts.googleapis.com/css2?family=Bebas+Neue&family=DM+Sans:ital,wght@0,300;0,400;0,500;1,300&family=Space+Mono:wght@400;700&display=swap"
+      rel="stylesheet"
+    />
+  </head>
+  <body>
+    <main class="wrap">
+      <a class="brand" href="/">LÍO<span> EL BONILLO</span></a>
+
+      <figure class="foto">
+        <img src={foto.cloudinary_url} alt={`Foto de ${autor}`} />
+        <figcaption>
+          <span class="autor">{autor}</span>
+          <span class="votos">♥ {foto.votos_count} votos</span>
+        </figcaption>
+      </figure>
+
+      <div class="cta">
+        <p>¿Estuviste en el Lío este finde?</p>
+        <div class="cta-actions">
+          <a class="btn btn-primary" href="/#fotos">Ver todas las fotos</a>
+          <a class="btn btn-ghost" href="/#subir">Sube la tuya</a>
+        </div>
+      </div>
+    </main>
+
+    <style>
+      body {
+        background: var(--color-bg);
+        color: var(--color-text);
+        font-family: var(--font-body);
+        min-height: 100vh;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        padding: 32px 20px;
+      }
+      .wrap {
+        width: 100%;
+        max-width: 460px;
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        gap: 28px;
+      }
+      .brand {
+        font-family: var(--font-display);
+        font-size: 1.6rem;
+        letter-spacing: 0.05em;
+        color: var(--color-accent);
+        text-decoration: none;
+      }
+      .brand span {
+        color: var(--color-muted);
+      }
+      .foto {
+        margin: 0;
+        width: 100%;
+        background: var(--color-surface);
+        border: 1px solid var(--color-border);
+      }
+      .foto img {
+        width: 100%;
+        display: block;
+        max-height: 70vh;
+        object-fit: contain;
+      }
+      .foto figcaption {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        padding: 14px 16px;
+        font-family: var(--font-mono);
+        font-size: 0.75rem;
+        letter-spacing: 0.05em;
+      }
+      .autor {
+        color: var(--color-text);
+      }
+      .votos {
+        color: var(--color-accent);
+      }
+      .cta {
+        text-align: center;
+        display: flex;
+        flex-direction: column;
+        gap: 16px;
+      }
+      .cta p {
+        font-family: var(--font-mono);
+        font-size: 0.7rem;
+        letter-spacing: 0.15em;
+        text-transform: uppercase;
+        color: var(--color-muted);
+      }
+      .cta-actions {
+        display: flex;
+        gap: 12px;
+        justify-content: center;
+        flex-wrap: wrap;
+      }
+      .btn {
+        font-family: var(--font-mono);
+        font-size: 0.75rem;
+        font-weight: 700;
+        letter-spacing: 0.1em;
+        text-transform: uppercase;
+        padding: 12px 20px;
+        text-decoration: none;
+      }
+      .btn-primary {
+        background: var(--color-accent);
+        color: var(--color-bg);
+      }
+      .btn-ghost {
+        border: 1px solid var(--color-border);
+        color: var(--color-text);
+      }
+    </style>
+  </body>
+</html>

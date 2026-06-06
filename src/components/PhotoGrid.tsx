@@ -209,7 +209,13 @@ export default function PhotoGrid({
 
   // ─── Compartir ───
   const textoCompartir = "Mira esta foto del finde en Lío El Bonillo 🪩";
-  const urlDe = (foto: Foto) => foto.cloudinary_url;
+  // Compartimos la página de la app (no la URL directa de Cloudinary) para
+  // generar tráfico. La preview en WhatsApp/Instagram sigue siendo la foto
+  // gracias a las etiquetas Open Graph de /foto/[id].
+  const urlDe = (foto: Foto) =>
+    typeof window !== "undefined"
+      ? `${window.location.origin}/foto/${foto.id}`
+      : `/foto/${foto.id}`;
 
   const compartirNativo = async (foto: Foto) => {
     if (typeof navigator !== "undefined" && navigator.share) {
