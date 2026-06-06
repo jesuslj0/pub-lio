@@ -1,0 +1,96 @@
+---
+// Fondo decorativo "liquid aurora": formas orgánicas que flotan, con los
+// colores de marca. Se monta fijo detrás de todo el contenido.
+// Optimizado: solo anima `transform` (compositado por GPU, sin repaint).
+// El aspecto "líquido" sale de un border-radius asimétrico estático + rotate.
+---
+
+<div class="liquid-aurora" aria-hidden="true">
+  <div class="liquid-shape shape-1"></div>
+  <div class="liquid-shape shape-2"></div>
+  <div class="liquid-shape shape-3"></div>
+</div>
+
+<style>
+  .liquid-aurora {
+    position: fixed;
+    inset: 0;
+    z-index: -2;
+    overflow: hidden;
+    pointer-events: none;
+    background: var(--bg);
+    /* Aísla el pintado del fondo del resto del documento. */
+    contain: strict;
+  }
+
+  .liquid-shape {
+    position: absolute;
+    width: 45vmax;
+    height: 45vmax;
+    filter: blur(80px);
+    opacity: 0.4;
+    mix-blend-mode: screen;
+    /* border-radius asimétrico fijo: al rotar parece que muta, sin repaint. */
+    border-radius: 60% 40% 30% 70% / 60% 30% 70% 40%;
+    will-change: transform;
+    transform: translateZ(0);
+    backface-visibility: hidden;
+  }
+
+  .shape-1 {
+    top: -10%;
+    left: -8%;
+    background: radial-gradient(circle at 30% 30%, #f22c8f, transparent 70%);
+    animation: aurora-float-a 22s ease-in-out infinite;
+  }
+  .shape-2 {
+    bottom: -15%;
+    right: -10%;
+    background: radial-gradient(circle at 50% 50%, #8b2cf2, transparent 70%);
+    animation: aurora-float-b 28s ease-in-out infinite;
+  }
+  .shape-3 {
+    top: 35%;
+    left: 40%;
+    width: 35vmax;
+    height: 35vmax;
+    background: radial-gradient(circle at 50% 50%, #2563ff, transparent 70%);
+    opacity: 0.28;
+    animation: aurora-float-c 34s ease-in-out infinite;
+  }
+
+  @keyframes aurora-float-a {
+    0%,
+    100% {
+      transform: translate3d(0, 0, 0) rotate(0deg) scale(1);
+    }
+    50% {
+      transform: translate3d(5vmax, 4vmax, 0) rotate(180deg) scale(1.1);
+    }
+  }
+  @keyframes aurora-float-b {
+    0%,
+    100% {
+      transform: translate3d(0, 0, 0) rotate(0deg) scale(1.05);
+    }
+    50% {
+      transform: translate3d(-6vmax, -3vmax, 0) rotate(-160deg) scale(0.95);
+    }
+  }
+  @keyframes aurora-float-c {
+    0%,
+    100% {
+      transform: translate3d(0, 0, 0) rotate(0deg) scale(1);
+    }
+    50% {
+      transform: translate3d(-4vmax, 5vmax, 0) rotate(200deg) scale(1.12);
+    }
+  }
+
+  @media (prefers-reduced-motion: reduce) {
+    .liquid-shape {
+      animation: none !important;
+      will-change: auto;
+    }
+  }
+</style>

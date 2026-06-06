@@ -1,7 +1,7 @@
 import { useEffect, useState, type CSSProperties } from "react";
-import { CalendarClock, CalendarRange } from "lucide-react";
+import { Gift, CalendarClock, Hourglass } from "lucide-react";
 import { supabase } from "../lib/supabase";
-import type { Cartel } from "../lib/database.types";
+import type { Premio } from "../lib/database.types";
 
 function formatearFecha(fecha: string | null): string {
   if (!fecha) return "";
@@ -14,15 +14,15 @@ function formatearFecha(fecha: string | null): string {
   });
 }
 
-export default function CartelFinde() {
-  const [cartel, setCartel] = useState<Cartel | null>(null);
+export default function PremioSemanal() {
+  const [premio, setPremio] = useState<Premio | null>(null);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
     let activo = true;
     async function cargar() {
       const { data, error } = await supabase
-        .from("carteles")
+        .from("premios")
         .select("*")
         .eq("activo", true)
         .order("created_at", { ascending: false })
@@ -31,7 +31,7 @@ export default function CartelFinde() {
 
       if (!activo) return;
       if (error) console.error(error);
-      setCartel(data ?? null);
+      setPremio(data ?? null);
       setLoading(false);
     }
     cargar();
@@ -48,40 +48,40 @@ export default function CartelFinde() {
     );
   }
 
-  if (!cartel) {
+  if (!premio) {
     return (
       <div style={styles.placeholder}>
-        <div style={styles.placeholderText}>
-          CARTEL
-          <br />
-          FINDE
-        </div>
+        <Gift size={32} strokeWidth={1.5} color="var(--accent)" />
         <span style={styles.placeholderSub}>
           <CalendarClock size={14} strokeWidth={2} />
-          Próximamente · Pdte. confirmar
+          Premio de la semana · Próximamente
         </span>
       </div>
     );
   }
 
-  const rango = [formatearFecha(cartel.fecha_inicio), formatearFecha(cartel.fecha_fin)]
-    .filter(Boolean)
-    .join(" — ");
+  const valido = formatearFecha(premio.valido_hasta);
 
   return (
-    <div className="lio-cartel-card" style={styles.card}>
-      <style>{neonGlow}</style>
-      {cartel.imagen_url && (
-        <img src={cartel.imagen_url} alt={cartel.titulo} style={styles.img} />
+    <div style={styles.card}>
+      {premio.imagen_url && (
+        <div style={styles.imgWrap}>
+          <img src={premio.imagen_url} alt={premio.titulo} style={styles.img} />
+        </div>
       )}
       <div style={styles.content}>
-        <span style={styles.badge}>Esta semana</span>
-        <h3 style={styles.titulo}>{cartel.titulo}</h3>
-        {cartel.subtitulo && <p style={styles.subtitulo}>{cartel.subtitulo}</p>}
-        {rango && (
-          <p style={styles.fecha}>
-            <CalendarRange size={14} strokeWidth={2} />
-            {rango}
+        <span style={styles.badge}>
+          <Gift size={13} strokeWidth={2} />
+          Premio de la semana
+        </span>
+        <h3 style={styles.titulo}>{premio.titulo}</h3>
+        {premio.descripcion && (
+          <p style={styles.descripcion}>{premio.descripcion}</p>
+        )}
+        {valido && (
+          <p style={styles.valido}>
+            <Hourglass size={14} strokeWidth={2} />
+            Válido hasta el {valido}
           </p>
         )}
       </div>
@@ -91,61 +91,21 @@ export default function CartelFinde() {
 
 const pulse = `@keyframes lio-pulse { 0%,100% { opacity: 1; } 50% { opacity: 0.4; } }`;
 
-// Borde animado tipo neón con el verde de acento: un conic-gradient que gira
-// detrás de la tarjeta + un glow exterior que respira.
-const neonGlow = `
-  @property --lio-neon-angle {
-    syntax: "<angle>";
-    inherits: false;
-    initial-value: 0deg;
-  }
-  .lio-cartel-card {
-    position: relative;
-    isolation: isolate;
-  }
-  .lio-cartel-card::before {
-    content: "";
-    position: absolute;
-    inset: -2px;
-    z-index: -1;
-    border-radius: inherit;
-    padding: 2px;
-    background: conic-gradient(
-      from var(--lio-neon-angle),
-      transparent 0deg,
-      var(--accent) 70deg,
-      color-mix(in srgb, var(--accent) 40%, transparent) 140deg,
-      transparent 200deg,
-      var(--accent) 320deg,
-      transparent 360deg
-    );
-    filter: drop-shadow(0 0 10px color-mix(in srgb, var(--accent) 60%, transparent));
-    animation: lio-neon-spin 5s linear infinite, lio-neon-breath 3s ease-in-out infinite;
-  }
-  @keyframes lio-neon-spin {
-    to { --lio-neon-angle: 360deg; }
-  }
-  @keyframes lio-neon-breath {
-    0%, 100% { opacity: 0.85; }
-    50% { opacity: 1; }
-  }
-  @media (prefers-reduced-motion: reduce) {
-    .lio-cartel-card::before {
-      animation: none;
-      background: linear-gradient(135deg, var(--accent), transparent 70%);
-    }
-  }
-`;
-
 const styles: Record<string, CSSProperties> = {
   card: {
     position: "relative",
     background: "var(--surface)",
-    border: "1px solid color-mix(in srgb, var(--accent) 25%, var(--border))",
-    aspectRatio: "9 / 16",
+    border: "1px solid var(--border)",
     display: "flex",
-    flexDirection: "column",
-    justifyContent: "flex-end",
+    flexDirection: "row",
+    overflow: "hidden",
+    minHeight: "220px",
+  },
+  imgWrap: {
+    position: "relative",
+    flexShrink: 0,
+    width: "40%",
+    minWidth: "180px",
   },
   img: {
     position: "absolute",
@@ -156,11 +116,17 @@ const styles: Record<string, CSSProperties> = {
   },
   content: {
     position: "relative",
+    flex: 1,
     padding: "32px",
-    background: "linear-gradient(to top, rgba(8,8,16,0.92) 0%, transparent 80%)",
+    display: "flex",
+    flexDirection: "column",
+    justifyContent: "center",
   },
   badge: {
-    display: "inline-block",
+    display: "inline-flex",
+    alignItems: "center",
+    gap: "7px",
+    width: "fit-content",
     fontFamily: "var(--font-mono)",
     fontSize: "0.6rem",
     letterSpacing: "0.2em",
@@ -169,7 +135,7 @@ const styles: Record<string, CSSProperties> = {
     color: "var(--bg)",
     padding: "5px 12px",
     fontWeight: 700,
-    marginBottom: "12px",
+    marginBottom: "14px",
   },
   titulo: {
     fontFamily: "var(--font-display)",
@@ -177,19 +143,20 @@ const styles: Record<string, CSSProperties> = {
     lineHeight: 1,
     color: "var(--text)",
   },
-  subtitulo: {
+  descripcion: {
     fontFamily: "var(--font-body)",
     fontSize: "0.95rem",
     color: "var(--muted)",
-    marginTop: "8px",
+    marginTop: "12px",
     fontWeight: 300,
+    maxWidth: "440px",
   },
-  fecha: {
+  valido: {
     fontFamily: "var(--font-mono)",
     fontSize: "0.7rem",
-    color: "var(--muted)",
+    color: "var(--accent)",
     letterSpacing: "0.1em",
-    marginTop: "8px",
+    marginTop: "16px",
     display: "flex",
     alignItems: "center",
     gap: "7px",
@@ -198,7 +165,7 @@ const styles: Record<string, CSSProperties> = {
     position: "relative",
     background: "var(--surface)",
     border: "1px solid var(--border)",
-    aspectRatio: "9 / 16",
+    minHeight: "220px",
     display: "flex",
     flexDirection: "column",
     alignItems: "center",
@@ -206,14 +173,6 @@ const styles: Record<string, CSSProperties> = {
     gap: "16px",
     backgroundImage:
       "repeating-linear-gradient(45deg, transparent, transparent 30px, color-mix(in srgb, var(--accent) 2%, transparent) 30px, color-mix(in srgb, var(--accent) 2%, transparent) 31px)",
-  },
-  placeholderText: {
-    fontFamily: "var(--font-display)",
-    fontSize: "5rem",
-    color: "color-mix(in srgb, var(--accent) 6%, transparent)",
-    letterSpacing: "0.1em",
-    textAlign: "center",
-    lineHeight: 0.9,
   },
   placeholderSub: {
     fontFamily: "var(--font-mono)",

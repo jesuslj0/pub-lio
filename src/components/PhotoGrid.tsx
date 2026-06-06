@@ -1,5 +1,5 @@
 import { useEffect, useState, type CSSProperties } from "react";
-import { Heart } from "lucide-react";
+import { Heart, Star, Trophy } from "lucide-react";
 import FingerprintJS from "@fingerprintjs/fingerprintjs";
 import { supabase, getCurrentWeek } from "../lib/supabase";
 import type { Foto } from "../lib/database.types";
@@ -153,10 +153,20 @@ export default function PhotoGrid({
         const esMasVotada = foto.votos_count === maxVotos && maxVotos > 0;
         return (
           <div key={foto.id} className="foto-card" style={styles.card}>
-            {esMasVotada && <div style={styles.badgeTop}>★ Más votada</div>}
-            {mostrarGanadora && foto.ganadora && (
-              <div style={styles.badgeWinner}>🏆 Ganadora</div>
-            )}
+            <div style={styles.badges}>
+              {mostrarGanadora && foto.ganadora && (
+                <div style={styles.badgeWinner}>
+                  <Trophy size={12} strokeWidth={2} />
+                  Ganadora
+                </div>
+              )}
+              {esMasVotada && (
+                <div style={styles.badgeTop}>
+                  <Star size={12} strokeWidth={2} fill="currentColor" />
+                  Más votada
+                </div>
+              )}
+            </div>
             <img
               src={foto.cloudinary_url}
               alt={foto.nombre_autor ?? "Foto del finde"}
@@ -284,6 +294,11 @@ const styles: Record<string, CSSProperties> = {
     letterSpacing: "0.1em",
     textTransform: "uppercase",
     cursor: "pointer",
+    display: "inline-flex",
+    alignItems: "center",
+    justifyContent: "center",
+    gap: "5px",
+    lineHeight: 1,
   },
   voteBtnDone: {
     background: "var(--accent2)",
@@ -299,11 +314,20 @@ const styles: Record<string, CSSProperties> = {
     alignItems: "center",
     gap: "4px",
   },
-  badgeTop: {
+  badges: {
     position: "absolute",
     top: "12px",
     right: "12px",
     zIndex: 2,
+    display: "flex",
+    flexDirection: "column",
+    alignItems: "flex-end",
+    gap: "6px",
+  },
+  badgeTop: {
+    display: "inline-flex",
+    alignItems: "center",
+    gap: "5px",
     background: "var(--accent)",
     color: "var(--bg)",
     fontFamily: "var(--font-mono)",
@@ -312,12 +336,12 @@ const styles: Record<string, CSSProperties> = {
     letterSpacing: "0.15em",
     textTransform: "uppercase",
     padding: "4px 10px",
+    lineHeight: 1,
   },
   badgeWinner: {
-    position: "absolute",
-    top: "12px",
-    right: "12px",
-    zIndex: 2,
+    display: "inline-flex",
+    alignItems: "center",
+    gap: "5px",
     background: "var(--accent3)",
     color: "#fff",
     fontFamily: "var(--font-mono)",
@@ -326,6 +350,7 @@ const styles: Record<string, CSSProperties> = {
     letterSpacing: "0.15em",
     textTransform: "uppercase",
     padding: "4px 10px",
+    lineHeight: 1,
   },
   skeleton: {
     background: "var(--surface)",

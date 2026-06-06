@@ -8,9 +8,9 @@ import { Disc3 } from "@lucide/astro";
 
   <p class="hero-eyebrow"><Disc3 size={14} stroke-width={2} /> Music Pub · El Bonillo (AB)</p>
   <h1 class="hero-title">
-    <span class="stroke-text">Te</span>
-    <span class="accent-word">vas</span>
-    a liar
+    <span class="stroke-text">te</span>
+    vas
+    <span class="accent-word">a liar</span>
   </h1>
   <div class="hero-sub">
     <p>
@@ -27,7 +27,7 @@ import { Disc3 } from "@lucide/astro";
     display: flex;
     flex-direction: column;
     justify-content: flex-end;
-    padding: 0 40px 72px;
+    padding: 0 40px 40px;
     position: relative;
     overflow: hidden;
   }
@@ -133,7 +133,7 @@ import { Disc3 } from "@lucide/astro";
   .hero-sub {
     margin-top: 32px;
     display: flex;
-    align-items: center;
+    align-items: start;
     gap: 48px;
     opacity: 0;
     animation: fadeUp 0.8s 0.6s forwards;
@@ -192,8 +192,8 @@ import { Disc3 } from "@lucide/astro";
 
   @media (max-width: 768px) {
     .hero {
-      padding: 0 20px;
-      justify-content: center;
+      padding: 0 20px 40px;
+      justify-content: flex-end;
     }
     .hero-title {
       font-size: clamp(4rem, 18vw, 7rem);

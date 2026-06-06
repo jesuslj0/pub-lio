@@ -196,6 +196,38 @@ const fmt = (iso: string) =>
               <p id="cartel-msg" class="msg" />
             </form>
           </section>
+
+          {/* D) PREMIO SEMANAL */}
+          <section>
+            <h2>Nuevo premio semanal</h2>
+            <form id="premio-form" class="cartel-form">
+              <label>
+                Título *
+                <input name="titulo" type="text" required />
+              </label>
+              <label>
+                Descripción
+                <textarea name="descripcion" rows="3" />
+              </label>
+              <label>
+                Imagen del premio
+                <input id="premio-imagen" name="imagen" type="file" accept="image/*" />
+              </label>
+              <img id="premio-preview" class="cartel-preview" alt="Vista previa" hidden />
+              <label>
+                Válido hasta
+                <input name="valido_hasta" type="date" />
+              </label>
+              <label class="checkbox">
+                <input name="activo" type="checkbox" checked />
+                Activar este premio (desactiva los demás)
+              </label>
+              <button type="submit" class="btn btn-primary">
+                Guardar premio
+              </button>
+              <p id="premio-msg" class="msg" />
+            </form>
+          </section>
         </main>
       )
     }
@@ -349,6 +381,77 @@ const fmt = (iso: string) =>
             } catch {
               msg.textContent = "Error de red";
               msg.className = "msg err";
+            }
+          });
+
+          // ─── Vista previa de la imagen del premio ───
+          const premioImagenInput = document.getElementById("premio-imagen");
+          const premioPreview = document.getElementById("premio-preview");
+          premioImagenInput?.addEventListener("change", () => {
+            const file = premioImagenInput.files && premioImagenInput.files[0];
+            if (file) {
+              premioPreview.src = URL.createObjectURL(file);
+              premioPreview.hidden = false;
+            } else {
+              premioPreview.hidden = true;
+              premioPreview.removeAttribute("src");
+            }
+          });
+
+          // ─── Formulario de premio semanal ───
+          const premioForm = document.getElementById("premio-form");
+          const premioMsg = document.getElementById("premio-msg");
+          premioForm?.addEventListener("submit", async (e) => {
+            e.preventDefault();
+            const fd = new FormData(premioForm);
+            premioMsg.className = "msg";
+
+            try {
+              // Sube la imagen a Cloudinary (si se eligió una) y usa su secure_url.
+              let imagenUrl = null;
+              const file = fd.get("imagen");
+              if (file && file.size > 0) {
+                premioMsg.textContent = "Subiendo imagen...";
+                const cloudData = new FormData();
+                cloudData.append("file", file);
+                cloudData.append("upload_preset", uploadPreset);
+                const up = await fetch(
+                  "https://api.cloudinary.com/v1_1/" + cloudName + "/image/upload",
+                  { method: "POST", body: cloudData },
+                );
+                if (!up.ok) throw new Error("cloudinary");
+                const upJson = await up.json();
+                imagenUrl = upJson.secure_url;
+              }
+
+              const payload = {
+                titulo: fd.get("titulo"),
+                descripcion: fd.get("descripcion"),
+                imagen_url: imagenUrl,
+                valido_hasta: fd.get("valido_hasta"),
+                activo: fd.get("activo") === "on",
+              };
+              premioMsg.textContent = "Guardando...";
+              const res = await fetch("/api/admin/premio", {
+                method: "POST",
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify(payload),
+              });
+              const data = await res.json();
+              if (data.success) {
+                premioMsg.textContent = "✓ Premio guardado";
+                premioMsg.className = "msg ok";
+                premioForm.reset();
+                premioPreview.hidden = true;
+                premioPreview.removeAttribute("src");
+              } else {
+                premioMsg.textContent =
+                  "Error: " + (data.error || "no se pudo guardar");
+                premioMsg.className = "msg err";
+              }
+            } catch {
+              premioMsg.textContent = "Error de red";
+              premioMsg.className = "msg err";
             }
           });
         </script>
@@ -554,12 +657,17 @@ const fmt = (iso: string) =>
       }
       input[type="text"],
       input[type="url"],
-      input[type="date"] {
+      input[type="date"],
+      textarea {
         background: var(--bg);
         border: 1px solid var(--border);
         color: var(--text);
         padding: 10px 12px;
         font-size: 0.9rem;
+      }
+      textarea {
+        font-family: inherit;
+        resize: vertical;
       }
       .row {
         display: flex;

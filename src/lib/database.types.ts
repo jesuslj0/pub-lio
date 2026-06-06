@@ -34,6 +34,16 @@ export type Cartel = {
   created_at: string;
 }
 
+export type Premio = {
+  id: string;
+  titulo: string;
+  descripcion: string | null;
+  imagen_url: string | null;
+  valido_hasta: string | null;
+  activo: boolean;
+  created_at: string;
+}
+
 export interface Database {
   public: {
     Tables: {
@@ -78,6 +88,20 @@ export interface Database {
           created_at?: string;
         };
         Update: Partial<Cartel>;
+        Relationships: [];
+      };
+      premios: {
+        Row: Premio;
+        Insert: {
+          id?: string;
+          titulo: string;
+          descripcion?: string | null;
+          imagen_url?: string | null;
+          valido_hasta?: string | null;
+          activo?: boolean;
+          created_at?: string;
+        };
+        Update: Partial<Premio>;
         Relationships: [];
       };
     };
