@@ -1,8 +1,26 @@
 ---
+import { siInstagram } from "simple-icons";
 ---
 
 <footer>
   <div class="footer-logo">LÍO<span> EL BONILLO</span></div>
+
+  <div class="footer-social">
+    <span class="footer-social-label">Síguenos</span>
+    <a
+      class="social-link"
+      href="https://www.instagram.com/lioelbonillo/"
+      target="_blank"
+      rel="noopener noreferrer"
+      aria-label="Instagram de Lío El Bonillo"
+    >
+      <svg class="social-icon" role="img" viewBox="0 0 24 24" aria-hidden="true">
+        <path d={siInstagram.path}></path>
+      </svg>
+      <span>@lioelbonillo</span>
+    </a>
+  </div>
+
   <div class="footer-meta">
     <p>Plaza Mayor · El Bonillo · Albacete</p>
     <p class="footer-copy">© 2025 Lío El Bonillo</p>
@@ -25,6 +43,46 @@
   }
   .footer-logo span {
     color: var(--muted);
+  }
+  .footer-social {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 10px;
+  }
+  .footer-social-label {
+    font-family: var(--font-mono);
+    font-size: 0.6rem;
+    letter-spacing: 0.25em;
+    text-transform: uppercase;
+    color: var(--muted);
+  }
+  .social-link {
+    display: inline-flex;
+    align-items: center;
+    gap: 9px;
+    padding: 8px 16px;
+    border: 1px solid var(--border);
+    border-radius: 999px;
+    color: var(--text);
+    text-decoration: none;
+    font-family: var(--font-mono);
+    font-size: 0.75rem;
+    letter-spacing: 0.05em;
+    transition:
+      border-color 0.2s ease,
+      color 0.2s ease,
+      box-shadow 0.2s ease;
+  }
+  .social-link:hover {
+    color: var(--accent);
+    border-color: var(--accent);
+    box-shadow: 0 0 18px color-mix(in srgb, var(--accent) 30%, transparent);
+  }
+  .social-icon {
+    width: 18px;
+    height: 18px;
+    fill: currentColor;
   }
   .footer-meta {
     font-family: var(--font-mono);

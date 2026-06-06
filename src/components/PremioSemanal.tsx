@@ -63,15 +63,16 @@ export default function PremioSemanal() {
   const valido = formatearFecha(premio.valido_hasta);
 
   return (
-    <div style={styles.card}>
+    <div className="lio-premio-card" style={styles.card}>
+      <style>{responsive}</style>
       {premio.imagen_url && (
-        <div style={styles.imgWrap}>
+        <div className="lio-premio-img" style={styles.imgWrap}>
           <img src={premio.imagen_url} alt={premio.titulo} style={styles.img} />
         </div>
       )}
       <div style={styles.content}>
         <span style={styles.badge}>
-          <Gift size={13} strokeWidth={2} />
+          <Gift size={13} strokeWidth={2} style={iconStyle} />
           Premio de la semana
         </span>
         <h3 style={styles.titulo}>{premio.titulo}</h3>
@@ -80,7 +81,7 @@ export default function PremioSemanal() {
         )}
         {valido && (
           <p style={styles.valido}>
-            <Hourglass size={14} strokeWidth={2} />
+            <Hourglass size={14} strokeWidth={2} style={iconStyle} />
             Válido hasta el {valido}
           </p>
         )}
@@ -90,6 +91,25 @@ export default function PremioSemanal() {
 }
 
 const pulse = `@keyframes lio-pulse { 0%,100% { opacity: 1; } 50% { opacity: 0.4; } }`;
+
+// Los iconos nunca deben encogerse al estrechar la columna en móvil.
+const iconStyle: CSSProperties = { flexShrink: 0 };
+
+const responsive = `
+  @media (max-width: 600px) {
+    .lio-premio-card {
+      flex-direction: column !important;
+    }
+    .lio-premio-card .lio-premio-img {
+      width: 100% !important;
+      min-width: 0 !important;
+      aspect-ratio: 16 / 10;
+    }
+    .lio-premio-card > div:last-child {
+      padding: 24px !important;
+    }
+  }
+`;
 
 const styles: Record<string, CSSProperties> = {
   card: {

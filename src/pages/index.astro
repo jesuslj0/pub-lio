@@ -36,7 +36,7 @@ import { CalendarDays, Images, Gift } from "@lucide/astro";
       </div>
       <div style="text-align:right; padding-bottom: 8px;">
         <p class="fotos-note">La más votada gana el finde siguiente</p>
-        <p class="fotos-note accent">Premio activo en temporada ↗</p>
+        <a href="#premio" class="fotos-note accent fotos-note-link">Ver premio activo ↗</a>
       </div>
     </div>
     <PhotoGrid client:load mostrarGanadora={true} />
@@ -98,6 +98,17 @@ import { CalendarDays, Images, Gift } from "@lucide/astro";
     color: var(--accent);
     letter-spacing: 0.1em;
     margin-top: 6px;
+  }
+  .fotos-note-link {
+    display: inline-block;
+    text-decoration: none;
+    transition:
+      opacity 0.2s ease,
+      text-shadow 0.2s ease;
+  }
+  .fotos-note-link:hover {
+    text-shadow: 0 0 12px color-mix(in srgb, var(--accent) 50%, transparent);
+    opacity: 0.85;
   }
 
   .upload-section {
