@@ -3,7 +3,7 @@ import "../../styles/global.css";
 import { supabaseAdmin } from "../../lib/supabaseAdmin";
 import { getCurrentWeek } from "../../lib/supabase";
 import { isAdmin } from "../../lib/adminAuth";
-import type { Foto } from "../../lib/database.types";
+import type { Foto, Cartel, Premio } from "../../lib/database.types";
 
 export const prerender = false;
 
@@ -18,12 +18,17 @@ const uploadPreset = import.meta.env.PUBLIC_CLOUDINARY_UPLOAD_PRESET;
 // ─── Datos (solo si está autenticado) ───
 let pendientes: Foto[] = [];
 let aprobadas: Foto[] = [];
+let cartelActivo: Cartel | null = null;
+let premioActivo: Premio | null = null;
+let carteles: Cartel[] = [];
+let premios: Premio[] = [];
+let historialFotos: Foto[] = [];
 let loadError = false;
 const semana = getCurrentWeek();
 
 if (authed) {
   try {
-    const [pend, aprob] = await Promise.all([
+    const [pend, aprob, cartelesRes, premiosRes, fotosRes] = await Promise.all([
       supabaseAdmin
         .from("fotos")
         .select("*")
@@ -35,13 +40,34 @@ if (authed) {
         .eq("estado", "aprobada")
         .eq("semana", semana)
         .order("votos_count", { ascending: false }),
+      supabaseAdmin
+        .from("carteles")
+        .select("*")
+        .order("created_at", { ascending: false }),
+      supabaseAdmin
+        .from("premios")
+        .select("*")
+        .order("created_at", { ascending: false }),
+      supabaseAdmin
+        .from("fotos")
+        .select("*")
+        .order("created_at", { ascending: false })
+        .limit(60),
     ]);
     if (pend.error) throw pend.error;
     if (aprob.error) throw aprob.error;
+    if (cartelesRes.error) throw cartelesRes.error;
+    if (premiosRes.error) throw premiosRes.error;
+    if (fotosRes.error) throw fotosRes.error;
     pendientes = pend.data ?? [];
     aprobadas = aprob.data ?? [];
+    carteles = cartelesRes.data ?? [];
+    premios = premiosRes.data ?? [];
+    historialFotos = fotosRes.data ?? [];
+    cartelActivo = carteles.find((c) => c.activo) ?? null;
+    premioActivo = premios.find((p) => p.activo) ?? null;
   } catch (err) {
-    console.error("[admin] cargar fotos", err);
+    console.error("[admin] cargar datos", err);
     loadError = true;
   }
 }
@@ -161,72 +187,240 @@ const fmt = (iso: string) =>
 
           {/* C) CARTELES */}
           <section>
-            <h2>Nuevo cartel</h2>
-            <form id="cartel-form" class="cartel-form">
+            <div class="section-head">
+              <h2 id="cartel-titulo">{cartelActivo ? "Editar cartel activo" : "Nuevo cartel"}</h2>
+              {cartelActivo && (
+                <button type="button" id="cartel-nuevo" class="btn btn-ghost">
+                  + Crear nuevo
+                </button>
+              )}
+            </div>
+            <form
+              id="cartel-form"
+              class="cartel-form"
+              data-id={cartelActivo?.id ?? ""}
+              data-imagen-url={cartelActivo?.imagen_url ?? ""}
+              data-media-tipo={cartelActivo?.media_tipo ?? "imagen"}
+            >
               <label>
                 Título *
-                <input name="titulo" type="text" required />
+                <input name="titulo" type="text" required value={cartelActivo?.titulo ?? ""} />
               </label>
               <label>
-                Subtítulo
-                <input name="subtitulo" type="text" />
+                Descripción del evento
+                <textarea name="subtitulo" rows="4" placeholder="Cuenta de qué va el finde…">{cartelActivo?.subtitulo ?? ""}</textarea>
               </label>
               <label>
-                Imagen del cartel
-                <input id="cartel-imagen" name="imagen" type="file" accept="image/*" />
+                Imagen o vídeo del cartel
+                {cartelActivo?.imagen_url && (
+                  <span class="muted small">
+                    Hay un medio actual. Sube uno nuevo solo si quieres reemplazarlo.
+                  </span>
+                )}
+                <input id="cartel-imagen" name="imagen" type="file" accept="image/*,video/*" />
               </label>
-              <img id="cartel-preview" class="cartel-preview" alt="Vista previa" hidden />
+              <img
+                id="cartel-preview"
+                class="cartel-preview"
+                alt="Vista previa"
+                src={cartelActivo?.media_tipo !== "video" ? (cartelActivo?.imagen_url ?? undefined) : undefined}
+                hidden={!(cartelActivo?.imagen_url && cartelActivo?.media_tipo !== "video")}
+              />
+              <video
+                id="cartel-preview-video"
+                class="cartel-preview"
+                muted
+                playsinline
+                controls
+                src={cartelActivo?.media_tipo === "video" ? (cartelActivo?.imagen_url ?? undefined) : undefined}
+                hidden={!(cartelActivo?.imagen_url && cartelActivo?.media_tipo === "video")}
+              ></video>
               <div class="row">
                 <label>
                   Fecha inicio
-                  <input name="fecha_inicio" type="date" />
+                  <input name="fecha_inicio" type="date" value={cartelActivo?.fecha_inicio ?? ""} />
                 </label>
                 <label>
                   Fecha fin
-                  <input name="fecha_fin" type="date" />
+                  <input name="fecha_fin" type="date" value={cartelActivo?.fecha_fin ?? ""} />
                 </label>
               </div>
               <label class="checkbox">
-                <input name="activo" type="checkbox" checked />
+                <input name="activo" type="checkbox" checked={cartelActivo?.activo ?? true} />
                 Activar este cartel (desactiva los demás)
               </label>
               <button type="submit" class="btn btn-primary">
-                Guardar cartel
+                {cartelActivo ? "Actualizar cartel" : "Guardar cartel"}
               </button>
               <p id="cartel-msg" class="msg" />
             </form>
           </section>
 
+          {/* C2) HISTORIAL DE CARTELES */}
+          <section>
+            <h2>
+              Historial de carteles <span class="count">{carteles.length}</span>
+            </h2>
+            {carteles.length === 0 && (
+              <p class="muted">Aún no hay carteles.</p>
+            )}
+            <div class="foto-list">
+              {carteles.map((c) => (
+                <div
+                  class:list={["foto-row", "hist-row", { "is-active": c.activo }]}
+                  data-id={c.id}
+                  data-tipo="cartel"
+                >
+                  {c.imagen_url ? (
+                    c.media_tipo === "video" ? (
+                      <video src={c.imagen_url} class="thumb" muted playsinline />
+                    ) : (
+                      <img src={c.imagen_url} alt="thumbnail" class="thumb" />
+                    )
+                  ) : (
+                    <div class="thumb thumb-empty">—</div>
+                  )}
+                  <div class="foto-info">
+                    <strong>{c.titulo}</strong>
+                    <span class="muted small">{fmt(c.created_at)}</span>
+                    <span class="active-flag">● Activo</span>
+                  </div>
+                  <div class="foto-actions">
+                    {!c.activo && (
+                      <button class="btn btn-primary" data-accion="activar">
+                        Activar
+                      </button>
+                    )}
+                    <button class="btn btn-reject" data-accion="eliminar">
+                      Eliminar
+                    </button>
+                  </div>
+                </div>
+              ))}
+            </div>
+          </section>
+
           {/* D) PREMIO SEMANAL */}
           <section>
-            <h2>Nuevo premio semanal</h2>
-            <form id="premio-form" class="cartel-form">
+            <div class="section-head">
+              <h2 id="premio-titulo">{premioActivo ? "Editar premio activo" : "Nuevo premio semanal"}</h2>
+              {premioActivo && (
+                <button type="button" id="premio-nuevo" class="btn btn-ghost">
+                  + Crear nuevo
+                </button>
+              )}
+            </div>
+            <form
+              id="premio-form"
+              class="cartel-form"
+              data-id={premioActivo?.id ?? ""}
+              data-imagen-url={premioActivo?.imagen_url ?? ""}
+            >
               <label>
                 Título *
-                <input name="titulo" type="text" required />
+                <input name="titulo" type="text" required value={premioActivo?.titulo ?? ""} />
               </label>
               <label>
                 Descripción
-                <textarea name="descripcion" rows="3" />
+                <textarea name="descripcion" rows="3">{premioActivo?.descripcion ?? ""}</textarea>
               </label>
               <label>
                 Imagen del premio
+                {premioActivo?.imagen_url && (
+                  <span class="muted small">
+                    Hay una imagen actual. Sube una nueva solo si quieres reemplazarla.
+                  </span>
+                )}
                 <input id="premio-imagen" name="imagen" type="file" accept="image/*" />
               </label>
-              <img id="premio-preview" class="cartel-preview" alt="Vista previa" hidden />
+              <img
+                id="premio-preview"
+                class="cartel-preview"
+                alt="Vista previa"
+                src={premioActivo?.imagen_url ?? undefined}
+                hidden={!premioActivo?.imagen_url}
+              />
               <label>
                 Válido hasta
-                <input name="valido_hasta" type="date" />
+                <input name="valido_hasta" type="date" value={premioActivo?.valido_hasta ?? ""} />
               </label>
               <label class="checkbox">
-                <input name="activo" type="checkbox" checked />
+                <input name="activo" type="checkbox" checked={premioActivo?.activo ?? true} />
                 Activar este premio (desactiva los demás)
               </label>
               <button type="submit" class="btn btn-primary">
-                Guardar premio
+                {premioActivo ? "Actualizar premio" : "Guardar premio"}
               </button>
               <p id="premio-msg" class="msg" />
             </form>
+          </section>
+
+          {/* D2) HISTORIAL DE PREMIOS */}
+          <section>
+            <h2>
+              Historial de premios <span class="count">{premios.length}</span>
+            </h2>
+            {premios.length === 0 && <p class="muted">Aún no hay premios.</p>}
+            <div class="foto-list">
+              {premios.map((p) => (
+                <div
+                  class:list={["foto-row", "hist-row", { "is-active": p.activo }]}
+                  data-id={p.id}
+                  data-tipo="premio"
+                >
+                  {p.imagen_url ? (
+                    <img src={p.imagen_url} alt="thumbnail" class="thumb" />
+                  ) : (
+                    <div class="thumb thumb-empty">—</div>
+                  )}
+                  <div class="foto-info">
+                    <strong>{p.titulo}</strong>
+                    <span class="muted small">{fmt(p.created_at)}</span>
+                    <span class="active-flag">● Activo</span>
+                  </div>
+                  <div class="foto-actions">
+                    {!p.activo && (
+                      <button class="btn btn-primary" data-accion="activar">
+                        Activar
+                      </button>
+                    )}
+                    <button class="btn btn-reject" data-accion="eliminar">
+                      Eliminar
+                    </button>
+                  </div>
+                </div>
+              ))}
+            </div>
+          </section>
+
+          {/* E) HISTORIAL DE FOTOS SUBIDAS */}
+          <section>
+            <h2>
+              Historial de fotos <span class="count">{historialFotos.length}</span>
+            </h2>
+            {historialFotos.length === 0 && (
+              <p class="muted">Aún no hay fotos subidas.</p>
+            )}
+            <div class="hist-grid">
+              {historialFotos.map((foto) => (
+                <a
+                  class="hist-foto"
+                  href={foto.cloudinary_url}
+                  target="_blank"
+                  rel="noopener"
+                >
+                  <img src={foto.cloudinary_url} alt="foto" loading="lazy" />
+                  <div class="hist-foto-meta">
+                    <span class:list={["estado", foto.estado]}>{foto.estado}</span>
+                    <span class="muted small">{foto.votos_count} ★</span>
+                  </div>
+                  <span class="muted small hist-foto-sub">
+                    {foto.nombre_autor ?? "Anónimo"} · {foto.semana}
+                    {foto.ganadora ? " · 🏆" : ""}
+                  </span>
+                </a>
+              ))}
+            </div>
           </section>
         </main>
       )
@@ -238,7 +432,7 @@ const fmt = (iso: string) =>
           {/* Las llamadas usan la cookie httpOnly automáticamente; no hay secreto en el cliente. */}
           // ─── Moderación de fotos pendientes ───
           document
-            .querySelectorAll(".foto-row:not(.winner-row)")
+            .querySelectorAll(".foto-row:not(.winner-row):not(.hist-row)")
             .forEach((row) => {
               row.querySelectorAll(".btn").forEach((btn) => {
                 btn.addEventListener("click", async () => {
@@ -312,17 +506,27 @@ const fmt = (iso: string) =>
             });
           });
 
-          // ─── Vista previa de la imagen del cartel ───
+          // ─── Vista previa de la imagen/vídeo del cartel ───
           const imagenInput = document.getElementById("cartel-imagen");
           const preview = document.getElementById("cartel-preview");
+          const previewVideo = document.getElementById("cartel-preview-video");
+          function limpiarPreviews() {
+            preview.hidden = true;
+            preview.removeAttribute("src");
+            previewVideo.hidden = true;
+            previewVideo.removeAttribute("src");
+          }
           imagenInput?.addEventListener("change", () => {
+            limpiarPreviews();
             const file = imagenInput.files && imagenInput.files[0];
-            if (file) {
-              preview.src = URL.createObjectURL(file);
-              preview.hidden = false;
+            if (!file) return;
+            const url = URL.createObjectURL(file);
+            if (file.type.startsWith("video/")) {
+              previewVideo.src = url;
+              previewVideo.hidden = false;
             } else {
-              preview.hidden = true;
-              preview.removeAttribute("src");
+              preview.src = url;
+              preview.hidden = false;
             }
           });
 
@@ -335,27 +539,38 @@ const fmt = (iso: string) =>
             msg.className = "msg";
 
             try {
-              // Sube la imagen a Cloudinary (si se eligió una) y usa su secure_url.
-              let imagenUrl = null;
+              // Si no se sube un medio nuevo, se conserva el actual (edición).
+              let imagenUrl = form.dataset.imagenUrl || null;
+              let mediaTipo = form.dataset.mediaTipo || "imagen";
               const file = fd.get("imagen");
               if (file && file.size > 0) {
-                msg.textContent = "Subiendo imagen...";
+                const esVideo = file.type.startsWith("video/");
+                msg.textContent = esVideo
+                  ? "Subiendo vídeo..."
+                  : "Subiendo imagen...";
                 const cloudData = new FormData();
                 cloudData.append("file", file);
                 cloudData.append("upload_preset", uploadPreset);
+                // Endpoint /auto/ acepta imagen y vídeo (auto-detección).
                 const up = await fetch(
-                  "https://api.cloudinary.com/v1_1/" + cloudName + "/image/upload",
+                  "https://api.cloudinary.com/v1_1/" + cloudName + "/auto/upload",
                   { method: "POST", body: cloudData },
                 );
                 if (!up.ok) throw new Error("cloudinary");
                 const upJson = await up.json();
                 imagenUrl = upJson.secure_url;
+                mediaTipo =
+                  upJson.resource_type === "video" || esVideo
+                    ? "video"
+                    : "imagen";
               }
 
               const payload = {
+                id: form.dataset.id || null,
                 titulo: fd.get("titulo"),
                 subtitulo: fd.get("subtitulo"),
                 imagen_url: imagenUrl,
+                media_tipo: mediaTipo,
                 fecha_inicio: fd.get("fecha_inicio"),
                 fecha_fin: fd.get("fecha_fin"),
                 activo: fd.get("activo") === "on",
@@ -368,11 +583,11 @@ const fmt = (iso: string) =>
               });
               const data = await res.json();
               if (data.success) {
-                msg.textContent = "✓ Cartel guardado";
+                msg.textContent = form.dataset.id
+                  ? "✓ Cartel actualizado"
+                  : "✓ Cartel guardado";
                 msg.className = "msg ok";
-                form.reset();
-                preview.hidden = true;
-                preview.removeAttribute("src");
+                setTimeout(() => location.reload(), 700);
               } else {
                 msg.textContent =
                   "Error: " + (data.error || "no se pudo guardar");
@@ -382,6 +597,25 @@ const fmt = (iso: string) =>
               msg.textContent = "Error de red";
               msg.className = "msg err";
             }
+          });
+
+          // ─── Botón "Crear nuevo" cartel: vacía el form y pasa a modo creación ───
+          document.getElementById("cartel-nuevo")?.addEventListener("click", () => {
+            form.querySelectorAll("input, textarea").forEach((el) => {
+              if (el.type === "checkbox") el.checked = true;
+              else el.value = "";
+            });
+            form.dataset.id = "";
+            form.dataset.imagenUrl = "";
+            form.dataset.mediaTipo = "imagen";
+            limpiarPreviews();
+            const t = document.getElementById("cartel-titulo");
+            if (t) t.textContent = "Nuevo cartel";
+            const submitBtn = form.querySelector('button[type="submit"]');
+            if (submitBtn) submitBtn.textContent = "Guardar cartel";
+            msg.textContent = "";
+            msg.className = "msg";
+            form.querySelector('[name="titulo"]')?.focus();
           });
 
           // ─── Vista previa de la imagen del premio ───
@@ -407,8 +641,8 @@ const fmt = (iso: string) =>
             premioMsg.className = "msg";
 
             try {
-              // Sube la imagen a Cloudinary (si se eligió una) y usa su secure_url.
-              let imagenUrl = null;
+              // Si no se sube una imagen nueva, se conserva la actual (edición).
+              let imagenUrl = premioForm.dataset.imagenUrl || null;
               const file = fd.get("imagen");
               if (file && file.size > 0) {
                 premioMsg.textContent = "Subiendo imagen...";
@@ -425,6 +659,7 @@ const fmt = (iso: string) =>
               }
 
               const payload = {
+                id: premioForm.dataset.id || null,
                 titulo: fd.get("titulo"),
                 descripcion: fd.get("descripcion"),
                 imagen_url: imagenUrl,
@@ -439,11 +674,11 @@ const fmt = (iso: string) =>
               });
               const data = await res.json();
               if (data.success) {
-                premioMsg.textContent = "✓ Premio guardado";
+                premioMsg.textContent = premioForm.dataset.id
+                  ? "✓ Premio actualizado"
+                  : "✓ Premio guardado";
                 premioMsg.className = "msg ok";
-                premioForm.reset();
-                premioPreview.hidden = true;
-                premioPreview.removeAttribute("src");
+                setTimeout(() => location.reload(), 700);
               } else {
                 premioMsg.textContent =
                   "Error: " + (data.error || "no se pudo guardar");
@@ -453,6 +688,66 @@ const fmt = (iso: string) =>
               premioMsg.textContent = "Error de red";
               premioMsg.className = "msg err";
             }
+          });
+
+          // ─── Botón "Crear nuevo" premio: vacía el form y pasa a modo creación ───
+          document.getElementById("premio-nuevo")?.addEventListener("click", () => {
+            premioForm.querySelectorAll("input, textarea").forEach((el) => {
+              if (el.type === "checkbox") el.checked = true;
+              else el.value = "";
+            });
+            premioForm.dataset.id = "";
+            premioForm.dataset.imagenUrl = "";
+            premioPreview.hidden = true;
+            premioPreview.removeAttribute("src");
+            const t = document.getElementById("premio-titulo");
+            if (t) t.textContent = "Nuevo premio semanal";
+            const submitBtn = premioForm.querySelector('button[type="submit"]');
+            if (submitBtn) submitBtn.textContent = "Guardar premio";
+            premioMsg.textContent = "";
+            premioMsg.className = "msg";
+            premioForm.querySelector('[name="titulo"]')?.focus();
+          });
+
+          // ─── Historial de carteles/premios: activar / eliminar ───
+          document.querySelectorAll(".hist-row").forEach((row) => {
+            const tipo = row.getAttribute("data-tipo"); // 'cartel' | 'premio'
+            const id = row.getAttribute("data-id");
+            const endpoint =
+              tipo === "premio" ? "/api/admin/premio" : "/api/admin/cartel";
+            row.querySelectorAll(".btn").forEach((btn) => {
+              btn.addEventListener("click", async () => {
+                const accion = btn.getAttribute("data-accion");
+                if (
+                  accion === "eliminar" &&
+                  !confirm("¿Eliminar definitivamente este elemento?")
+                ) {
+                  return;
+                }
+                row.querySelectorAll(".btn").forEach((b) => (b.disabled = true));
+                try {
+                  const res = await fetch(endpoint, {
+                    method: accion === "eliminar" ? "DELETE" : "PATCH",
+                    headers: { "Content-Type": "application/json" },
+                    body: JSON.stringify({ id }),
+                  });
+                  const data = await res.json();
+                  if (data.success) {
+                    location.reload();
+                  } else {
+                    alert("Error: " + (data.error || "no se pudo procesar"));
+                    row
+                      .querySelectorAll(".btn")
+                      .forEach((b) => (b.disabled = false));
+                  }
+                } catch {
+                  alert("Error de red");
+                  row
+                    .querySelectorAll(".btn")
+                    .forEach((b) => (b.disabled = false));
+                }
+              });
+            });
           });
         </script>
       )
@@ -535,6 +830,15 @@ const fmt = (iso: string) =>
         align-items: center;
         gap: 10px;
       }
+      .section-head {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        gap: 16px;
+      }
+      .section-head h2 {
+        margin-bottom: 16px;
+      }
       .count {
         background: var(--surface);
         border: 1px solid var(--border);
@@ -597,6 +901,74 @@ const fmt = (iso: string) =>
       }
       .winner-row.is-winner .winner-flag {
         display: inline;
+      }
+      /* Historial carteles/premios */
+      .active-flag {
+        display: none;
+        color: var(--accent);
+        font-size: 0.75rem;
+        font-weight: 700;
+      }
+      .hist-row.is-active {
+        border-color: var(--accent);
+      }
+      .hist-row.is-active .active-flag {
+        display: inline;
+      }
+      .thumb-empty {
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        color: var(--muted);
+        border: 1px dashed var(--border);
+      }
+      /* Historial de fotos */
+      .hist-grid {
+        display: grid;
+        grid-template-columns: repeat(auto-fill, minmax(120px, 1fr));
+        gap: 10px;
+      }
+      .hist-foto {
+        display: flex;
+        flex-direction: column;
+        gap: 6px;
+        text-decoration: none;
+        color: var(--text);
+        background: var(--surface);
+        border: 1px solid var(--border);
+        padding: 8px;
+      }
+      .hist-foto img {
+        width: 100%;
+        aspect-ratio: 1 / 1;
+        object-fit: cover;
+        background: var(--bg);
+      }
+      .hist-foto-meta {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        gap: 6px;
+      }
+      .hist-foto-sub {
+        white-space: nowrap;
+        overflow: hidden;
+        text-overflow: ellipsis;
+      }
+      .estado {
+        font-size: 0.65rem;
+        text-transform: uppercase;
+        letter-spacing: 0.08em;
+        font-weight: 700;
+      }
+      .estado.aprobada {
+        color: var(--green);
+      }
+      .estado.pendiente {
+        color: var(--accent);
+      }
+      .estado.rechazada {
+        color: var(--red);
       }
       .btn {
         border: none;

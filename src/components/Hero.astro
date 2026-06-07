@@ -4,8 +4,6 @@ import { Disc3 } from "@lucide/astro";
 
 <section class="hero">
   <div class="hero-bg"></div>
-  <div class="hero-grid"></div>
-
   <p class="hero-eyebrow"><Disc3 size={14} stroke-width={2} /> Music Pub · El Bonillo (AB)</p>
   <h1 class="hero-title">
     <span class="stroke-text">te</span>
@@ -15,7 +13,7 @@ import { Disc3 } from "@lucide/astro";
   <div class="hero-sub">
     <p>
       Sonido y luz de <strong>última generación.</strong> Copas, tapas y cañas. El
-      plan del finde en El Bonillo.
+      <strong>plan del finde</strong> en El Bonillo.
     </p>
     <div class="hero-scroll">scroll</div>
   </div>
@@ -36,9 +34,10 @@ import { Disc3 } from "@lucide/astro";
   .hero-bg {
     position: absolute;
     inset: 0;
-    background: url("/img/lio-barra.png") center/cover no-repeat;
-    opacity: 0.85;
+    background: url("/img/dj-pov-b&w.jpg") center/cover no-repeat;
+    opacity: 0.75;
     z-index: -1;
+    top: -100px;
   }
   /* Darkening overlay so the title stays legible */
   .hero-bg::after {
@@ -48,35 +47,9 @@ import { Disc3 } from "@lucide/astro";
     background: linear-gradient(
       to top,
       var(--bg) 0%,
-      rgba(8, 8, 16, 0.3) 45%,
+      rgba(8, 8, 16, 0.45) 35%,
       rgba(8, 8, 16, 0.9) 100%
     );
-  }
-
-  /* Animated grid background */
-  .hero-grid {
-    position: absolute;
-    inset: 0;
-    background-image:
-      linear-gradient(
-        color-mix(in srgb, var(--accent) 4%, transparent) 1px,
-        transparent 1px
-      ),
-      linear-gradient(
-        90deg,
-        color-mix(in srgb, var(--accent) 4%, transparent) 1px,
-        transparent 1px
-      );
-    background-size: 60px 60px;
-    animation: gridShift 20s linear infinite;
-  }
-  @keyframes gridShift {
-    0% {
-      transform: perspective(600px) rotateX(20deg) translateY(0);
-    }
-    100% {
-      transform: perspective(600px) rotateX(20deg) translateY(60px);
-    }
   }
 
   @keyframes float1 {
@@ -190,11 +163,27 @@ import { Disc3 } from "@lucide/astro";
     }
   }
 
+  @media (min-width: 769px) {
+    .hero {
+      min-height: calc(100vh - 48px);
+      padding-bottom: 88px;
+    }
+  }
+
   @media (max-width: 768px) {
     .hero {
-      padding: 0 20px 96px;
-      justify-content: flex-end;
+      min-height: calc(100vh - 48px);
+      padding: 96px 20px 32px;
+      justify-content: flex-start;
     }
+    .hero-bg {
+      background-position: 73% center;
+    }
+
+    .hero-sub {
+      margin-top: auto;
+    }
+
     .hero-title {
       font-size: clamp(4rem, 18vw, 7rem);
     }
@@ -205,5 +194,6 @@ import { Disc3 } from "@lucide/astro";
     .hero-scroll {
       display: none;
     }
+
   }
 </style>

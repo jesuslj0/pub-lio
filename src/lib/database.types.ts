@@ -3,6 +3,8 @@
 
 export type EstadoFoto = "pendiente" | "aprobada" | "rechazada";
 
+export type MediaTipo = "imagen" | "video";
+
 export type Foto = {
   id: string;
   cloudinary_url: string;
@@ -28,6 +30,7 @@ export type Cartel = {
   titulo: string;
   subtitulo: string | null;
   imagen_url: string | null;
+  media_tipo: MediaTipo;
   fecha_inicio: string | null;
   fecha_fin: string | null;
   activo: boolean;
@@ -82,6 +85,7 @@ export interface Database {
           titulo: string;
           subtitulo?: string | null;
           imagen_url?: string | null;
+          media_tipo?: MediaTipo;
           fecha_inicio?: string | null;
           fecha_fin?: string | null;
           activo?: boolean;

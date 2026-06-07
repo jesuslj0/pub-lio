@@ -58,8 +58,20 @@ const items = [
   .ticker-track {
     display: flex;
     gap: 0;
+    width: max-content;
     animation: tickerScroll 22s linear infinite;
     white-space: nowrap;
+    will-change: transform;
+    transform: translateZ(0);
+    backface-visibility: hidden;
+  }
+  .ticker:hover .ticker-track {
+    animation-play-state: paused;
+  }
+  @media (prefers-reduced-motion: reduce) {
+    .ticker-track {
+      animation: none;
+    }
   }
   .ticker-item {
     font-family: var(--font-mono);
@@ -82,10 +94,10 @@ const items = [
   }
   @keyframes tickerScroll {
     from {
-      transform: translateX(0);
+      transform: translate3d(0, 0, 0);
     }
     to {
-      transform: translateX(-50%);
+      transform: translate3d(-50%, 0, 0);
     }
   }
 </style>
