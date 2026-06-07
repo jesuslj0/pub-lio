@@ -35,7 +35,7 @@ npm run preview  # previsualizar el build
 ```
 src/
   components/     # .astro (estáticos) y .tsx (islas React interactivas)
-  layouts/Base.astro   # layout raíz: tokens CSS (:root), cursor custom, fuentes
+  layouts/Base.astro   # layout raíz: tokens CSS (:root), fuentes
   lib/            # supabase.ts (cliente público), supabaseAdmin.ts (service role),
                   # cloudinary.ts, adminAuth.ts, database.types.ts
   pages/
@@ -66,24 +66,24 @@ Acceder siempre con `import.meta.env.X`.
 
 ## Sistema de diseño (tokens)
 
-Definidos como variables CSS en `:root` dentro de `src/layouts/Base.astro`:
+Definidos en `@theme` dentro de `src/styles/global.css` (como `--color-*`); en
+`src/layouts/Base.astro` se exponen alias cortos (`--accent`, `--bg`, …):
 
 | Token        | Valor       | Uso                        |
 | ------------ | ----------- | -------------------------- |
 | `--bg`       | `#080810`   | fondo principal            |
+| `--bg2`      | `#0e0e1a`   | fondo secundario           |
 | `--surface`  | `#13131f`   | superficies/tarjetas       |
 | `--border`   | blanco 7%   | bordes                     |
-| `--accent`   | `#48f026`   | verde de marca (principal) |
-| `--accent2`  | `#7b2fff`   | violeta                    |
-| `--accent3`  | `#ff2d6e`   | rosa                       |
+| `--accent`   | `#f22c8f`   | rosa de marca (principal)  |
+| `--accent2`  | `#00e5a8`   | verde menta                |
+| `--accent3`  | `#00cfff`   | cian                       |
 | `--text`     | `#e8e8f0`   | texto                      |
 | `--muted`    | `#6b6b80`   | texto secundario           |
 
-Fuentes: `--font-display` (Bebas Neue, titulares), `--font-body` (DM Sans),
-`--font-mono` (Space Mono, etiquetas/eyebrows).
-
-> Hay un **cursor personalizado** (`cursor: none` global + elementos `.cursor`).
-> El efecto hover del cursor se activa sobre `a, button, .foto-card, .cartel-side`.
+Fuentes: `--font-logo` (Archivo Expanded, logotipo de texto), `--font-display`
+(Anton, titulares), `--font-body` (Space Grotesk), `--font-mono` (Space Mono,
+etiquetas/eyebrows).
 
 ## Reglas a seguir
 
@@ -97,7 +97,7 @@ Fuentes: `--font-display` (Bebas Neue, titulares), `--font-body` (DM Sans),
 - Los tokens de marca ya están expuestos en `@theme` (`src/styles/global.css`), así
   que hay utilidades disponibles: `bg-bg`, `bg-surface`, `text-accent`, `text-muted`,
   `border-border`, `font-display`, `font-mono`, etc.
-- Mantener la **estética actual**: fondo oscuro, verde de acento, tipografía
+- Mantener la **estética actual**: fondo oscuro, rosa de acento, tipografía
   display grande, toques mono en etiquetas. No introducir estilos genéricos.
 
 ### Iconos — usar Lucide

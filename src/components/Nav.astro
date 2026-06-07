@@ -2,9 +2,7 @@
 ---
 
 <nav>
-  <a href="#" class="nav-logo" aria-label="Lío El Bonillo">
-    <img src="/img/logo-lio-neon-recortado.jpg" alt="Lío El Bonillo" />
-  </a>
+  <a href="#" class="nav-logo inline-flex gap-2" aria-label="Lío El Bonillo"><strong>LÍO</strong> EL BONILLO</a>
   <ul class="nav-links">
     <li><a href="#carteles">Carteles</a></li>
     <li><a href="#fotos">Fotos</a></li>
@@ -35,6 +33,10 @@
     text-decoration: none;
     opacity: 0.9;
     transition: opacity 0.2s;
+
+    font-size: 12px;
+    font-family: "Archivo";
+    color: var(--muted);
   }
   .nav-logo:hover {
     opacity: 1;
@@ -43,6 +45,10 @@
     height: 36px;
     width: auto;
     display: block;
+    border-radius: 100%;
+  }
+  .nav-logo > strong {
+    color: var(--accent);
   }
   .nav-links {
     display: flex;

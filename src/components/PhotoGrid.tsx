@@ -10,6 +10,7 @@ import {
   Link2,
   Check,
   Maximize2,
+  ImagePlus,
 } from "lucide-react";
 import { siWhatsapp, siInstagram } from "simple-icons";
 
@@ -288,7 +289,15 @@ export default function PhotoGrid({
 
   if (fotos.length === 0) {
     return (
-      <p style={styles.empty}>No hay fotos esta semana. ¡Sé el primero!</p>
+      <div style={styles.emptyState}>
+        <p style={styles.empty}>
+          Aún no hay fotos esta semana. ¡Sé el primero en subir la tuya!
+        </p>
+        <a href="#subir" style={styles.emptyBtn}>
+          <ImagePlus size={16} strokeWidth={2} />
+          Subir foto
+        </a>
+      </div>
     );
   }
 
@@ -859,12 +868,36 @@ const styles: Record<string, CSSProperties> = {
     aspectRatio: "3 / 4",
     animation: "lio-pulse 1.4s ease-in-out infinite",
   },
+  emptyState: {
+    display: "flex",
+    flexDirection: "column",
+    alignItems: "center",
+    gap: "20px",
+    padding: "56px 24px",
+    textAlign: "center",
+  },
   empty: {
     fontFamily: "var(--font-mono)",
     fontSize: "0.85rem",
     color: "var(--muted)",
     letterSpacing: "0.05em",
-    padding: "40px 0",
-    textAlign: "center",
+    margin: 0,
+  },
+  emptyBtn: {
+    display: "inline-flex",
+    alignItems: "center",
+    gap: "8px",
+    background: "var(--accent)",
+    color: "var(--bg)",
+    border: "none",
+    padding: "12px 22px",
+    fontFamily: "var(--font-mono)",
+    fontSize: "0.7rem",
+    fontWeight: 700,
+    letterSpacing: "0.12em",
+    textTransform: "uppercase",
+    textDecoration: "none",
+    cursor: "pointer",
+    lineHeight: 1,
   },
 };

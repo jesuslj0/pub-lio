@@ -17,15 +17,34 @@ const supabaseUrl = rawUrl.replace(/\/+$/, "").replace(/\/rest\/v1$/, "");
 /** Cliente Supabase tipado (anon). Seguro para usar en cliente y servidor. */
 export const supabase = createClient<Database>(supabaseUrl, supabaseAnonKey);
 
+/** Zona horaria de referencia del pub. La semana cambia a su medianoche. */
+const TZ_LOCAL = "Europe/Madrid";
+
+/**
+ * Devuelve el año/mes/día de una fecha tal y como se ven en `Europe/Madrid`,
+ * independientemente de la zona horaria del entorno (UTC en Vercel, local en dev).
+ */
+function partesEnMadrid(date: Date): { year: number; month: number; day: number } {
+  const fmt = new Intl.DateTimeFormat("en-CA", {
+    timeZone: TZ_LOCAL,
+    year: "numeric",
+    month: "2-digit",
+    day: "2-digit",
+  });
+  const [year, month, day] = fmt.format(date).split("-").map(Number);
+  return { year, month, day };
+}
+
 /**
  * Devuelve la semana ISO 8601 actual con formato `AAAA-Www`, ej: `2025-W23`.
  * Las semanas ISO empiezan en lunes; la semana 1 es la que contiene el primer jueves del año.
+ * El "día actual" se calcula en `Europe/Madrid` para que prod (UTC) y local coincidan.
  */
 export function getCurrentWeek(date: Date = new Date()): string {
-  // Copia en UTC para evitar problemas de zona horaria.
-  const target = new Date(
-    Date.UTC(date.getFullYear(), date.getMonth(), date.getDate()),
-  );
+  // Tomamos el día tal cual se ve en Madrid y lo fijamos en UTC para operar sin
+  // sustos de zona horaria.
+  const { year, month, day } = partesEnMadrid(date);
+  const target = new Date(Date.UTC(year, month - 1, day));
   // getUTCDay(): domingo=0 … sábado=6 → lo pasamos a lunes=1 … domingo=7.
   const dayNum = target.getUTCDay() || 7;
   // Movemos al jueves de la semana actual.

@@ -12,7 +12,8 @@
   --color-text: #e8e8f0;
   --color-muted: #6b6b80;
 
-  --font-display: "Bebas Neue", sans-serif;
-  --font-body: "DM Sans", sans-serif;
+  --font-logo: "Archivo", sans-serif;
+  --font-display: "Anton", sans-serif;
+  --font-body: "Space Grotesk", sans-serif;
   --font-mono: "Space Mono", monospace;
 }
