@@ -65,6 +65,14 @@ export default function PhotoGrid({
   const [shareTarget, setShareTarget] = useState<Foto | null>(null);
   const [copied, setCopied] = useState(false);
   const touchX = useRef<number | null>(null);
+  // Corazón animado (doble toque estilo Instagram): foto activa + key para
+  // reiniciar la animación en taps consecutivos.
+  const [heartBurst, setHeartBurst] = useState<{ id: string; key: number } | null>(
+    null,
+  );
+  // Control de doble toque en táctil: último tap y temporizador del tap simple.
+  const lastTap = useRef<{ id: string; t: number } | null>(null);
+  const singleTapTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
 
   // Carga inicial + suscripción Realtime.
   useEffect(() => {
@@ -162,6 +170,44 @@ export default function PhotoGrid({
       console.error(err);
     } finally {
       setVoting((v) => ({ ...v, [fotoId]: false }));
+    }
+  };
+
+  // Dispara el corazón animado y vota (si no se había votado ya).
+  const meEncanta = (foto: Foto) => {
+    setHeartBurst({ id: foto.id, key: Date.now() });
+    if (typeof window !== "undefined" && !localStorage.getItem(`voted_${foto.id}`)) {
+      handleVote(foto.id);
+    }
+  };
+
+  // Tap sobre la imagen. En táctil: 1 toque abre el visor (con leve retardo
+  // para detectar el segundo), 2 toques rápidos = me encanta. En escritorio el
+  // clic abre el visor al instante (sin retardo).
+  const isCoarse =
+    typeof window !== "undefined" &&
+    window.matchMedia("(pointer: coarse)").matches;
+
+  const handleImageActivate = (foto: Foto, i: number) => {
+    if (!isCoarse) {
+      setOpenIndex(i);
+      return;
+    }
+    const now = Date.now();
+    const prev = lastTap.current;
+    if (prev && prev.id === foto.id && now - prev.t < 300) {
+      if (singleTapTimer.current) clearTimeout(singleTapTimer.current);
+      singleTapTimer.current = null;
+      lastTap.current = null;
+      meEncanta(foto);
+    } else {
+      lastTap.current = { id: foto.id, t: now };
+      if (singleTapTimer.current) clearTimeout(singleTapTimer.current);
+      singleTapTimer.current = setTimeout(() => {
+        lastTap.current = null;
+        singleTapTimer.current = null;
+        setOpenIndex(i);
+      }, 280);
     }
   };
 
@@ -329,8 +375,18 @@ export default function PhotoGrid({
               alt={foto.nombre_autor ?? "Foto del finde"}
               style={styles.img}
               loading="lazy"
-              onClick={() => setOpenIndex(i)}
+              onClick={() => handleImageActivate(foto, i)}
             />
+            {heartBurst?.id === foto.id && (
+              <span
+                key={heartBurst.key}
+                style={styles.heartBurst}
+                onAnimationEnd={() => setHeartBurst(null)}
+                aria-hidden="true"
+              >
+                <Heart size={96} strokeWidth={1.5} fill="currentColor" />
+              </span>
+            )}
             <div style={styles.overlay}>
               {/* Arriba izquierda: nombre + fecha */}
               <div style={styles.topInfo}>
@@ -534,7 +590,15 @@ export default function PhotoGrid({
   );
 }
 
-const pulseKeyframes = `@keyframes lio-pulse { 0%,100% { opacity: 1; } 50% { opacity: 0.4; } }`;
+const pulseKeyframes = `@keyframes lio-pulse { 0%,100% { opacity: 1; } 50% { opacity: 0.4; } }
+@keyframes lio-heart-burst {
+  0%   { opacity: 0; transform: translate(-50%, -50%) scale(0.3); }
+  15%  { opacity: 1; transform: translate(-50%, -50%) scale(1.15); }
+  30%  { transform: translate(-50%, -50%) scale(0.95); }
+  45%  { transform: translate(-50%, -50%) scale(1); }
+  70%  { opacity: 1; transform: translate(-50%, -50%) scale(1); }
+  100% { opacity: 0; transform: translate(-50%, -50%) scale(1.1); }
+}`;
 
 const gridResponsive = `
   @media (max-width: 1024px) {
@@ -571,6 +635,16 @@ const styles: Record<string, CSSProperties> = {
     objectFit: "cover",
     display: "block",
     cursor: "pointer",
+  },
+  heartBurst: {
+    position: "absolute",
+    top: "50%",
+    left: "50%",
+    color: "#fff",
+    pointerEvents: "none",
+    zIndex: 3,
+    filter: "drop-shadow(0 2px 12px rgba(0,0,0,0.45))",
+    animation: "lio-heart-burst 0.9s ease-out forwards",
   },
   overlay: {
     position: "absolute",
