@@ -70,9 +70,8 @@ export default function PhotoGrid({
   const [heartBurst, setHeartBurst] = useState<{ id: string; key: number } | null>(
     null,
   );
-  // Control de doble toque en táctil: último tap y temporizador del tap simple.
+  // Control de doble toque en táctil: marca del último tap por foto.
   const lastTap = useRef<{ id: string; t: number } | null>(null);
-  const singleTapTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
 
   // Carga inicial + suscripción Realtime.
   useEffect(() => {
@@ -181,33 +180,19 @@ export default function PhotoGrid({
     }
   };
 
-  // Tap sobre la imagen. En táctil: 1 toque abre el visor (con leve retardo
-  // para detectar el segundo), 2 toques rápidos = me encanta. En escritorio el
-  // clic abre el visor al instante (sin retardo).
-  const isCoarse =
-    typeof window !== "undefined" &&
-    window.matchMedia("(pointer: coarse)").matches;
-
-  const handleImageActivate = (foto: Foto, i: number) => {
-    if (!isCoarse) {
-      setOpenIndex(i);
-      return;
-    }
+  // Tap sobre la imagen. Usamos onPointerUp (no onClick) porque en móvil el
+  // click llega con ~300ms de retardo y rompe la detección del doble toque.
+  // En táctil: 2 toques rápidos = me encanta; el toque simple no hace nada (el
+  // visor se abre con su botón). Con ratón/lápiz el clic tampoco abre nada.
+  const handleImagePointerUp = (e: React.PointerEvent, foto: Foto) => {
+    if (e.pointerType !== "touch") return;
     const now = Date.now();
     const prev = lastTap.current;
     if (prev && prev.id === foto.id && now - prev.t < 300) {
-      if (singleTapTimer.current) clearTimeout(singleTapTimer.current);
-      singleTapTimer.current = null;
       lastTap.current = null;
       meEncanta(foto);
     } else {
       lastTap.current = { id: foto.id, t: now };
-      if (singleTapTimer.current) clearTimeout(singleTapTimer.current);
-      singleTapTimer.current = setTimeout(() => {
-        lastTap.current = null;
-        singleTapTimer.current = null;
-        setOpenIndex(i);
-      }, 280);
     }
   };
 
@@ -375,7 +360,8 @@ export default function PhotoGrid({
               alt={foto.nombre_autor ?? "Foto del finde"}
               style={styles.img}
               loading="lazy"
-              onClick={() => handleImageActivate(foto, i)}
+              onPointerUp={(e) => handleImagePointerUp(e, foto)}
+              onDoubleClick={() => meEncanta(foto)}
             />
             {heartBurst?.id === foto.id && (
               <span
@@ -404,6 +390,14 @@ export default function PhotoGrid({
                     <Heart size={13} strokeWidth={2} fill="currentColor" />
                     {foto.votos_count}
                   </span>
+                  <button
+                    style={styles.shareBtn}
+                    onClick={() => setOpenIndex(i)}
+                    aria-label="Ver foto"
+                    title="Ver"
+                  >
+                    <Maximize2 size={14} strokeWidth={2} />
+                  </button>
                   <button
                     style={styles.shareBtn}
                     onClick={() => abrirCompartir(foto)}
@@ -634,7 +628,9 @@ const styles: Record<string, CSSProperties> = {
     height: "100%",
     objectFit: "cover",
     display: "block",
-    cursor: "pointer",
+    touchAction: "manipulation",
+    WebkitUserSelect: "none",
+    userSelect: "none",
   },
   heartBurst: {
     position: "absolute",
