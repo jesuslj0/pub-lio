@@ -114,7 +114,7 @@ export default function CartelFinde() {
             {muted ? <VolumeX size={18} strokeWidth={2} /> : <Volume2 size={18} strokeWidth={2} />}
           </button>
         </div>
-        <div className="lio-cartel-text">
+        <div className="lio-cartel-card lio-cartel-text">
           <span style={styles.badge}>Esta semana</span>
           <h3 style={styles.titulo}>{cartel.titulo}</h3>
           {cartel.subtitulo && <p style={styles.subtitulo}>{cartel.subtitulo}</p>}
@@ -204,15 +204,22 @@ const videoLayout = `
     display: flex;
     flex-direction: column;
     align-items: flex-start;
+    background: var(--surface);
+    border: 1px solid var(--border);
+    padding: 32px;
   }
   @media (min-width: 769px) {
     .lio-cartel-video {
       grid-template-columns: 380px 1fr;
       gap: 48px;
-      align-items: center;
+      align-items: stretch;
     }
     .lio-cartel-videocard {
       margin: 0;
+    }
+    .lio-cartel-text {
+      justify-content: center;
+      padding: 40px;
     }
   }
 `;
@@ -234,20 +241,26 @@ const neonGlow = `
   .lio-cartel-card::before {
     content: "";
     position: absolute;
-    inset: -2px;
+    inset: -3px;
     z-index: -1;
     border-radius: inherit;
-    padding: 2px;
+    padding: 3px;
     background: conic-gradient(
       from var(--lio-neon-angle),
       transparent 0deg,
-      var(--accent) 70deg,
-      color-mix(in srgb, var(--accent) 40%, transparent) 140deg,
-      transparent 200deg,
+      var(--accent) 60deg,
+      color-mix(in srgb, var(--accent) 55%, transparent) 130deg,
+      transparent 190deg,
       var(--accent) 320deg,
       transparent 360deg
     );
-    filter: drop-shadow(0 0 10px color-mix(in srgb, var(--accent) 60%, transparent));
+    /* Recorta el centro para que solo quede el anillo (borde real). */
+    -webkit-mask: linear-gradient(#000 0 0) content-box, linear-gradient(#000 0 0);
+    -webkit-mask-composite: xor;
+    mask: linear-gradient(#000 0 0) content-box, linear-gradient(#000 0 0);
+    mask-composite: exclude;
+    filter: drop-shadow(0 0 10px color-mix(in srgb, var(--accent) 75%, transparent))
+      drop-shadow(0 0 22px color-mix(in srgb, var(--accent) 45%, transparent));
     animation: lio-neon-spin 5s linear infinite, lio-neon-breath 3s ease-in-out infinite;
   }
   @keyframes lio-neon-spin {
