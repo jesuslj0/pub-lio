@@ -1,0 +1,56 @@
+---
+import { PartyPopper, Camera, Upload, Trophy } from "@lucide/astro";
+
+const pasos = [
+  {
+    Icon: PartyPopper,
+    titulo: "Ven al Lío el finde",
+    texto: "De chill el viernes o a partirla el sábado. La fiesta empieza aquí.",
+    nota: "Vie · Sáb · Dom",
+  },
+  {
+    Icon: Camera,
+    titulo: "Haz tu mejor foto",
+    texto: "En el local o los alrededores, con tus amigos o bailando a lo loco.",
+    nota: "Dentro o alrededores",
+  },
+  {
+    Icon: Upload,
+    titulo: "Súbela a la galería",
+    texto: "Sin registro, solo tu foto y un nombre. Tienes hasta el jueves.",
+    nota: "Máx. 3 por dispositivo",
+  },
+  {
+    Icon: Trophy,
+    titulo: "Gana el premio",
+    texto: "Compártela y consigue likes para ser la foto ganadora. Será descatada en la web al terminar el concurso.",
+    nota: "Ganador del finde",
+  },
+];
+---
+
+<div class="grid grid-cols-1 gap-5 sm:grid-cols-2 lg:grid-cols-4 lg:gap-6">
+  {
+    pasos.map(({ Icon, titulo, texto, nota }, i) => (
+      <div class="paso group relative flex flex-col border border-border bg-bg2 p-4 transition-all duration-300 hover:-translate-y-1 hover:border-accent/30 hover:bg-surface lg:p-10">
+        <div class="mb-7 flex items-center justify-between">
+          <span class="paso-num font-display text-6xl leading-none text-accent/20 transition-colors duration-300 group-hover:text-accent/60">
+            0{i + 1}
+          </span>
+          <span class="flex h-12 w-12 items-center justify-center rounded-full border border-border bg-surface text-accent transition-colors duration-300 group-hover:border-accent/40">
+            <Icon size={22} stroke-width={1.5} />
+          </span>
+        </div>
+        <h3 class="font-display text-2xl uppercase leading-tight text-text">
+          {titulo}
+        </h3>
+        <p class="mt-4 text-[0.95rem] font-light leading-relaxed text-muted">
+          {texto}
+        </p>
+        <p class="mt-8 inline-flex w-fit font-mono text-[0.6rem] uppercase tracking-[0.18em] text-accent">
+          {nota}
+        </p>
+      </div>
+    ))
+  }
+</div>

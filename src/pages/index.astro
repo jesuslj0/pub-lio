@@ -7,13 +7,15 @@ import CartelFinde from "../components/CartelFinde.tsx";
 import PhotoGrid from "../components/PhotoGrid.tsx";
 import PhotoUploader from "../components/PhotoUploader.tsx";
 import PremioSemanal from "../components/PremioSemanal.tsx";
+import Leaderboard from "../components/Leaderboard.tsx";
 import NacionSection from "../components/NacionSection.astro";
 import InfoStrip from "../components/InfoStrip.astro";
+import ComoParticipar from "../components/ComoParticipar.astro";
 import Footer from "../components/Footer.astro";
-import { CalendarDays, Images, Gift } from "@lucide/astro";
+import { CalendarDays, Images, Gift, ListChecks } from "@lucide/astro";
 ---
 
-<Base title="Lío El Bonillo · Disco Pub en El Bonillo (Albacete)">
+<Base title="Lío Music Pub · El Bonillo (Albacete)">
   <Nav />
   <main id="contenido">
   <Hero />
@@ -48,23 +50,33 @@ import { CalendarDays, Images, Gift } from "@lucide/astro";
     <p class="section-label"><Gift size={14} stroke-width={2} />· Premio</p>
     <h2 class="section-title">Premio<br /> semanal</h2>
     <div class="premio-wrap">
-      <PremioSemanal client:load />
+      <div class="premio-card-col">
+        <PremioSemanal client:load />
+      </div>
+      <div class="premio-lb-col">
+        <Leaderboard client:load />
+      </div>
     </div>
   </section>
 
-  <!-- SUBIR FOTO -->
-  <section class="section upload-section" id="subir" style="padding-top: 0;">
-    <div class="upload-left">
-      <h2 class="upload-left-title">¿Estuviste<br />con nosotros?</h2>
-      <p class="upload-left-sub">
-        Sube tu <span class="mark">mejor foto del finde</span> en el Lío, consigue votos y gana el <span class="mark">premio</span> de la semana
-        siguiente. Sin registro: solo tu foto y un nombre. Máximo 3 fotos por
-        semana. <span class="mark" style="font-style: italic">Comparte tu momento!</span>
-      </p>
+  <!-- SUBIR FOTO + CÓMO PARTICIPAR -->
+  <section class="section" id="subir" style="padding-top: 0;">
+    <p class="section-label"><ListChecks size={14} stroke-width={2} />· Participa</p>
+    <div class="upload-grid">
+      <div class="upload-left">
+        <h2 class="upload-left-title">¿Estuviste<br />con nosotros?</h2>
+        <p class="upload-left-sub">
+          Sube tu <span class="mark">mejor foto del finde</span> en el Lío, consigue votos y gana el <span class="mark">premio</span> de la semana
+          siguiente. Sin registro: solo tu foto y un nombre. Máximo 3 fotos por
+          dispositivo. <span class="mark" style="font-style: italic">Comparte tu momento!</span>
+        </p>
+      </div>
+      <div class="upload-right">
+        <PhotoUploader client:load />
+      </div>
     </div>
-    <div class="upload-right">
-      <PhotoUploader client:load />
-    </div>
+
+    <ComoParticipar />
   </section>
 
   <NacionSection />
@@ -79,8 +91,12 @@ import { CalendarDays, Images, Gift } from "@lucide/astro";
     margin: 0 auto;
   }
   .premio-wrap {
-    max-width: 760px;
+    max-width: 1140px;
     margin: 0 auto;
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 32px;
+    align-items: start;
   }
   .fotos-header {
     display: flex;
@@ -113,11 +129,12 @@ import { CalendarDays, Images, Gift } from "@lucide/astro";
     opacity: 0.85;
   }
 
-  .upload-section {
+  .upload-grid {
     display: grid;
     grid-template-columns: 1fr 1fr;
     gap: 40px;
     align-items: center;
+    margin-bottom: 72px;
   }
   .upload-left-title {
     font-family: var(--font-display);
@@ -143,14 +160,23 @@ import { CalendarDays, Images, Gift } from "@lucide/astro";
     opacity: 0.8;
   }
 
+  @media (max-width: 900px) {
+    .premio-wrap {
+      grid-template-columns: 1fr;
+      max-width: 760px;
+      gap: 24px;
+    }
+  }
+
   @media (max-width: 768px) {
     .fotos-header {
       flex-direction: column;
       align-items: flex-start;
     }
-    .upload-section {
+    .upload-grid {
       grid-template-columns: 1fr;
       gap: 28px;
+      margin-bottom: 48px;
     }
     .upload-right {
       justify-content: flex-start;

@@ -110,12 +110,17 @@ const jsonLd = {
     --muted: var(--color-muted);
   }
 
-  *,
-  *::before,
-  *::after {
-    box-sizing: border-box;
-    margin: 0;
-    padding: 0;
+  /* Dentro de @layer base para que las utilidades de Tailwind (@layer utilities)
+     puedan sobrescribir margin/padding; si no, este reset sin capa ganaría a
+     clases como p-4, mt-8, etc. (lo no-layered vence a lo layered). */
+  @layer base {
+    *,
+    *::before,
+    *::after {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+    }
   }
 
   html {
