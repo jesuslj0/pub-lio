@@ -1,4 +1,5 @@
 ---
+import { Menu, X } from "@lucide/astro";
 ---
 
 <nav>
@@ -9,7 +10,67 @@
     <li><a href="#info">Info</a></li>
   </ul>
   <a href="#subir" class="nav-cta">Subir foto</a>
+
+  <button
+    type="button"
+    class="nav-toggle"
+    aria-label="Abrir menú"
+    aria-expanded="false"
+    aria-controls="mobile-menu"
+    data-nav-toggle
+  >
+    <Menu class="icon-open" size={22} stroke-width={2} />
+    <X class="icon-close" size={22} stroke-width={2} />
+  </button>
 </nav>
+
+<!-- Menú móvil: panel lateral desde la derecha -->
+<div class="mobile-backdrop" data-nav-backdrop hidden></div>
+<div id="mobile-menu" class="mobile-menu" data-mobile-menu role="dialog" aria-modal="true" aria-label="Menú de navegación" hidden>
+  <ul class="mobile-menu-links">
+    <li><a href="#carteles" data-nav-link>Carteles</a></li>
+    <li><a href="#fotos" data-nav-link>Fotos</a></li>
+    <li><a href="#info" data-nav-link>Info</a></li>
+  </ul>
+  <a href="#subir" class="mobile-menu-cta" data-nav-link>Subir foto</a>
+</div>
+
+<script>
+  const toggle = document.querySelector<HTMLButtonElement>("[data-nav-toggle]");
+  const menu = document.querySelector<HTMLElement>("[data-mobile-menu]");
+  const backdrop = document.querySelector<HTMLElement>("[data-nav-backdrop]");
+  const links = document.querySelectorAll<HTMLAnchorElement>("[data-nav-link]");
+
+  function setOpen(open: boolean) {
+    if (!toggle || !menu || !backdrop) return;
+    toggle.setAttribute("aria-expanded", String(open));
+    toggle.setAttribute("aria-label", open ? "Cerrar menú" : "Abrir menú");
+    toggle.classList.toggle("is-open", open);
+    menu.classList.toggle("is-open", open);
+    backdrop.classList.toggle("is-open", open);
+    document.body.classList.toggle("nav-locked", open);
+    if (open) {
+      menu.hidden = false;
+      backdrop.hidden = false;
+    } else {
+      window.setTimeout(() => {
+        if (!menu.classList.contains("is-open")) {
+          menu.hidden = true;
+          backdrop.hidden = true;
+        }
+      }, 280);
+    }
+  }
+
+  toggle?.addEventListener("click", () => {
+    setOpen(toggle.getAttribute("aria-expanded") !== "true");
+  });
+  backdrop?.addEventListener("click", () => setOpen(false));
+  links.forEach((link) => link.addEventListener("click", () => setOpen(false)));
+  document.addEventListener("keydown", (e) => {
+    if (e.key === "Escape") setOpen(false);
+  });
+</script>
 
 <style>
   nav {
@@ -85,11 +146,127 @@
     color: var(--bg);
   }
 
+  /* Botón hamburguesa: oculto en desktop */
+  .nav-toggle {
+    display: none;
+    align-items: center;
+    justify-content: center;
+    width: 40px;
+    height: 40px;
+    margin-right: -8px;
+    background: transparent;
+    border: none;
+    color: var(--text);
+    cursor: pointer;
+  }
+  .nav-toggle .icon-close {
+    display: none;
+  }
+  .nav-toggle.is-open .icon-open {
+    display: none;
+  }
+  .nav-toggle.is-open .icon-close {
+    display: block;
+  }
+
+  /* Backdrop oscuro tras el panel */
+  .mobile-backdrop {
+    position: fixed;
+    inset: 0;
+    z-index: 98;
+    background: rgba(8, 8, 16, 0.6);
+    backdrop-filter: blur(2px);
+    opacity: 0;
+    pointer-events: none;
+    transition: opacity 0.28s ease;
+  }
+  .mobile-backdrop.is-open {
+    opacity: 1;
+    pointer-events: auto;
+  }
+
+  /* Panel lateral móvil (desde la derecha) */
+  .mobile-menu {
+    position: fixed;
+    top: 0;
+    right: 0;
+    bottom: 0;
+    z-index: 99;
+    width: min(80vw, 320px);
+    display: flex;
+    flex-direction: column;
+    justify-content: space-between;
+    gap: 8px;
+    padding: 88px 28px 32px;
+    background: rgba(8, 8, 16, 0.97);
+    backdrop-filter: blur(16px);
+    border-left: 1px solid var(--border);
+    transform: translateX(100%);
+    transition: transform 0.28s ease;
+  }
+  .mobile-menu.is-open {
+    transform: translateX(0);
+  }
+  .mobile-menu-links {
+    list-style: none;
+    display: flex;
+    flex-direction: column;
+  }
+  .mobile-menu-links a {
+    display: block;
+    padding: 14px 4px;
+    font-family: var(--font-mono);
+    font-size: 0.85rem;
+    letter-spacing: 0.15em;
+    text-transform: uppercase;
+    color: var(--text);
+    text-decoration: none;
+    border-bottom: 1px solid var(--border);
+    transition: color 0.2s;
+  }
+  .mobile-menu-links a:hover {
+    color: var(--accent);
+  }
+  .mobile-menu-cta {
+    margin-top: 16px;
+    text-align: center;
+    font-family: var(--font-mono);
+    font-size: 0.8rem;
+    letter-spacing: 0.1em;
+    text-transform: uppercase;
+    color: var(--accent);
+    background: transparent;
+    border: 1px solid var(--accent);
+    padding: 14px 18px;
+    text-decoration: none;
+    font-weight: 700;
+  }
+
+  .mobile-menu-cta:active {
+    background-color: var(--accent);
+    color: var(--color-text);
+  }
+
+  :global(body.nav-locked) {
+    overflow: hidden;
+  }
+
   @media (max-width: 768px) {
     nav {
       padding: 0 20px;
     }
-    .nav-links {
+    .nav-links,
+    .nav-cta {
+      display: none;
+    }
+    .nav-toggle {
+      display: inline-flex;
+    }
+  }
+
+  @media (min-width: 769px) {
+    .mobile-menu,
+    .mobile-backdrop {
       display: none;
     }
   }

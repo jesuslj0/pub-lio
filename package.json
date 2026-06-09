@@ -13,6 +13,7 @@
   },
   "dependencies": {
     "@astrojs/react": "^5.0.7",
+    "@astrojs/sitemap": "^3.7.3",
     "@astrojs/vercel": "^10.0.8",
     "@fingerprintjs/fingerprintjs": "^5.2.0",
     "@lucide/astro": "^1.17.0",
