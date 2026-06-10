@@ -252,10 +252,13 @@ export default function PhotoGrid({
   const compartirNativo = async (foto: Foto) => {
     if (typeof navigator !== "undefined" && navigator.share) {
       try {
+        // Incluimos la URL dentro del texto (no en un campo `url` aparte): en
+        // Android, WhatsApp y otras apps solo despliegan la preview Open Graph
+        // cuando el enlace forma parte del cuerpo del mensaje. Si va en el campo
+        // `url` separado, muchas apps no hacen el unfurl y se comparte sin foto.
         await navigator.share({
           title: "Lío El Bonillo",
-          text: textoCompartir,
-          url: urlDe(foto),
+          text: `${textoCompartir} ${urlDe(foto)}`,
         });
         return true;
       } catch {

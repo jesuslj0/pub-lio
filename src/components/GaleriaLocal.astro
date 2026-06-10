@@ -1,57 +1,68 @@
 ---
 import { Building2 } from "@lucide/astro";
+import { Picture } from "astro:assets";
+
+import local from "../assets/img/local.jpeg";
+import botellas from "../assets/img/botellas.jpeg";
+import cartelLio from "../assets/img/cartel-lio.jpeg";
+import decoracionNeon from "../assets/img/decoracion-neon.jpeg";
+import barra from "../assets/img/barra.jpeg";
+import nevera from "../assets/img/nevera.jpeg";
+import futbolin from "../assets/img/futbolin.jpeg";
+import cuadroAfro from "../assets/img/cuadro-afro.jpeg";
+import iluminacion from "../assets/img/iluminacion.jpeg";
 
 const fotos = [
   {
-    src: "/img/local.jpeg",
+    src: local,
     titulo: "Nuestro local",
     alt: "Vista general del interior del Lío El Bonillo",
     area: "local",
   },
   {
-    src: "/img/botellas.jpeg",
+    src: botellas,
     titulo: "Estante",
     alt: "Estantería de botellas tras la barra",
     area: "botellas",
   },
   {
-    src: "/img/cartel-lio.jpeg",
+    src: cartelLio,
     titulo: "El cartel",
     alt: "Cartel del Lío El Bonillo",
     area: "cartel",
   },
   {
-    src: "/img/decoracion-neon.jpeg",
+    src: decoracionNeon,
     titulo: "Neón",
     alt: "Decoración de neón del Lío El Bonillo",
     area: "neon",
   },
   {
-    src: "/img/barra.jpeg",
+    src: barra,
     titulo: "La barra",
     alt: "Barra con los dispensadores de cerveza",
     area: "barra",
   },
   {
-    src: "/img/nevera.jpeg",
+    src: nevera,
     titulo: "Bien fría",
     alt: "Nevera de bebidas del Lío El Bonillo",
     area: "nevera",
   },
   {
-    src: "/img/futbolin.jpeg",
+    src: futbolin,
     titulo: "Futbolín",
     alt: "Zona de futbolín del Lío El Bonillo",
     area: "futbolin",
   },
   {
-    src: "/img/cuadro-afro.jpeg",
+    src: cuadroAfro,
     titulo: "Decoración",
     alt: "Cuadro afro del Lío El Bonillo",
     area: "afro",
   },
   {
-    src: "/img/iluminacion.jpeg",
+    src: iluminacion,
     titulo: "Ambientacion",
     alt: "Iluminación del Lío El Bonillo",
     area: "ilumina",
@@ -76,7 +87,13 @@ const fotos = [
       {
         fotos.map(({ src, titulo, alt, area }) => (
           <figure class={`local-card local-${area}`}>
-            <img src={src} alt={alt} loading="lazy" decoding="async" />
+            <Picture
+              src={src}
+              formats={["avif", "webp"]}
+              alt={alt}
+              loading="lazy"
+              decoding="async"
+            />
             <figcaption>{titulo}</figcaption>
           </figure>
         ))
@@ -172,6 +189,14 @@ const fotos = [
     margin: 0;
     border: 1px solid var(--border);
     background: var(--surface);
+    transition:
+      border-color 0.3s ease,
+      box-shadow 0.3s ease;
+  }
+  .local-card picture {
+    display: block;
+    width: 100%;
+    height: 100%;
   }
   .local-card img {
     width: 100%;
@@ -206,6 +231,7 @@ const fotos = [
   }
   .local-card:hover {
     border-color: color-mix(in srgb, var(--accent) 35%, transparent);
+    box-shadow: 0 0 24px 4px color-mix(in srgb, var(--accent) 22%, transparent);
   }
   .local-card:hover figcaption {
     opacity: 1;

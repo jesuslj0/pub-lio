@@ -194,11 +194,12 @@ const videoLayout = `
     backdrop-filter: blur(6px);
     color: var(--accent);
     cursor: pointer;
-    transition: background 0.2s ease, color 0.2s ease;
+    transition: background 0.2s ease, color 0.2s ease, box-shadow 0.2s ease;
   }
   .lio-cartel-mute:hover {
     background: var(--accent);
     color: var(--bg);
+    box-shadow: 0 0 18px color-mix(in srgb, var(--accent) 40%, transparent);
   }
   .lio-cartel-text {
     display: flex;

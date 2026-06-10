@@ -79,6 +79,17 @@ const jsonLd = {
     <link rel="manifest" href="/favicon/site.webmanifest" />
     <meta name="theme-color" content="#080810" />
 
+    {
+      Astro.url.pathname === "/" && (
+        <link
+          rel="preload"
+          as="image"
+          href="/img/dj-pov-b&w.webp"
+          type="image/webp"
+        />
+      )
+    }
+
     <!-- Google Fonts -->
     <link rel="preconnect" href="https://fonts.googleapis.com" />
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />

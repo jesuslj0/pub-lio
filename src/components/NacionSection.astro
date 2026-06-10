@@ -1,5 +1,7 @@
 ---
 import { LocateFixed } from "lucide-react";
+import { Picture } from "astro:assets";
+import neonNacion from "../assets/img/neon-nacion.jpeg";
 ---
 
 <section class="nacion">
@@ -14,8 +16,9 @@ import { LocateFixed } from "lucide-react";
   </div>
 
   <div class="nacion-media">
-    <img
-      src="/img/neon-nacion.jpeg"
+    <Picture
+      src={neonNacion}
+      formats={["avif", "webp"]}
       alt="Ambiente neón en el Lío El Bonillo"
       loading="lazy"
       decoding="async"
@@ -49,9 +52,12 @@ import { LocateFixed } from "lucide-react";
     position: relative;
   }
 
-  .nacion-media img {
+  .nacion-media picture {
     position: absolute;
     inset: 0 48px 0 0;
+    display: block;
+  }
+  .nacion-media img {
     width: auto;
     height: 100%;
     object-fit: cover;
@@ -127,8 +133,10 @@ import { LocateFixed } from "lucide-react";
       order: -1;
       height: 38vh;
     }
-    .nacion-media img {
+    .nacion-media picture {
       inset: 0;
+    }
+    .nacion-media img {
       width: 100%;
       object-position: center;
     }

@@ -34,7 +34,14 @@ import { Disc3 } from "@lucide/astro";
   .hero-bg {
     position: absolute;
     inset: 0;
-    background: url("/img/dj-pov-b&w.jpg") center/cover no-repeat;
+    background-image: url("/img/dj-pov-b&w.jpg"); /* fallback navegadores sin image-set */
+    background-image: image-set(
+      url("/img/dj-pov-b&w.webp") type("image/webp"),
+      url("/img/dj-pov-b&w.jpg") type("image/jpeg")
+    );
+    background-position: center;
+    background-size: cover;
+    background-repeat: no-repeat;
     opacity: 0.75;
     z-index: -1;
     top: -100px;
