@@ -134,7 +134,7 @@ export default function Leaderboard({
               <span
                 style={{ ...styles.rank, color: RANK_COLORS[i] ?? "var(--muted)" }}
               >
-                {i + 1}
+                {i + 1}<span style={{ fontSize: "0.5em", verticalAlign: "super" }}>º</span>
               </span>
               <div style={styles.thumbWrap}>
                 <img

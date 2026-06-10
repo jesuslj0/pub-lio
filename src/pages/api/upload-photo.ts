@@ -27,6 +27,13 @@ export const POST: APIRoute = async ({ request, clientAddress }) => {
       );
     }
 
+    if (!nombreAutor?.trim()) {
+      return jsonResponse(
+        { success: false, error: "El nombre es obligatorio" },
+        400,
+      );
+    }
+
     const semana = getCurrentWeek();
 
     // Doble verificación del límite en servidor.
@@ -49,7 +56,7 @@ export const POST: APIRoute = async ({ request, clientAddress }) => {
       .from("fotos")
       .insert({
         cloudinary_url: cloudinaryUrl,
-        nombre_autor: nombreAutor?.trim() ? nombreAutor.trim().slice(0, 20) : null,
+        nombre_autor: nombreAutor.trim().slice(0, 20),
         fingerprint,
         ip: ip ?? clientAddress ?? null,
         semana,

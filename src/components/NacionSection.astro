@@ -4,7 +4,7 @@ import { LocateFixed } from "lucide-react";
 
 <section class="nacion">
   <div class="nacion-content">
-    <p class="nacion-eyebrow"><LocateFixed size={14} strokeWidth={2} /> El lugar</p>
+    <p class="nacion-eyebrow"><LocateFixed size={14} strokeWidth={2} />· El lugar</p>
     <h2 class="nacion-title">La Nación<br />del <span class="accent-word">buen rollo</span></h2>
     <p class="nacion-body">
       Donde <span class="mark">cada noche pasa algo.</span> Buena música, copas y una pista que nunca se queda vacía. 
@@ -45,8 +45,6 @@ import { LocateFixed } from "lucide-react";
     padding: 60px 60px 60px 80px;
   }
 
-  /* Imagen a sangre por arriba/abajo y por la izquierda; con un margen a la
-     derecha en pantallas grandes para que respire contra el panel. */
   .nacion-media {
     position: relative;
   }
@@ -60,14 +58,11 @@ import { LocateFixed } from "lucide-react";
     display: block;
   }
 
-  /* Un único fundido por el borde izquierdo (junto al texto), algo más marcado,
-     para que la imagen se vea potente y solo se difumine donde toca el panel. */
   .nacion-media-fade {
     position: absolute;
     inset: 0;
     pointer-events: none;
-    /* Funde los cuatro bordes de la foto con el panel para que el neón parezca
-       flotar sobre la sección y no se note el rectángulo de la imagen. */
+
     background:
       linear-gradient(to right, var(--bg2) 0%, rgba(14, 14, 26, 0) 30%),
       linear-gradient(to left, var(--bg2) 0%, rgba(14, 14, 26, 0) 18%),
@@ -132,14 +127,12 @@ import { LocateFixed } from "lucide-react";
       order: -1;
       height: 38vh;
     }
-    /* En móvil sin margen lateral: ocupa todo el ancho y recorta solo un poco. */
     .nacion-media img {
       inset: 0;
       width: 100%;
       object-position: center;
     }
     .nacion-media-fade {
-      /* Mismo fundido perimetral, algo más marcado abajo (donde toca el texto). */
       background:
         linear-gradient(to bottom, var(--bg2) 0%, rgba(14, 14, 26, 0) 14%),
         linear-gradient(to top, var(--bg2) 0%, rgba(14, 14, 26, 0) 24%),

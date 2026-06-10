@@ -1,5 +1,6 @@
 ---
 import { Clock, MapPin, Martini } from "@lucide/astro";
+import { Navigation, Beer } from "@lucide/astro";
 ---
 
 <div class="info-strip" id="info">
@@ -12,11 +13,26 @@ import { Clock, MapPin, Martini } from "@lucide/astro";
     <p class="info-item-label"><MapPin size={13} stroke-width={2} /> Ubicación</p>
     <p class="info-item-value">Plaza Mayor<br />El Bonillo</p>
     <p class="info-item-sub">Albacete, Castilla-La Mancha</p>
+    <a
+      class="info-item-cta"
+      href="https://maps.app.goo.gl/9XWcoUGiDwr2wAKz7"
+      target="_blank"
+      rel="noopener noreferrer"
+    >
+      <Navigation size={14} stroke-width={2} /> Cómo llegar
+    </a>
   </div>
   <div class="info-item">
     <p class="info-item-label"><Martini size={13} stroke-width={2} /> Servicios</p>
     <p class="info-item-value">Copas · Tapas<br />Cañas</p>
-    <p class="info-item-sub">Futbolín · Diana · Sonido & luz pro</p>
+    <p class="info-item-sub">Futbolín · Diana · Shishas · Sonido & luz pro</p>
+    <div class="info-deal">
+      <Beer size={16} stroke-width={2} />
+      <div class="info-deal-text">
+        <span class="info-deal-title">Viernes · Cañas a 1 €</span>
+        <span class="info-deal-sub">Hasta las 22:00</span>
+      </div>
+    </div>
   </div>
 </div>
 
@@ -54,6 +70,56 @@ import { Clock, MapPin, Martini } from "@lucide/astro";
     color: var(--muted);
     margin-top: 6px;
     font-weight: 300;
+  }
+  .info-item-cta {
+    margin-top: 18px;
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    font-family: var(--font-mono);
+    font-size: 0.65rem;
+    letter-spacing: 0.15em;
+    text-transform: uppercase;
+    color: var(--accent);
+    background: transparent;
+    border: 1px solid var(--accent);
+    padding: 9px 16px;
+    text-decoration: none;
+    font-weight: 500;
+    transition: background 0.2s, color 0.2s;
+  }
+  .info-item-cta:hover {
+    background: var(--accent);
+    color: var(--bg);
+  }
+  .info-deal {
+    margin-top: 18px;
+    display: inline-flex;
+    align-items: center;
+    gap: 12px;
+    padding: 12px 16px;
+    border: 1px solid color-mix(in srgb, var(--accent) 35%, transparent);
+    background: color-mix(in srgb, var(--accent) 10%, transparent);
+    color: var(--accent);
+  }
+  .info-deal-text {
+    display: flex;
+    flex-direction: column;
+    line-height: 1.2;
+  }
+  .info-deal-title {
+    font-family: var(--font-display);
+    font-size: 1.05rem;
+    letter-spacing: 0.01em;
+    color: var(--text);
+  }
+  .info-deal-sub {
+    font-family: var(--font-mono);
+    font-size: 0.6rem;
+    letter-spacing: 0.18em;
+    text-transform: uppercase;
+    color: var(--accent);
+    margin-top: 3px;
   }
 
   @media (max-width: 768px) {

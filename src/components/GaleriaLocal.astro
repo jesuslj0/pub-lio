@@ -1,0 +1,246 @@
+---
+import { Building2 } from "@lucide/astro";
+
+const fotos = [
+  {
+    src: "/img/local.jpeg",
+    titulo: "Nuestro local",
+    alt: "Vista general del interior del Lío El Bonillo",
+    area: "local",
+  },
+  {
+    src: "/img/botellas.jpeg",
+    titulo: "Estante",
+    alt: "Estantería de botellas tras la barra",
+    area: "botellas",
+  },
+  {
+    src: "/img/cartel-lio.jpeg",
+    titulo: "El cartel",
+    alt: "Cartel del Lío El Bonillo",
+    area: "cartel",
+  },
+  {
+    src: "/img/decoracion-neon.jpeg",
+    titulo: "Neón",
+    alt: "Decoración de neón del Lío El Bonillo",
+    area: "neon",
+  },
+  {
+    src: "/img/barra.jpeg",
+    titulo: "La barra",
+    alt: "Barra con los dispensadores de cerveza",
+    area: "barra",
+  },
+  {
+    src: "/img/nevera.jpeg",
+    titulo: "Bien fría",
+    alt: "Nevera de bebidas del Lío El Bonillo",
+    area: "nevera",
+  },
+  {
+    src: "/img/futbolin.jpeg",
+    titulo: "Futbolín",
+    alt: "Zona de futbolín del Lío El Bonillo",
+    area: "futbolin",
+  },
+  {
+    src: "/img/cuadro-afro.jpeg",
+    titulo: "Decoración",
+    alt: "Cuadro afro del Lío El Bonillo",
+    area: "afro",
+  },
+  {
+    src: "/img/iluminacion.jpeg",
+    titulo: "Ambientacion",
+    alt: "Iluminación del Lío El Bonillo",
+    area: "ilumina",
+  },
+];
+---
+
+<section class="section" id="local" style="padding-top: 0;">
+  <div class="local-grid">
+    <div class="local-text">
+      <p class="section-label">
+        <Building2 size={14} stroke-width={2} />· El local
+      </p>
+      <h2 class="section-title">Así es<br />el <span class="accent">Lío</span></h2>
+      <p class="local-sub">
+        Un vistazo a <span class="mark">nuestro rincón</span> en El Bonillo: la
+        barra, la decoración y cada esquina donde <span class="mark">la noche pasa volando</span>.
+      </p>
+    </div>
+
+    <div class="local-gallery">
+      {
+        fotos.map(({ src, titulo, alt, area }) => (
+          <figure class={`local-card local-${area}`}>
+            <img src={src} alt={alt} loading="lazy" decoding="async" />
+            <figcaption>{titulo}</figcaption>
+          </figure>
+        ))
+      }
+    </div>
+  </div>
+</section>
+
+<style>
+  .local-grid {
+    display: grid;
+    grid-template-columns: 0.6fr 1.4fr;
+    gap: 56px;
+    align-items: center;
+  }
+  .local-text {
+    align-self: center;
+  }
+  @media (min-width: 1024px) {
+    .local-text .section-title {
+      font-size: clamp(5rem, 7vw, 7rem);
+    }
+  }
+  .local-sub {
+    font-size: 0.95rem;
+    color: var(--muted);
+    font-weight: 300;
+    line-height: 1.7;
+    max-width: 340px;
+  }
+  .mark {
+    color: var(--color-text);
+    opacity: 0.8;
+  }
+
+  .local-gallery {
+    display: grid;
+    grid-template-columns: repeat(4, 1fr);
+    grid-template-rows: repeat(4, 1fr);
+    grid-template-areas:
+      "local    local    neon   barra"
+      "local    local    cartel     barra"
+      "futbolin futbolin afro botellas"
+      "ilumina  ilumina  afro   nevera";
+    gap: 14px;
+    aspect-ratio: 1 / 1;
+  }
+  .local-local {
+    grid-area: local;
+  }
+  .local-neon {
+    grid-area: neon;
+  }
+
+  .local-neon img {
+    object-fit: cover;
+  }
+
+  .local-botellas {
+    grid-area: botellas;
+  }
+  .local-botellas img {
+    object-position: 75% center;
+  }
+  .local-barra {
+    grid-area: barra;
+  }
+  .local-futbolin {
+    grid-area: futbolin;
+  }
+  .local-cartel {
+    grid-area: cartel;
+  }
+  .local-nevera {
+    grid-area: nevera;
+  }
+  .local-ilumina {
+    grid-area: ilumina;
+  }
+  .local-ilumina img {
+    object-position: center 35%;
+  }
+  .local-afro {
+    grid-area: afro;
+  }
+  .local-afro img {
+    object-position: center 35%;
+  }
+
+  .local-card {
+    position: relative;
+    overflow: hidden;
+    margin: 0;
+    border: 1px solid var(--border);
+    background: var(--surface);
+  }
+  .local-card img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+    display: block;
+    transition:
+      transform 0.5s ease,
+      filter 0.4s ease;
+    filter: grayscale(0.15) brightness(0.92);
+  }
+
+  .local-card figcaption {
+    position: absolute;
+    inset: auto 0 0 0;
+    padding: 14px 14px 12px;
+    font-family: var(--font-mono);
+    font-size: 0.62rem;
+    letter-spacing: 0.18em;
+    text-transform: uppercase;
+    color: var(--text);
+    background: linear-gradient(to top, rgba(8, 8, 16, 0.85) 0%, rgba(8, 8, 16, 0) 100%);
+    opacity: 0;
+    transform: translateY(8px);
+    transition:
+      opacity 0.35s ease,
+      transform 0.35s ease;
+  }
+  .local-card:hover img {
+    transform: scale(1.05);
+    filter: grayscale(0) brightness(1);
+  }
+  .local-card:hover {
+    border-color: color-mix(in srgb, var(--accent) 35%, transparent);
+  }
+  .local-card:hover figcaption {
+    opacity: 1;
+    transform: translateY(0);
+  }
+
+  .accent {
+    color: var(--accent);
+  }
+
+  @media (max-width: 900px) {
+    .local-grid {
+      grid-template-columns: 1fr;
+      gap: 32px;
+    }
+  }
+
+  @media (max-width: 768px) {
+    .local-gallery {
+      grid-template-columns: 1fr 1fr;
+      grid-template-rows: 56vw 44vw 36vw 36vw 56vw 56vw 56vw;
+      grid-template-areas:
+        "local    local"
+        "cartel   neon"
+        "barra    botellas"
+        "barra    nevera"
+        "futbolin futbolin"
+        "ilumina  ilumina"
+        "afro     afro";
+      aspect-ratio: auto;
+      gap: 10px;
+    }
+    .local-card figcaption {
+      opacity: 0;
+      transform: translateY(0);
+    }
+  }
+</style>

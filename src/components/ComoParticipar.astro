@@ -29,10 +29,10 @@ const pasos = [
 ];
 ---
 
-<div class="grid grid-cols-1 gap-5 sm:grid-cols-2 lg:grid-cols-4 lg:gap-6">
+<div class="grid grid-cols-1 gap-5 sm:grid-cols-2 lg:gap-6">
   {
     pasos.map(({ Icon, titulo, texto, nota }, i) => (
-      <div class="paso group relative flex flex-col border border-border bg-bg2 p-4 transition-all duration-300 hover:-translate-y-1 hover:border-accent/30 hover:bg-surface lg:p-10">
+      <div class="paso group relative flex flex-col border border-border bg-bg2 p-4 transition-all duration-300 hover:-translate-y-1 hover:border-accent/30 hover:bg-surface lg:p-6">
         <div class="mb-7 flex items-center justify-between">
           <span class="paso-num font-display text-6xl leading-none text-accent/20 transition-colors duration-300 group-hover:text-accent/60">
             0{i + 1}

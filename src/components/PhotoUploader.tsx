@@ -48,6 +48,10 @@ export default function PhotoUploader() {
 
   const handleConfirm = async () => {
     if (!file) return;
+    if (nombreAutor.length < 3) {
+      setErrorMsg("El nombre debe tener almenos 3 letras");
+      return;
+    }
     setEstado("uploading");
     setErrorMsg("");
 
@@ -80,7 +84,7 @@ export default function PhotoUploader() {
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
           cloudinaryUrl,
-          nombreAutor: nombreAutor.trim() || undefined,
+          nombreAutor: nombreAutor.trim(),
           fingerprint,
         }),
       });
@@ -149,13 +153,25 @@ export default function PhotoUploader() {
           <input
             type="text"
             value={nombreAutor}
-            onChange={(e) => setNombreAutor(e.target.value)}
-            placeholder="Tu nombre, opcional"
+            onChange={(e) => {
+              setNombreAutor(e.target.value);
+              if (errorMsg) setErrorMsg("");
+            }}
+            placeholder="Tu nombre"
             maxLength={20}
+            required
             style={styles.textInput}
           />
+          {errorMsg && <p style={styles.errorText}>{errorMsg}</p>}
           <div style={styles.buttonRow}>
-            <button style={styles.primaryBtn} onClick={handleConfirm}>
+            <button
+              style={{
+                ...styles.primaryBtn,
+                ...(nombreAutor.trim() ? {} : styles.primaryBtnDisabled),
+              }}
+              onClick={handleConfirm}
+              disabled={!nombreAutor.trim()}
+            >
               Confirmar
             </button>
             <button style={styles.ghostBtn} onClick={reset}>
@@ -250,6 +266,10 @@ const styles: Record<string, CSSProperties> = {
     flexDirection: "column",
     alignItems: "center",
     gap: "10px",
+  },
+  primaryBtnDisabled: {
+    opacity: 0.4,
+    cursor: "not-allowed",
   },
   secondaryBtn: {
     flex: 1,

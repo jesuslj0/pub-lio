@@ -8,11 +8,12 @@ import PhotoGrid from "../components/PhotoGrid.tsx";
 import PhotoUploader from "../components/PhotoUploader.tsx";
 import PremioSemanal from "../components/PremioSemanal.tsx";
 import Leaderboard from "../components/Leaderboard.tsx";
+import GaleriaLocal from "../components/GaleriaLocal.astro";
 import NacionSection from "../components/NacionSection.astro";
 import InfoStrip from "../components/InfoStrip.astro";
 import ComoParticipar from "../components/ComoParticipar.astro";
 import Footer from "../components/Footer.astro";
-import { CalendarDays, Images, Gift, ListChecks } from "@lucide/astro";
+import { CalendarDays, Images, Gift, ListChecks, ShieldCheck } from "@lucide/astro";
 ---
 
 <Base title="Lío Music Pub · El Bonillo (Albacete)">
@@ -72,14 +73,28 @@ import { CalendarDays, Images, Gift, ListChecks } from "@lucide/astro";
         </p>
       </div>
       <div class="upload-right">
-        <PhotoUploader client:load />
+        <ComoParticipar />
+        <div class="upload-uploader">
+          <PhotoUploader client:load />
+          <p class="upload-aviso">
+            <ShieldCheck size={14} stroke-width={2} />
+            <span>
+              Cada imagen <span class="mark">pasa revisión</span> antes de
+              publicarse: puede validarse o no. No subas fotos ofensivas ni sin
+              consentimiento — una vez validadas serán
+              <span class="mark">públicas</span> para todo el que visite la web.
+              Las imágenes se usan <span class="mark">únicamente</span> para esta
+              galería y el concurso, no se ceden a terceros y se
+              <span class="mark">eliminan automáticamente</span> pasado un tiempo.
+            </span>
+          </p>
+        </div>
       </div>
     </div>
-
-    <ComoParticipar />
   </section>
-
+  
   <NacionSection />
+  <GaleriaLocal />
   <InfoStrip />
   </main>
   <Footer />
@@ -133,7 +148,7 @@ import { CalendarDays, Images, Gift, ListChecks } from "@lucide/astro";
     display: grid;
     grid-template-columns: 1fr 1fr;
     gap: 40px;
-    align-items: center;
+    align-items: start;
     margin-bottom: 72px;
   }
   .upload-left-title {
@@ -152,7 +167,35 @@ import { CalendarDays, Images, Gift, ListChecks } from "@lucide/astro";
   }
   .upload-right {
     display: flex;
-    justify-content: flex-end;
+    flex-direction: column;
+    gap: 24px;
+  }
+  .upload-uploader {
+    display: flex;
+    flex-direction: row;
+    justify-content: center;
+    align-items: center;
+    flex-wrap: wrap;
+    gap: 20px;
+  }
+  .upload-aviso {
+    display: flex;
+    align-items: flex-start;
+    gap: 10px;
+    max-width: 440px;
+    width: 100%;
+    padding: 14px 16px;
+    border: 1px solid var(--border);
+    background: var(--bg2);
+    font-size: 0.72rem;
+    line-height: 1.6;
+    color: var(--muted);
+    font-weight: 300;
+  }
+  .upload-aviso :global(svg) {
+    flex-shrink: 0;
+    margin-top: 2px;
+    color: var(--accent);
   }
 
   .mark {
@@ -178,8 +221,9 @@ import { CalendarDays, Images, Gift, ListChecks } from "@lucide/astro";
       gap: 28px;
       margin-bottom: 48px;
     }
-    .upload-right {
-      justify-content: flex-start;
+    .upload-uploader {
+      flex-direction: column;
+      align-items: flex-start;
     }
   }
 </style>
