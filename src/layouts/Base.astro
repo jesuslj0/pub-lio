@@ -33,8 +33,15 @@ const jsonLd = {
     streetAddress: "Plaza Mayor",
     addressLocality: "El Bonillo",
     addressRegion: "Albacete",
+    postalCode: "02610",
     addressCountry: "ES",
   },
+  geo: {
+    "@type": "GeoCoordinates",
+    latitude: 38.95044287201614,
+    longitude: -2.5398941420405077,
+  },
+  priceRange: "€€",
   sameAs: ["https://www.instagram.com/lioelbonillo/"],
   openingHours: ["Fr 20:00-04:00", "Sa 20:00-04:00"],
 };
@@ -58,6 +65,7 @@ const jsonLd = {
     <meta property="og:description" content={description} />
     <meta property="og:url" content={canonical} />
     <meta property="og:image" content={ogImage} />
+    <meta property="og:image:type" content="image/png" />
     <meta property="og:image:width" content="1200" />
     <meta property="og:image:height" content="630" />
     <meta property="og:locale" content="es_ES" />
@@ -73,6 +81,7 @@ const jsonLd = {
 
     <!-- Favicons -->
     <link rel="icon" href="/favicon/favicon.ico" sizes="any" />
+    <link rel="icon" type="image/svg+xml" href="/favicon.svg" />
     <link rel="icon" type="image/png" sizes="32x32" href="/favicon/favicon-32x32.png" />
     <link rel="icon" type="image/png" sizes="16x16" href="/favicon/favicon-16x16.png" />
     <link rel="apple-touch-icon" href="/favicon/apple-touch-icon.png" />
