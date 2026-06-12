@@ -1,0 +1,89 @@
+---
+import Base from "../layouts/Base.astro";
+import { Home } from "@lucide/astro";
+---
+
+<Base title="404 — Lío El Bonillo" noindex={true}>
+  <main id="contenido" class="error-page">
+    <span class="error-label">Error 404</span>
+    <p class="error-code">404</p>
+    <h1 class="error-title">Te has perdido</h1>
+    <p class="error-text">
+      Esta página no existe o se fue de fiesta. Vuelve al inicio y sigue el ritmo.
+    </p>
+    <a href="/" class="error-btn">
+      <Home size={18} stroke-width={1.5} />
+      Volver al inicio
+    </a>
+  </main>
+</Base>
+
+<style>
+  .error-page {
+    position: relative;
+    z-index: 1;
+    min-height: 100dvh;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    text-align: center;
+    padding: 100px 40px;
+    gap: 8px;
+  }
+
+  .error-label {
+    font-family: var(--font-mono);
+    font-size: 0.65rem;
+    letter-spacing: 0.25em;
+    text-transform: uppercase;
+    color: var(--accent);
+    margin-bottom: 8px;
+  }
+
+  .error-code {
+    font-family: var(--font-display);
+    font-size: clamp(7rem, 28vw, 18rem);
+    line-height: 0.85;
+    letter-spacing: 0.02em;
+    background: linear-gradient(120deg, var(--accent), var(--accent3));
+    -webkit-background-clip: text;
+    background-clip: text;
+    color: transparent;
+    text-shadow: 0 0 60px color-mix(in srgb, var(--accent) 35%, transparent);
+  }
+
+  .error-title {
+    font-family: var(--font-display);
+    font-size: clamp(2rem, 6vw, 3.5rem);
+    line-height: 0.95;
+    letter-spacing: 0.02em;
+    margin-bottom: 12px;
+  }
+
+  .error-text {
+    color: var(--muted);
+    max-width: 32ch;
+    margin-bottom: 28px;
+  }
+
+  .error-btn {
+    display: inline-flex;
+    align-items: center;
+    gap: 10px;
+    font-family: var(--font-mono);
+    font-size: 0.75rem;
+    letter-spacing: 0.1em;
+    text-transform: uppercase;
+    text-decoration: none;
+    color: var(--bg);
+    background: var(--accent);
+    padding: 14px 26px;
+    border-radius: 999px;
+    transition: transform 0.2s ease, box-shadow 0.2s ease;
+  }
+  .error-btn:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 10px 30px color-mix(in srgb, var(--accent) 40%, transparent);
+  }
+</style>

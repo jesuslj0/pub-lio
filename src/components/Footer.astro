@@ -1,5 +1,6 @@
 ---
 import { siInstagram } from "simple-icons";
+import { Share2, Check } from "@lucide/astro";
 ---
 
 <footer>
@@ -19,6 +20,11 @@ import { siInstagram } from "simple-icons";
       </svg>
       <span>@lioelbonillo</span>
     </a>
+    <button class="social-link share-btn" type="button" data-share aria-label="Compartir la web de Lío El Bonillo">
+      <Share2 class="social-icon share-ico-share" size={18} stroke-width={1.5} />
+      <Check class="social-icon share-ico-ok" size={18} stroke-width={1.5} />
+      <span class="share-text">Compartir</span>
+    </button>
   </div>
 
   <div class="footer-meta">
@@ -85,6 +91,29 @@ import { siInstagram } from "simple-icons";
     height: 18px;
     fill: currentColor;
   }
+  /* El botón de compartir usa iconos de trazo (Lucide), no relleno. */
+  .share-btn {
+    cursor: pointer;
+    background: transparent;
+  }
+  .share-btn .social-icon {
+    fill: none;
+    stroke: currentColor;
+  }
+  .share-ico-ok {
+    display: none;
+    color: var(--accent2);
+  }
+  .share-btn.copied .share-ico-share {
+    display: none;
+  }
+  .share-btn.copied .share-ico-ok {
+    display: inline-block;
+  }
+  .share-btn.copied {
+    color: var(--accent2);
+    border-color: var(--accent2);
+  }
   .footer-meta {
     font-family: var(--font-mono);
     font-size: 0.65rem;
@@ -108,3 +137,37 @@ import { siInstagram } from "simple-icons";
     }
   }
 </style>
+
+<script>
+  const btn = document.querySelector<HTMLButtonElement>("[data-share]");
+  const textEl = btn?.querySelector<HTMLSpanElement>(".share-text");
+
+  btn?.addEventListener("click", async () => {
+    const shareData = {
+      title: "Lío El Bonillo",
+      text: "Disco pub en El Bonillo (Albacete). Carteles del finde, galería de fotos y premio semanal 🪩",
+      url: window.location.origin,
+    };
+
+    if (navigator.share) {
+      try {
+        await navigator.share(shareData);
+        return;
+      } catch {
+        /* el usuario canceló o falló: caemos al copiado */
+      }
+    }
+
+    try {
+      await navigator.clipboard.writeText(shareData.url);
+      btn.classList.add("copied");
+      if (textEl) textEl.textContent = "¡Copiado!";
+      setTimeout(() => {
+        btn.classList.remove("copied");
+        if (textEl) textEl.textContent = "Compartir";
+      }, 1800);
+    } catch {
+      /* sin portapapeles disponible */
+    }
+  });
+</script>

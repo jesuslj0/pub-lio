@@ -377,14 +377,19 @@ export default function PhotoGrid({
               </span>
             )}
             <div style={styles.overlay}>
-              {/* Arriba izquierda: nombre + fecha */}
+              {/* Arriba izquierda: avatar + nombre + fecha (cabecera tipo post) */}
               <div style={styles.topInfo}>
-                {foto.nombre_autor && (
-                  <span style={styles.autor}>{foto.nombre_autor}</span>
-                )}
-                <span style={styles.fecha}>
-                  · {new Date(foto.created_at).toLocaleDateString("es-ES", { day: "numeric", month: "short" })}
+                <span style={styles.avatar} aria-hidden="true">
+                  {(foto.nombre_autor?.trim()?.[0] ?? "?").toUpperCase()}
                 </span>
+                <div style={styles.topMeta}>
+                  {foto.nombre_autor && (
+                    <span style={styles.autor}>{foto.nombre_autor}</span>
+                  )}
+                  <span style={styles.fecha}>
+                    {new Date(foto.created_at).toLocaleDateString("es-ES", { day: "numeric", month: "short" })}
+                  </span>
+                </div>
               </div>
               {/* Abajo: votos + compartir a la izquierda, botón votar a la derecha */}
               <div style={styles.bottomRow}>
@@ -663,18 +668,40 @@ const styles: Record<string, CSSProperties> = {
     alignItems: "center",
     gap: "8px",
   },
+  avatar: {
+    flexShrink: 0,
+    display: "inline-flex",
+    alignItems: "center",
+    justifyContent: "center",
+    width: "28px",
+    height: "28px",
+    borderRadius: "999px",
+    background: "linear-gradient(135deg, var(--accent), var(--accent3))",
+    color: "var(--bg)",
+    fontFamily: "var(--font-display)",
+    fontSize: "0.8rem",
+    lineHeight: 1,
+    letterSpacing: "0.02em",
+    border: "1.5px solid color-mix(in srgb, var(--bg) 60%, transparent)",
+  },
+  topMeta: {
+    display: "flex",
+    flexDirection: "column",
+    lineHeight: 1.15,
+  },
   autor: {
     fontFamily: "var(--font-mono)",
     fontSize: "0.65rem",
+    fontWeight: 700,
     color: "var(--text)",
     letterSpacing: "0.05em",
   },
   fecha: {
     fontFamily: "var(--font-mono)",
-    fontSize: "0.6rem",
+    fontSize: "0.58rem",
     color: "var(--text)",
     letterSpacing: "0.05em",
-    opacity: 0.6,
+    opacity: 0.55,
   },
   bottomRow: {
     display: "flex",

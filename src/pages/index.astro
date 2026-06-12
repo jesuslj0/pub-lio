@@ -35,12 +35,9 @@ import { CalendarDays, Images, Gift, ListChecks, ShieldCheck } from "@lucide/ast
   <section class="section" id="fotos" style="padding-top: 0;">
     <div class="fotos-header">
       <div>
-        <p class="section-label"><Images size={14} stroke-width={2} />· Galería</p>
-        <h2 class="section-title">Fotos<br />del finde</h2>
-      </div>
-      <div style="text-align:right; padding-bottom: 8px;">
-        <p class="fotos-note">La más votada gana el finde siguiente</p>
-        <a href="#premio" class="fotos-note accent fotos-note-link">Ver premio activo ↗</a>
+        <p class="section-label"><Images size={14} stroke-width={2} />· feed</p>
+        <h2 class="section-title fotos-title">Liad@s</h2>
+        <p class="fotos-sub">Mira cómo se lió el finde</p>
       </div>
     </div>
     <PhotoGrid client:load mostrarGanadora={true} />
@@ -69,7 +66,7 @@ import { CalendarDays, Images, Gift, ListChecks, ShieldCheck } from "@lucide/ast
         <p class="upload-left-sub">
           Sube tu <span class="mark">mejor foto del finde</span> en el Lío, consigue votos y gana el <span class="mark">premio</span> de la semana
           siguiente. Sin registro: solo tu foto y un nombre. Máximo 3 fotos por
-          dispositivo. <span class="mark" style="font-style: italic">Comparte tu momento!</span>
+          dispositivo. <span class="mark" style="font-style: italic">¡Comparte tu momento!</span>
         </p>
       </div>
       <div class="upload-right">
@@ -119,6 +116,25 @@ import { CalendarDays, Images, Gift, ListChecks, ShieldCheck } from "@lucide/ast
     justify-content: space-between;
     margin-bottom: 32px;
     gap: 24px;
+  }
+  .fotos-title {
+    margin-bottom: 10px;
+  }
+  .fotos-sub {
+    font-family: var(--font-body);
+    font-size: clamp(1rem, 2.2vw, 1.35rem);
+    font-weight: 500;
+    line-height: 1.25;
+    color: var(--color-muted);
+  }
+  .fotos-sub::after {
+    content: "";
+    display: block;
+    width: 56px;
+    height: 3px;
+    margin-top: 14px;
+    border-radius: 999px;
+    background: linear-gradient(90deg, var(--accent), var(--accent3));
   }
   .fotos-note {
     font-family: var(--font-mono);

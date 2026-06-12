@@ -49,7 +49,7 @@ export default function PhotoUploader() {
   const handleConfirm = async () => {
     if (!file) return;
     if (nombreAutor.length < 3) {
-      setErrorMsg("El nombre debe tener almenos 3 letras");
+      setErrorMsg("El nombre debe tener al menos 3 letras");
       return;
     }
     setEstado("uploading");

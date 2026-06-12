@@ -9,8 +9,7 @@ function formatearFecha(fecha: string | null): string {
   if (Number.isNaN(d.getTime())) return "";
   return d.toLocaleDateString("es-ES", {
     day: "numeric",
-    month: "long",
-    year: "numeric",
+    month: "short",
   });
 }
 
@@ -242,10 +241,10 @@ const neonGlow = `
   .lio-cartel-card::before {
     content: "";
     position: absolute;
-    inset: -3px;
+    inset: -1.5px;
     z-index: -1;
     border-radius: inherit;
-    padding: 3px;
+    padding: 1.5px;
     background: conic-gradient(
       from var(--lio-neon-angle),
       transparent 0deg,
@@ -336,10 +335,17 @@ const styles: Record<string, CSSProperties> = {
     fontSize: "0.7rem",
     color: "var(--accent)",
     letterSpacing: "0.1em",
-    marginTop: "8px",
-    display: "flex",
+    marginTop: "12px",
+    display: "inline-flex",
     alignItems: "center",
+    flexWrap: "wrap",
     gap: "7px",
+    padding: "7px 12px",
+    borderRadius: "999px",
+    border: "1px solid color-mix(in srgb, var(--accent) 45%, transparent)",
+    background: "color-mix(in srgb, var(--accent) 10%, transparent)",
+    lineHeight: 1.3,
+    maxWidth: "100%",
     textShadow: "0 0 12px color-mix(in srgb, var(--accent) 45%, transparent)",
   },
   placeholder: {
