@@ -63,7 +63,9 @@ export default function PhotoGrid({
   // Índice de la foto abierta en el visor a pantalla completa (null = cerrado).
   const [openIndex, setOpenIndex] = useState<number | null>(null);
   // Modo "reels" a pantalla completa (scroll vertical) para móvil.
-  const [reelsOpen, setReelsOpen] = useState(false);
+  // null = cerrado; número = índice de la foto donde arrancar.
+  const [reelsStart, setReelsStart] = useState<number | null>(null);
+  const reelsTrackRef = useRef<HTMLDivElement>(null);
   // Foto sobre la que se ha abierto la hoja de compartir (null = cerrada).
   const [shareTarget, setShareTarget] = useState<Foto | null>(null);
   const [copied, setCopied] = useState(false);
@@ -226,11 +228,16 @@ export default function PhotoGrid({
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [openIndex, fotos.length]);
 
-  // Modo reels: bloquea el scroll de fondo y permite cerrar con Esc.
+  // Modo reels: bloquea el scroll de fondo, salta a la foto de inicio y permite
+  // cerrar con Esc.
   useEffect(() => {
-    if (!reelsOpen) return;
+    if (reelsStart === null) return;
+    // Posiciona el scroll en la foto desde la que se abrió (sin animación).
+    const track = reelsTrackRef.current;
+    if (track) track.scrollTop = reelsStart * track.clientHeight;
+
     const onKey = (e: KeyboardEvent) => {
-      if (e.key === "Escape") setReelsOpen(false);
+      if (e.key === "Escape") setReelsStart(null);
     };
     window.addEventListener("keydown", onKey);
     const prevOverflow = document.body.style.overflow;
@@ -239,7 +246,19 @@ export default function PhotoGrid({
       window.removeEventListener("keydown", onKey);
       document.body.style.overflow = prevOverflow;
     };
-  }, [reelsOpen]);
+  }, [reelsStart]);
+
+  // Abre el visor adecuado al tamaño: reels en móvil/tablet, slider en escritorio.
+  const abrirVisor = (i: number) => {
+    if (
+      typeof window !== "undefined" &&
+      window.matchMedia("(max-width: 900px)").matches
+    ) {
+      setReelsStart(i);
+    } else {
+      setOpenIndex(i);
+    }
+  };
 
   // Swipe en táctil dentro del visor.
   const onTouchStart = (e: React.TouchEvent) => {
@@ -359,7 +378,7 @@ export default function PhotoGrid({
       <button
         type="button"
         className="lio-reels-trigger"
-        onClick={() => setReelsOpen(true)}
+        onClick={() => setReelsStart(0)}
       >
         <Play size={15} strokeWidth={2} fill="currentColor" />
         Ver en pantalla completa
@@ -431,7 +450,7 @@ export default function PhotoGrid({
                   </span>
                   <button
                     style={styles.shareBtn}
-                    onClick={() => setOpenIndex(i)}
+                    onClick={() => abrirVisor(i)}
                     aria-label="Ver foto"
                     title="Ver"
                   >
@@ -622,18 +641,18 @@ export default function PhotoGrid({
       </div>
 
       {/* ─── Feed inmersivo tipo reels (scroll vertical con snap) ─── */}
-      {reelsOpen && (
+      {reelsStart !== null && (
         <div className="lio-reels" role="dialog" aria-modal="true">
           <button
             type="button"
             className="lio-reels-close"
-            onClick={() => setReelsOpen(false)}
+            onClick={() => setReelsStart(null)}
             aria-label="Cerrar"
           >
             <X size={24} strokeWidth={2} />
           </button>
 
-          <div className="lio-reels-track">
+          <div className="lio-reels-track" ref={reelsTrackRef}>
             {fotos.map((foto) => {
               const yaVotada =
                 typeof window !== "undefined" &&
@@ -798,11 +817,13 @@ const reelsStyles = `
   .lio-reels-track {
     height: 100%;
     overflow-y: scroll;
+    overflow-x: hidden;
     scroll-snap-type: y mandatory;
     -webkit-overflow-scrolling: touch;
     scrollbar-width: none;
+    -ms-overflow-style: none;
   }
-  .lio-reels-track::-webkit-scrollbar { display: none; }
+  .lio-reels-track::-webkit-scrollbar { width: 0; height: 0; display: none; }
   .lio-reels-slide {
     position: relative;
     height: 100%;
