@@ -2,4 +2,4 @@ User-agent: *
 Allow: /
 Disallow: /admin
 
-Sitemap: https://pub-lio.vercel.app/sitemap-index.xml
+Sitemap: https://liopub.com/sitemap-index.xml

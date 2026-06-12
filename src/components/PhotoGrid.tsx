@@ -11,6 +11,7 @@ import {
   Check,
   Maximize2,
   ImagePlus,
+  Play,
 } from "lucide-react";
 import { siWhatsapp, siInstagram } from "simple-icons";
 
@@ -61,6 +62,8 @@ export default function PhotoGrid({
   const [voting, setVoting] = useState<Record<string, boolean>>({});
   // Índice de la foto abierta en el visor a pantalla completa (null = cerrado).
   const [openIndex, setOpenIndex] = useState<number | null>(null);
+  // Modo "reels" a pantalla completa (scroll vertical) para móvil.
+  const [reelsOpen, setReelsOpen] = useState(false);
   // Foto sobre la que se ha abierto la hoja de compartir (null = cerrada).
   const [shareTarget, setShareTarget] = useState<Foto | null>(null);
   const [copied, setCopied] = useState(false);
@@ -223,6 +226,21 @@ export default function PhotoGrid({
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [openIndex, fotos.length]);
 
+  // Modo reels: bloquea el scroll de fondo y permite cerrar con Esc.
+  useEffect(() => {
+    if (!reelsOpen) return;
+    const onKey = (e: KeyboardEvent) => {
+      if (e.key === "Escape") setReelsOpen(false);
+    };
+    window.addEventListener("keydown", onKey);
+    const prevOverflow = document.body.style.overflow;
+    document.body.style.overflow = "hidden";
+    return () => {
+      window.removeEventListener("keydown", onKey);
+      document.body.style.overflow = prevOverflow;
+    };
+  }, [reelsOpen]);
+
   // Swipe en táctil dentro del visor.
   const onTouchStart = (e: React.TouchEvent) => {
     touchX.current = e.touches[0].clientX;
@@ -336,7 +354,18 @@ export default function PhotoGrid({
   }
 
   return (
-    <div className="lio-photo-grid" style={styles.grid}>
+    <>
+      {/* Botón para abrir el feed inmersivo (solo móvil). */}
+      <button
+        type="button"
+        className="lio-reels-trigger"
+        onClick={() => setReelsOpen(true)}
+      >
+        <Play size={15} strokeWidth={2} fill="currentColor" />
+        Ver en pantalla completa
+      </button>
+
+      <div className="lio-photo-grid" style={styles.grid}>
       {fotos.map((foto, i) => {
         const yaVotada =
           typeof window !== "undefined" &&
@@ -388,6 +417,8 @@ export default function PhotoGrid({
                   )}
                   <span style={styles.fecha}>
                     {new Date(foto.created_at).toLocaleDateString("es-ES", { day: "numeric", month: "short" })}
+                    {" · "}
+                    {new Date(foto.created_at).toLocaleTimeString("es-ES", { hour: "2-digit", minute: "2-digit" })}
                   </span>
                 </div>
               </div>
@@ -588,7 +619,98 @@ export default function PhotoGrid({
 
       <style>{pulseKeyframes}</style>
       <style>{gridResponsive}</style>
-    </div>
+      </div>
+
+      {/* ─── Feed inmersivo tipo reels (scroll vertical con snap) ─── */}
+      {reelsOpen && (
+        <div className="lio-reels" role="dialog" aria-modal="true">
+          <button
+            type="button"
+            className="lio-reels-close"
+            onClick={() => setReelsOpen(false)}
+            aria-label="Cerrar"
+          >
+            <X size={24} strokeWidth={2} />
+          </button>
+
+          <div className="lio-reels-track">
+            {fotos.map((foto) => {
+              const yaVotada =
+                typeof window !== "undefined" &&
+                localStorage.getItem(`voted_${foto.id}`) !== null;
+              return (
+                <div key={foto.id} className="lio-reels-slide">
+                  <img
+                    src={foto.cloudinary_url}
+                    alt={foto.nombre_autor ?? "Foto del finde"}
+                    className="lio-reels-img"
+                    loading="lazy"
+                    onPointerUp={(e) => handleImagePointerUp(e, foto)}
+                    onDoubleClick={() => meEncanta(foto)}
+                  />
+                  {heartBurst?.id === foto.id && (
+                    <span
+                      key={heartBurst.key}
+                      style={styles.heartBurst}
+                      onAnimationEnd={() => setHeartBurst(null)}
+                      aria-hidden="true"
+                    >
+                      <Heart size={110} strokeWidth={1.5} fill="currentColor" />
+                    </span>
+                  )}
+
+                  {/* Columna de acciones a la derecha (estilo reels) */}
+                  <div className="lio-reels-actions">
+                    <button
+                      type="button"
+                      className="lio-reels-action"
+                      onClick={() => handleVote(foto.id)}
+                      disabled={yaVotada || voting[foto.id]}
+                      aria-label={yaVotada ? "Votado" : "Votar"}
+                    >
+                      <Heart
+                        size={30}
+                        strokeWidth={2}
+                        fill={yaVotada ? "var(--accent)" : "none"}
+                        color={yaVotada ? "var(--accent)" : "#fff"}
+                      />
+                      <span>{foto.votos_count}</span>
+                    </button>
+                    <button
+                      type="button"
+                      className="lio-reels-action"
+                      onClick={() => abrirCompartir(foto)}
+                      aria-label="Compartir"
+                    >
+                      <Share2 size={28} strokeWidth={2} />
+                      <span>Compartir</span>
+                    </button>
+                  </div>
+
+                  {/* Info del autor abajo a la izquierda */}
+                  <div className="lio-reels-info">
+                    <span className="lio-reels-avatar" aria-hidden="true">
+                      {(foto.nombre_autor?.trim()?.[0] ?? "?").toUpperCase()}
+                    </span>
+                    <div className="lio-reels-meta">
+                      {foto.nombre_autor && (
+                        <span className="lio-reels-autor">{foto.nombre_autor}</span>
+                      )}
+                      <span className="lio-reels-fecha">
+                        {new Date(foto.created_at).toLocaleDateString("es-ES", { day: "numeric", month: "short" })}
+                        {" · "}
+                        {new Date(foto.created_at).toLocaleTimeString("es-ES", { hour: "2-digit", minute: "2-digit" })}
+                      </span>
+                    </div>
+                  </div>
+                </div>
+              );
+            })}
+          </div>
+          <style>{reelsStyles}</style>
+        </div>
+      )}
+    </>
   );
 }
 
@@ -615,6 +737,158 @@ const gridResponsive = `
   .lio-photo-grid .foto-card:hover {
     box-shadow: 0 0 0 1px var(--accent), 0 0 24px 4px color-mix(in srgb, var(--accent) 30%, transparent);
     z-index: 1;
+  }
+  /* Botón del feed inmersivo: solo visible en móvil. */
+  .lio-reels-trigger {
+    display: none;
+  }
+  @media (max-width: 900px) {
+    .lio-reels-trigger {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      gap: 8px;
+      width: 100%;
+      margin-bottom: 12px;
+      padding: 12px 16px;
+      background: color-mix(in srgb, var(--accent) 8%, transparent);
+      color: color-mix(in srgb, var(--accent) 85%, var(--text));
+      border: 1px solid color-mix(in srgb, var(--accent) 30%, transparent);
+      border-radius: 999px;
+      font-family: var(--font-mono);
+      font-size: 0.68rem;
+      font-weight: 500;
+      letter-spacing: 0.12em;
+      text-transform: uppercase;
+      cursor: pointer;
+      transition: background 0.2s ease, border-color 0.2s ease;
+    }
+    .lio-reels-trigger:active {
+      background: color-mix(in srgb, var(--accent) 16%, transparent);
+      border-color: color-mix(in srgb, var(--accent) 50%, transparent);
+    }
+  }
+`;
+
+// Estilos del overlay "reels" (scroll vertical a pantalla completa).
+const reelsStyles = `
+  .lio-reels {
+    position: fixed;
+    inset: 0;
+    z-index: 9994;
+    background: #000;
+  }
+  .lio-reels-close {
+    position: absolute;
+    top: max(14px, env(safe-area-inset-top));
+    right: 14px;
+    z-index: 2;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 42px;
+    height: 42px;
+    border-radius: 999px;
+    border: 1px solid var(--border);
+    background: rgba(8, 8, 16, 0.55);
+    backdrop-filter: blur(6px);
+    color: #fff;
+    cursor: pointer;
+  }
+  .lio-reels-track {
+    height: 100%;
+    overflow-y: scroll;
+    scroll-snap-type: y mandatory;
+    -webkit-overflow-scrolling: touch;
+    scrollbar-width: none;
+  }
+  .lio-reels-track::-webkit-scrollbar { display: none; }
+  .lio-reels-slide {
+    position: relative;
+    height: 100%;
+    width: 100%;
+    scroll-snap-align: start;
+    scroll-snap-stop: always;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    overflow: hidden;
+  }
+  .lio-reels-img {
+    width: 100%;
+    height: 100%;
+    object-fit: contain;
+    background: #000;
+    user-select: none;
+    -webkit-user-select: none;
+    touch-action: manipulation;
+  }
+  .lio-reels-actions {
+    position: absolute;
+    right: 14px;
+    bottom: calc(28px + env(safe-area-inset-bottom));
+    z-index: 2;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 22px;
+  }
+  .lio-reels-action {
+    display: inline-flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 6px;
+    background: transparent;
+    border: none;
+    color: #fff;
+    cursor: pointer;
+    font-family: var(--font-mono);
+    font-size: 0.62rem;
+    letter-spacing: 0.05em;
+    filter: drop-shadow(0 2px 8px rgba(0, 0, 0, 0.6));
+  }
+  .lio-reels-action:disabled { cursor: default; }
+  .lio-reels-info {
+    position: absolute;
+    left: 16px;
+    right: 78px;
+    bottom: calc(28px + env(safe-area-inset-bottom));
+    z-index: 2;
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    filter: drop-shadow(0 2px 10px rgba(0, 0, 0, 0.7));
+  }
+  .lio-reels-avatar {
+    flex-shrink: 0;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 36px;
+    height: 36px;
+    border-radius: 999px;
+    background: linear-gradient(135deg, var(--accent), var(--accent3));
+    color: var(--bg);
+    font-family: var(--font-display);
+    font-size: 1rem;
+    border: 1.5px solid rgba(255, 255, 255, 0.25);
+  }
+  .lio-reels-meta {
+    display: flex;
+    flex-direction: column;
+    line-height: 1.2;
+    min-width: 0;
+  }
+  .lio-reels-autor {
+    font-family: var(--font-mono);
+    font-size: 0.8rem;
+    font-weight: 700;
+    color: #fff;
+  }
+  .lio-reels-fecha {
+    font-family: var(--font-mono);
+    font-size: 0.62rem;
+    color: rgba(255, 255, 255, 0.7);
   }
 `;
 

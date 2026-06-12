@@ -11,7 +11,7 @@ import vercel from '@astrojs/vercel';
 export default defineConfig({
   // Dominio público del sitio. Necesario para URLs canónicas, Open Graph y sitemap.
   // Cámbialo si el deploy de Vercel usa otro subdominio.
-  site: 'https://pub-lio.vercel.app',
+  site: 'https://liopub.com',
   output: 'server',
   integrations: [
     react(),
