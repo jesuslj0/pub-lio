@@ -1,6 +1,7 @@
 import type { APIRoute } from "astro";
 import { supabaseAdmin } from "../../../lib/supabaseAdmin";
 import { isAdmin } from "../../../lib/adminAuth";
+import { deleteFromCloudinary } from "../../../lib/cloudinaryAdmin";
 
 export const prerender = false;
 
@@ -108,11 +109,19 @@ export const DELETE: APIRoute = async ({ request, cookies }) => {
       return jsonResponse({ success: false, error: "Falta el id" }, 400);
     }
 
+    const { data: premio } = await supabaseAdmin
+      .from("premios")
+      .select("imagen_url")
+      .eq("id", id)
+      .single();
+
     const { error } = await supabaseAdmin
       .from("premios")
       .delete()
       .eq("id", id);
     if (error) throw error;
+
+    await deleteFromCloudinary(premio?.imagen_url);
 
     return jsonResponse({ success: true });
   } catch (err) {

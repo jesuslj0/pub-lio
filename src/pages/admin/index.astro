@@ -3,6 +3,7 @@ import "../../styles/global.css";
 import { supabaseAdmin } from "../../lib/supabaseAdmin";
 import { getCurrentWeek } from "../../lib/supabase";
 import { isAdmin } from "../../lib/adminAuth";
+import { Trash2 } from "@lucide/astro";
 import type { Foto, Cartel, Premio } from "../../lib/database.types";
 
 export const prerender = false;
@@ -404,25 +405,64 @@ const fmt = (iso: string) =>
             )}
             <div class="hist-grid">
               {historialFotos.map((foto) => (
-                <a
-                  class="hist-foto"
-                  href={foto.cloudinary_url}
-                  target="_blank"
-                  rel="noopener"
-                >
-                  <img src={foto.cloudinary_url} alt="foto" loading="lazy" />
-                  <div class="hist-foto-meta">
-                    <span class:list={["estado", foto.estado]}>{foto.estado}</span>
-                    <span class="muted small">{foto.votos_count} ★</span>
+                <div class="hist-foto" data-foto-id={foto.id}>
+                  <button
+                    type="button"
+                    class="hist-foto-del"
+                    data-accion="borrar-foto"
+                    aria-label="Borrar foto"
+                    title="Borrar foto"
+                  >
+                    <Trash2 size={15} stroke-width={1.5} />
+                  </button>
+                  <a
+                    class="hist-foto-link"
+                    href={foto.cloudinary_url}
+                    target="_blank"
+                    rel="noopener"
+                  >
+                    <img src={foto.cloudinary_url} alt="foto" loading="lazy" />
+                    <div class="hist-foto-meta">
+                      <span class:list={["estado", foto.estado]}>{foto.estado}</span>
+                      <span class="muted small">{foto.votos_count} ★</span>
+                    </div>
+                    <span class="muted small hist-foto-sub">
+                      {foto.nombre_autor ?? "Anónimo"} · {foto.semana}
+                      {foto.ganadora ? " · 🏆" : ""}
+                    </span>
+                  </a>
+                  <div class="hist-foto-mod">
+                    {foto.estado !== "aprobada" && (
+                      <button class="btn btn-approve btn-sm" data-accion="aprobar">
+                        Aprobar
+                      </button>
+                    )}
+                    {foto.estado !== "rechazada" && (
+                      <button class="btn btn-reject btn-sm" data-accion="rechazar">
+                        Rechazar
+                      </button>
+                    )}
                   </div>
-                  <span class="muted small hist-foto-sub">
-                    {foto.nombre_autor ?? "Anónimo"} · {foto.semana}
-                    {foto.ganadora ? " · 🏆" : ""}
-                  </span>
-                </a>
+                </div>
               ))}
             </div>
           </section>
+
+          {/* Modal de confirmación reutilizable */}
+          <div id="del-modal" class="modal-overlay" hidden>
+            <div class="modal-box" role="dialog" aria-modal="true">
+              <h3 id="del-title">Confirmar</h3>
+              <p class="muted" id="del-text">¿Seguro que quieres continuar?</p>
+              <div class="modal-actions">
+                <button type="button" id="del-cancel" class="btn btn-ghost">
+                  Cancelar
+                </button>
+                <button type="button" id="del-confirm" class="btn btn-reject">
+                  Confirmar
+                </button>
+              </div>
+            </div>
+          </div>
         </main>
       )
     }
@@ -716,34 +756,170 @@ const fmt = (iso: string) =>
             const id = row.getAttribute("data-id");
             const endpoint =
               tipo === "premio" ? "/api/admin/premio" : "/api/admin/cartel";
+            const nombre = tipo === "premio" ? "premio" : "cartel";
+            // Ejecuta activar/eliminar contra el endpoint correspondiente.
+            async function ejecutar(accion) {
+              row.querySelectorAll(".btn").forEach((b) => (b.disabled = true));
+              try {
+                const res = await fetch(endpoint, {
+                  method: accion === "eliminar" ? "DELETE" : "PATCH",
+                  headers: { "Content-Type": "application/json" },
+                  body: JSON.stringify({ id }),
+                });
+                const data = await res.json();
+                if (data.success) {
+                  location.reload();
+                  return true;
+                }
+                alert("Error: " + (data.error || "no se pudo procesar"));
+                row.querySelectorAll(".btn").forEach((b) => (b.disabled = false));
+                return false;
+              } catch {
+                alert("Error de red");
+                row.querySelectorAll(".btn").forEach((b) => (b.disabled = false));
+                return false;
+              }
+            }
             row.querySelectorAll(".btn").forEach((btn) => {
+              btn.addEventListener("click", () => {
+                const accion = btn.getAttribute("data-accion");
+                if (accion === "eliminar") {
+                  pedirConfirmacion({
+                    titulo: "Eliminar " + nombre,
+                    texto:
+                      "Esta acción elimina el " +
+                      nombre +
+                      " definitivamente (también su imagen en Cloudinary) y no se puede deshacer. ¿Continuar?",
+                    confirmar: "Eliminar definitivamente",
+                    accion: () => ejecutar("eliminar"),
+                  });
+                } else {
+                  ejecutar(accion);
+                }
+              });
+            });
+          });
+
+          // ─── Modal de confirmación reutilizable ───
+          const delModal = document.getElementById("del-modal");
+          const delTitle = document.getElementById("del-title");
+          const delText = document.getElementById("del-text");
+          const delConfirm = document.getElementById("del-confirm");
+          const delCancel = document.getElementById("del-cancel");
+          let onConfirm = null; // callback async en espera de confirmación
+          const confirmLabelDefault = "Confirmar";
+
+          function cerrarModal() {
+            delModal.hidden = true;
+            onConfirm = null;
+            delConfirm.disabled = false;
+            delConfirm.textContent = confirmLabelDefault;
+          }
+
+          // Abre el modal con textos a medida y guarda el callback a ejecutar.
+          function pedirConfirmacion({ titulo, texto, confirmar, accion }) {
+            delTitle.textContent = titulo;
+            delText.textContent = texto;
+            delConfirm.textContent = confirmar || confirmLabelDefault;
+            delConfirm.dataset.label = confirmar || confirmLabelDefault;
+            onConfirm = accion;
+            delModal.hidden = false;
+          }
+
+          delCancel?.addEventListener("click", cerrarModal);
+          delModal?.addEventListener("click", (e) => {
+            if (e.target === delModal) cerrarModal();
+          });
+
+          delConfirm?.addEventListener("click", async () => {
+            if (!onConfirm) return;
+            const label = delConfirm.dataset.label || confirmLabelDefault;
+            delConfirm.disabled = true;
+            delConfirm.textContent = "Procesando...";
+            try {
+              const ok = await onConfirm();
+              if (ok) cerrarModal();
+              else {
+                delConfirm.disabled = false;
+                delConfirm.textContent = label;
+              }
+            } catch {
+              alert("Error de red");
+              delConfirm.disabled = false;
+              delConfirm.textContent = label;
+            }
+          });
+
+          // ─── Borrado definitivo de fotos ───
+          document
+            .querySelectorAll('.hist-foto-del[data-accion="borrar-foto"]')
+            .forEach((btn) => {
+              btn.addEventListener("click", () => {
+                const tarjeta = btn.closest(".hist-foto");
+                const fotoId = tarjeta.getAttribute("data-foto-id");
+                pedirConfirmacion({
+                  titulo: "Borrar foto",
+                  texto:
+                    "Esta acción elimina la foto definitivamente (también de Cloudinary) y no se puede deshacer. ¿Continuar?",
+                  confirmar: "Borrar definitivamente",
+                  accion: async () => {
+                    const res = await fetch("/api/admin/delete-photo", {
+                      method: "DELETE",
+                      headers: { "Content-Type": "application/json" },
+                      body: JSON.stringify({ fotoId }),
+                    });
+                    const data = await res.json();
+                    if (data.success) {
+                      tarjeta.remove();
+                      return true;
+                    }
+                    alert("Error: " + (data.error || "no se pudo borrar"));
+                    return false;
+                  },
+                });
+              });
+            });
+
+          // ─── Re-moderar fotos desde el historial (aprobar / rechazar) ───
+          document.querySelectorAll(".hist-foto-mod").forEach((cont) => {
+            const tarjeta = cont.closest(".hist-foto");
+            const fotoId = tarjeta.getAttribute("data-foto-id");
+            const estadoEl = tarjeta.querySelector(".estado");
+            cont.querySelectorAll(".btn").forEach((btn) => {
               btn.addEventListener("click", async () => {
                 const accion = btn.getAttribute("data-accion");
-                if (
-                  accion === "eliminar" &&
-                  !confirm("¿Eliminar definitivamente este elemento?")
-                ) {
-                  return;
-                }
-                row.querySelectorAll(".btn").forEach((b) => (b.disabled = true));
+                cont.querySelectorAll(".btn").forEach((b) => (b.disabled = true));
                 try {
-                  const res = await fetch(endpoint, {
-                    method: accion === "eliminar" ? "DELETE" : "PATCH",
+                  const res = await fetch("/api/admin/moderate", {
+                    method: "POST",
                     headers: { "Content-Type": "application/json" },
-                    body: JSON.stringify({ id }),
+                    body: JSON.stringify({ fotoId, accion }),
                   });
                   const data = await res.json();
                   if (data.success) {
-                    location.reload();
+                    const nuevoEstado =
+                      accion === "aprobar" ? "aprobada" : "rechazada";
+                    if (estadoEl) {
+                      estadoEl.textContent = nuevoEstado;
+                      estadoEl.className = "estado " + nuevoEstado;
+                    }
+                    // Muestra solo la acción contraria a la actual.
+                    cont.querySelectorAll(".btn").forEach((b) => {
+                      const a = b.getAttribute("data-accion");
+                      b.hidden =
+                        (nuevoEstado === "aprobada" && a === "aprobar") ||
+                        (nuevoEstado === "rechazada" && a === "rechazar");
+                      b.disabled = false;
+                    });
                   } else {
                     alert("Error: " + (data.error || "no se pudo procesar"));
-                    row
+                    cont
                       .querySelectorAll(".btn")
                       .forEach((b) => (b.disabled = false));
                   }
                 } catch {
                   alert("Error de red");
-                  row
+                  cont
                     .querySelectorAll(".btn")
                     .forEach((b) => (b.disabled = false));
                 }
@@ -930,14 +1106,41 @@ const fmt = (iso: string) =>
         gap: 10px;
       }
       .hist-foto {
+        position: relative;
+        background: var(--surface);
+        border: 1px solid var(--border);
+        padding: 8px;
+      }
+      .hist-foto-link {
         display: flex;
         flex-direction: column;
         gap: 6px;
         text-decoration: none;
         color: var(--text);
-        background: var(--surface);
+      }
+      .hist-foto-del {
+        position: absolute;
+        top: 12px;
+        right: 12px;
+        z-index: 2;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        width: 30px;
+        height: 30px;
+        padding: 0;
         border: 1px solid var(--border);
-        padding: 8px;
+        background: rgba(8, 8, 16, 0.78);
+        color: var(--red);
+        cursor: pointer;
+        backdrop-filter: blur(2px);
+        transition:
+          background 0.15s ease,
+          color 0.15s ease;
+      }
+      .hist-foto-del:hover {
+        background: var(--red);
+        color: #fff;
       }
       .hist-foto img {
         width: 100%;
@@ -955,6 +1158,19 @@ const fmt = (iso: string) =>
         white-space: nowrap;
         overflow: hidden;
         text-overflow: ellipsis;
+      }
+      .hist-foto-mod {
+        display: flex;
+        gap: 6px;
+        margin-top: 8px;
+      }
+      .hist-foto-mod .btn[hidden] {
+        display: none;
+      }
+      .btn-sm {
+        flex: 1;
+        padding: 6px 10px;
+        font-size: 0.72rem;
       }
       .estado {
         font-size: 0.65rem;
@@ -1058,6 +1274,40 @@ const fmt = (iso: string) =>
       }
       .msg.err {
         color: var(--red);
+      }
+      /* Modal de confirmación */
+      .modal-overlay {
+        position: fixed;
+        inset: 0;
+        z-index: 50;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        padding: 24px;
+        background: rgba(4, 4, 10, 0.72);
+        backdrop-filter: blur(3px);
+      }
+      .modal-overlay[hidden] {
+        display: none;
+      }
+      .modal-box {
+        width: 100%;
+        max-width: 400px;
+        display: flex;
+        flex-direction: column;
+        gap: 12px;
+        background: var(--surface);
+        border: 1px solid var(--border);
+        padding: 24px;
+      }
+      .modal-box h3 {
+        font-size: 1.05rem;
+      }
+      .modal-actions {
+        display: flex;
+        justify-content: flex-end;
+        gap: 10px;
+        margin-top: 8px;
       }
       @media (max-width: 600px) {
         .foto-row {

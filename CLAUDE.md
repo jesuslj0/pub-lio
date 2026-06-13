@@ -57,12 +57,20 @@ PUBLIC_SUPABASE_ANON_KEY
 SUPABASE_SERVICE_ROLE_KEY
 PUBLIC_CLOUDINARY_CLOUD_NAME
 PUBLIC_CLOUDINARY_UPLOAD_PRESET
+CLOUDINARY_API_KEY
+CLOUDINARY_API_SECRET
 ADMIN_SECRET
 ```
 
 Las que empiezan por `PUBLIC_` son accesibles en cliente; el resto **solo en servidor**
-(nunca exponer `SUPABASE_SERVICE_ROLE_KEY` ni `ADMIN_SECRET` en componentes de cliente).
-Acceder siempre con `import.meta.env.X`.
+(nunca exponer `SUPABASE_SERVICE_ROLE_KEY`, `CLOUDINARY_API_SECRET` ni `ADMIN_SECRET`
+en componentes de cliente). Acceder siempre con `import.meta.env.X`.
+
+`CLOUDINARY_API_KEY` y `CLOUDINARY_API_SECRET` (Cloudinary → *Settings → API Keys*)
+se usan para el **borrado firmado** de archivos en Cloudinary (`src/lib/cloudinaryAdmin.ts`),
+invocado al eliminar fotos, carteles y premios desde el panel de admin. Si faltan, el
+borrado del registro en la base de datos sigue funcionando pero el archivo queda
+huérfano en Cloudinary (se avisa en logs).
 
 ## Sistema de diseño (tokens)
 

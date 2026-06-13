@@ -115,6 +115,10 @@ export interface Database {
         Args: { foto_id: string };
         Returns: number;
       };
+      decrementar_voto: {
+        Args: { foto_id: string };
+        Returns: number;
+      };
     };
     Enums: Record<never, never>;
     CompositeTypes: Record<never, never>;

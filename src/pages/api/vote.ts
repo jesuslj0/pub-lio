@@ -45,6 +45,51 @@ export const POST: APIRoute = async ({ request }) => {
   }
 };
 
+// Quitar un voto/like previamente emitido por este fingerprint.
+export const DELETE: APIRoute = async ({ request }) => {
+  try {
+    const { fotoId, fingerprint } = (await request.json()) as {
+      fotoId?: string;
+      fingerprint?: string;
+    };
+
+    if (!fotoId || !fingerprint) {
+      return jsonResponse(
+        { success: false, reason: "Faltan datos obligatorios" },
+        400,
+      );
+    }
+
+    // Borra el voto de este fingerprint sobre la foto (si existe).
+    const { data: borrados, error: deleteError } = await supabaseAdmin
+      .from("votos")
+      .delete()
+      .eq("foto_id", fotoId)
+      .eq("fingerprint", fingerprint)
+      .select("id");
+
+    if (deleteError) throw deleteError;
+
+    // Si no había voto, no tocamos el contador.
+    if (!borrados || borrados.length === 0) {
+      return jsonResponse({ success: false, reason: "No había voto" }, 409);
+    }
+
+    // Decrementa el contador de forma atómica (no baja de 0).
+    const { data: newCount, error: rpcError } = await supabaseAdmin.rpc(
+      "decrementar_voto",
+      { foto_id: fotoId },
+    );
+
+    if (rpcError) throw rpcError;
+
+    return jsonResponse({ success: true, newCount: newCount ?? undefined });
+  } catch (err) {
+    console.error("[vote DELETE]", err);
+    return jsonResponse({ success: false, reason: "Error interno" }, 500);
+  }
+};
+
 function jsonResponse(body: unknown, status = 200): Response {
   return new Response(JSON.stringify(body), {
     status,

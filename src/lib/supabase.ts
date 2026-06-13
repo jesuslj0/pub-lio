@@ -36,8 +36,12 @@ function partesEnMadrid(date: Date): { year: number; month: number; day: number 
 }
 
 /**
- * Devuelve la semana ISO 8601 actual con formato `AAAA-Www`, ej: `2025-W23`.
- * Las semanas ISO empiezan en lunes; la semana 1 es la que contiene el primer jueves del año.
+ * Devuelve la semana de concurso actual con formato `AAAA-Www`, ej: `2025-W23`.
+ *
+ * La semana de concurso **empieza los jueves** (el plazo para subir fotos del
+ * finde anterior acaba ese día). Para reutilizar el cálculo ISO estándar
+ * (semanas lunes→domingo) desplazamos la fecha 3 días hacia atrás: así el bloque
+ * jueves→miércoles se agrupa igual que un bloque lunes→domingo desplazado.
  * El "día actual" se calcula en `Europe/Madrid` para que prod (UTC) y local coincidan.
  */
 export function getCurrentWeek(date: Date = new Date()): string {
@@ -45,6 +49,8 @@ export function getCurrentWeek(date: Date = new Date()): string {
   // sustos de zona horaria.
   const { year, month, day } = partesEnMadrid(date);
   const target = new Date(Date.UTC(year, month - 1, day));
+  // Desplaza 3 días atrás para que la semana arranque el jueves (jueves → lunes).
+  target.setUTCDate(target.getUTCDate() - 3);
   // getUTCDay(): domingo=0 … sábado=6 → lo pasamos a lunes=1 … domingo=7.
   const dayNum = target.getUTCDay() || 7;
   // Movemos al jueves de la semana actual.
@@ -57,8 +63,9 @@ export function getCurrentWeek(date: Date = new Date()): string {
 }
 
 /**
- * Dado un identificador de semana ISO (`AAAA-Www`) devuelve el rango de fechas
- * [inicio (lunes 00:00 UTC), fin (domingo 23:59:59.999 UTC)].
+ * Dado un identificador de semana de concurso (`AAAA-Www`) devuelve el rango de
+ * fechas [inicio (jueves 00:00 UTC), fin (miércoles siguiente 23:59:59.999 UTC)].
+ * Coherente con `getCurrentWeek`: las semanas empiezan en jueves.
  */
 export function getWeekRange(semana: string): { inicio: Date; fin: Date } {
   const match = /^(\d{4})-W(\d{2})$/.exec(semana);
@@ -77,6 +84,8 @@ export function getWeekRange(semana: string): { inicio: Date; fin: Date } {
 
   const inicio = new Date(week1Monday);
   inicio.setUTCDate(week1Monday.getUTCDate() + (week - 1) * 7);
+  // El cálculo ISO da el lunes; la semana de concurso empieza el jueves (+3 días).
+  inicio.setUTCDate(inicio.getUTCDate() + 3);
 
   const fin = new Date(inicio);
   fin.setUTCDate(inicio.getUTCDate() + 6);

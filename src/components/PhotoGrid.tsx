@@ -141,13 +141,15 @@ export default function PhotoGrid({
     };
   }, [semana]);
 
+  // Vota o, si ya se había votado, quita el voto (toggle).
   const handleVote = async (fotoId: string) => {
-    if (localStorage.getItem(`voted_${fotoId}`) || voting[fotoId]) return;
+    if (voting[fotoId]) return;
+    const yaVotada = localStorage.getItem(`voted_${fotoId}`) !== null;
     setVoting((v) => ({ ...v, [fotoId]: true }));
     try {
       const fingerprint = await getFingerprint();
       const res = await fetch("/api/vote", {
-        method: "POST",
+        method: yaVotada ? "DELETE" : "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ fotoId, fingerprint }),
       });
@@ -157,9 +159,11 @@ export default function PhotoGrid({
         reason?: string;
       };
 
+      // 409 = estado ya coherente con la acción (ya votado / no había voto):
+      // sincronizamos el flag local igualmente.
       if (data.success || res.status === 409) {
-        // Marcar como votado tanto si fue exitoso como si ya había votado.
-        localStorage.setItem(`voted_${fotoId}`, "1");
+        if (yaVotada) localStorage.removeItem(`voted_${fotoId}`);
+        else localStorage.setItem(`voted_${fotoId}`, "1");
         if (data.success && typeof data.newCount === "number") {
           setFotos((prev) =>
             prev
@@ -471,7 +475,8 @@ export default function PhotoGrid({
                     ...(yaVotada ? styles.voteBtnDone : {}),
                   }}
                   onClick={() => handleVote(foto.id)}
-                  disabled={yaVotada || voting[foto.id]}
+                  disabled={voting[foto.id]}
+                  title={yaVotada ? "Quitar voto" : "Votar"}
                 >
                   <Heart size={13} strokeWidth={2} fill={yaVotada ? "currentColor" : "none"} />
                   {yaVotada ? "Votado" : "Votar"}
@@ -584,7 +589,7 @@ export default function PhotoGrid({
         >
           <div style={styles.shareSheet} onClick={(e) => e.stopPropagation()}>
             <div style={styles.shareHead}>
-              <span style={styles.shareTitle}>Compartir</span>
+              {/* <span style={styles.shareTitle}>Compartir</span> */}
               <button
                 style={styles.shareClose}
                 onClick={() => setShareTarget(null)}
@@ -684,8 +689,8 @@ export default function PhotoGrid({
                       type="button"
                       className="lio-reels-action"
                       onClick={() => handleVote(foto.id)}
-                      disabled={yaVotada || voting[foto.id]}
-                      aria-label={yaVotada ? "Votado" : "Votar"}
+                      disabled={voting[foto.id]}
+                      aria-label={yaVotada ? "Quitar voto" : "Votar"}
                     >
                       <Heart
                         size={30}
@@ -702,7 +707,6 @@ export default function PhotoGrid({
                       aria-label="Compartir"
                     >
                       <Share2 size={28} strokeWidth={2} />
-                      <span>Compartir</span>
                     </button>
                   </div>
 
@@ -1025,9 +1029,9 @@ const styles: Record<string, CSSProperties> = {
   },
   voteBtn: {
     pointerEvents: "auto",
-    background: "var(--accent)",
-    color: "var(--bg)",
-    border: "none",
+    background: "transparent",
+    color: "var(--accent)",
+    border: "1px solid var(--accent)",
     padding: "6px 12px",
     fontFamily: "var(--font-mono)",
     fontSize: "0.65rem",
@@ -1042,9 +1046,9 @@ const styles: Record<string, CSSProperties> = {
     lineHeight: 1,
   },
   voteBtnDone: {
-    background: "var(--accent2)",
-    color: "#fff",
-    cursor: "default",
+    background: "transparent",
+    color: "var(--accent2)",
+    border: "1px solid var(--accent2)",
   },
   count: {
     fontFamily: "var(--font-mono)",
