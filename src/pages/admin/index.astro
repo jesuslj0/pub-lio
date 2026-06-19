@@ -116,7 +116,7 @@ const fmt = (iso: string) =>
               <span class="tag">Lío El Bonillo · {semana}</span>
             </div>
             <form method="POST" action="/api/admin/logout">
-              <button type="submit" class="btn btn-ghost">Cerrar sesión</button>
+              <button type="submit" class="btn btn-ghost btn-logout">Cerrar sesión</button>
             </form>
           </header>
 
@@ -188,15 +188,20 @@ const fmt = (iso: string) =>
           {/* C) CARTELES */}
           <section>
             <div class="section-head">
-              <h2 id="cartel-titulo">Nuevo cartel</h2>
-              <button type="button" id="cartel-cancel" class="btn btn-ghost" hidden>
-                Cancelar edición
-              </button>
+              <h2>Carteles</h2>
+              <button type="button" id="cartel-nuevo-btn" class="btn btn-primary">+ Nuevo cartel</button>
             </div>
             <p class="muted small">
               Puedes mostrar varios carteles a la vez (p. ej. los 2-3 de un finde).
               Marca cuáles se muestran desde el historial de abajo.
             </p>
+            <div id="cartel-form-wrap" hidden>
+            <div class="section-head form-subhead">
+              <h3 id="cartel-titulo">Nuevo cartel</h3>
+              <button type="button" id="cartel-cancel" class="btn btn-ghost">
+                Cancelar
+              </button>
+            </div>
             <form
               id="cartel-form"
               class="cartel-form"
@@ -252,6 +257,7 @@ const fmt = (iso: string) =>
               </button>
               <p id="cartel-msg" class="msg" />
             </form>
+            </div>
           </section>
 
           {/* C2) HISTORIAL DE CARTELES */}
@@ -565,6 +571,7 @@ const fmt = (iso: string) =>
           const previewVideo = document.getElementById("cartel-preview-video");
           const cartelMediaHint = document.getElementById("cartel-media-hint");
           const cartelCancel = document.getElementById("cartel-cancel");
+          const cartelFormWrap = document.getElementById("cartel-form-wrap");
           function limpiarPreviews() {
             preview.hidden = true;
             preview.removeAttribute("src");
@@ -669,7 +676,7 @@ const fmt = (iso: string) =>
             if (t) t.textContent = "Nuevo cartel";
             const submitBtn = form.querySelector('button[type="submit"]');
             if (submitBtn) submitBtn.textContent = "Guardar cartel";
-            if (cartelCancel) cartelCancel.hidden = true;
+            if (cartelFormWrap) cartelFormWrap.hidden = true;
             msg.textContent = "";
             msg.className = "msg";
           }
@@ -702,14 +709,21 @@ const fmt = (iso: string) =>
             if (t) t.textContent = "Editar cartel";
             const submitBtn = form.querySelector('button[type="submit"]');
             if (submitBtn) submitBtn.textContent = "Actualizar cartel";
-            if (cartelCancel) cartelCancel.hidden = false;
+            if (cartelFormWrap) cartelFormWrap.hidden = false;
             msg.textContent = "";
             msg.className = "msg";
-            form.scrollIntoView({ behavior: "smooth", block: "start" });
+            (cartelFormWrap || form).scrollIntoView({ behavior: "smooth", block: "start" });
             form.querySelector('[name="titulo"]')?.focus();
           }
 
           cartelCancel?.addEventListener("click", resetCartelForm);
+
+          document.getElementById("cartel-nuevo-btn")?.addEventListener("click", () => {
+            resetCartelForm();
+            if (cartelFormWrap) cartelFormWrap.hidden = false;
+            cartelFormWrap?.scrollIntoView({ behavior: "smooth", block: "start" });
+            form?.querySelector('[name="titulo"]')?.focus();
+          });
 
           // ─── Historial de carteles: editar / mostrar / quitar / eliminar ───
           document.querySelectorAll(".hist-cartel").forEach((row) => {
@@ -1045,10 +1059,8 @@ const fmt = (iso: string) =>
         --green: #3ad17a;
         --red: var(--color-accent3);
       }
-      * {
-        box-sizing: border-box;
-        margin: 0;
-        padding: 0;
+      html, body {
+        overflow-x: hidden;
       }
       body {
         background: var(--bg);
@@ -1056,6 +1068,7 @@ const fmt = (iso: string) =>
         font-family: system-ui, sans-serif;
         padding: 32px;
         line-height: 1.5;
+        overflow-x: hidden;
       }
       main {
         max-width: 760px;
@@ -1063,10 +1076,12 @@ const fmt = (iso: string) =>
         display: flex;
         flex-direction: column;
         gap: 48px;
+        padding: 0;
       }
       /* Login */
       .login-wrap {
         min-height: 80vh;
+        display: flex;
         justify-content: center;
         align-items: center;
       }
@@ -1111,14 +1126,26 @@ const fmt = (iso: string) =>
         align-items: center;
         gap: 10px;
       }
+      h3 {
+        font-size: 0.9rem;
+        font-weight: 600;
+        color: var(--muted);
+        text-transform: uppercase;
+        letter-spacing: 0.08em;
+      }
       .section-head {
         display: flex;
         align-items: center;
         justify-content: space-between;
         gap: 16px;
+        flex-wrap: wrap;
       }
       .section-head h2 {
         margin-bottom: 16px;
+      }
+      .form-subhead {
+        margin-bottom: 12px;
+        margin-top: 20px;
       }
       .count {
         background: var(--surface);
@@ -1319,6 +1346,12 @@ const fmt = (iso: string) =>
         border: 1px solid var(--border);
         color: var(--muted);
       }
+      .btn-logout {
+        padding: 6px 12px;
+        font-size: 0.7rem;
+        white-space: nowrap;
+        align-self: flex-start;
+      }
       .cartel-form {
         display: flex;
         flex-direction: column;
@@ -1413,12 +1446,60 @@ const fmt = (iso: string) =>
         gap: 10px;
         margin-top: 8px;
       }
-      @media (max-width: 600px) {
+      @media (max-width: 680px) {
+        body {
+          padding: 32px 20px;
+        }
+        main {
+          gap: 36px;
+        }
+        .head {
+          align-items: flex-start;
+        }
         .foto-row {
           flex-wrap: wrap;
+          max-width: 100%;
+          overflow: hidden;
+        }
+        .foto-info {
+          min-width: calc(100% - 80px);
+          overflow: hidden;
+        }
+        .foto-info strong,
+        .foto-info span {
+          display: block;
+          overflow: hidden;
+          text-overflow: ellipsis;
+          white-space: nowrap;
+        }
+        .foto-actions {
+          width: 100%;
+          flex-wrap: wrap;
+        }
+        .foto-actions .btn {
+          flex: 1;
+          min-width: 80px;
+          text-align: center;
         }
         .row {
           flex-direction: column;
+          gap: 12px;
+        }
+        .modal-box {
+          padding: 24px 20px;
+        }
+        .modal-actions {
+          flex-direction: column-reverse;
+        }
+        .modal-actions .btn {
+          width: 100%;
+          text-align: center;
+        }
+        h1 {
+          font-size: 1.15rem;
+        }
+        .hist-grid {
+          grid-template-columns: repeat(auto-fill, minmax(100px, 1fr));
         }
       }
     </style>
