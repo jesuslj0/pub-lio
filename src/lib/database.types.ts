@@ -9,6 +9,7 @@ export type Foto = {
   id: string;
   cloudinary_url: string;
   nombre_autor: string | null;
+  instagram: string | null;
   fingerprint: string;
   ip: string | null;
   semana: string; // ej: '2025-W23'
@@ -56,6 +57,7 @@ export interface Database {
           id?: string;
           cloudinary_url: string;
           nombre_autor?: string | null;
+          instagram?: string | null;
           fingerprint: string;
           ip?: string | null;
           semana: string;

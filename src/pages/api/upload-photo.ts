@@ -11,11 +11,13 @@ export const POST: APIRoute = async ({ request, clientAddress }) => {
     const {
       cloudinaryUrl,
       nombreAutor,
+      instagram,
       fingerprint,
       ip,
     } = (await request.json()) as {
       cloudinaryUrl?: string;
       nombreAutor?: string;
+      instagram?: string | null;
       fingerprint?: string;
       ip?: string;
     };
@@ -57,6 +59,7 @@ export const POST: APIRoute = async ({ request, clientAddress }) => {
       .insert({
         cloudinary_url: cloudinaryUrl,
         nombre_autor: nombreAutor.trim().slice(0, 20),
+        instagram: instagram?.trim().replace(/^@+/, "").slice(0, 30) || null,
         fingerprint,
         ip: ip ?? clientAddress ?? null,
         semana,

@@ -84,20 +84,31 @@ const semanaPasada = getPreviousWeek();
       </div>
       <div class="upload-right">
         <ComoParticipar />
-        <div class="upload-uploader">
+        <div class="upload-uploader" id="subir-foto">
           <PhotoUploader client:load />
-          <p class="upload-aviso">
-            <ShieldCheck size={14} stroke-width={2} />
-            <span>
-              Cada imagen <span class="mark">pasa revisión</span> antes de
-              publicarse: puede validarse o no. No subas fotos ofensivas ni sin
-              consentimiento — una vez validadas serán
-              <span class="mark">públicas</span> para todo el que visite la web.
-              Las imágenes se usan <span class="mark">únicamente</span> para esta
-              galería y el concurso, no se ceden a terceros y se
-              <span class="mark">eliminan automáticamente</span> pasado un tiempo.
-            </span>
-          </p>
+          <div class="upload-avisos">
+            <p class="upload-aviso">
+              <ShieldCheck size={14} stroke-width={2} />
+              <span>
+                Cada imagen <span class="mark">pasa revisión</span> antes de
+                publicarse: puede validarse o no. No subas fotos ofensivas ni sin
+                consentimiento — una vez validadas serán
+                <span class="mark">públicas</span> para todo el que visite la web.
+                Las imágenes se usan <span class="mark">únicamente</span> para esta
+                galería y el concurso, no se ceden a terceros y se
+                <span class="mark">eliminan automáticamente</span> pasado un tiempo.
+              </span>
+            </p>
+            <p class="upload-aviso">
+              <UserCheck size={14} stroke-width={2} />
+              <span>
+                Si tu foto resulta <span class="mark">ganadora</span>, verificaremos
+                la autoría a través del Instagram indicado. Si no podemos
+                confirmarla o la cuenta no coincide con la foto, se
+                <span class="mark">reelegirá un nuevo ganador</span>.
+              </span>
+            </p>
+          </div>
         </div>
       </div>
     </div>
@@ -112,7 +123,7 @@ const semanaPasada = getPreviousWeek();
 
 <style>
   .cartel-wrap {
-    max-width: 860px;
+    max-width: 1100px;
     margin: 0 auto;
   }
   .premio-wrap {
@@ -226,12 +237,17 @@ const semanaPasada = getPreviousWeek();
     flex-wrap: wrap;
     gap: 20px;
   }
+  .upload-avisos {
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+    max-width: 440px;
+    width: 100%;
+  }
   .upload-aviso {
     display: flex;
     align-items: flex-start;
     gap: 10px;
-    max-width: 440px;
-    width: 100%;
     padding: 14px 16px;
     border: 1px solid var(--border);
     background: var(--bg2);

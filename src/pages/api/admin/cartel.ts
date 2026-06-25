@@ -40,18 +40,8 @@ export const POST: APIRoute = async ({ request, cookies }) => {
       );
     }
 
-    // Solo puede haber un cartel activo: desactiva el resto primero
-    // (excepto el que se está editando).
-    if (activo) {
-      let query = supabaseAdmin
-        .from("carteles")
-        .update({ activo: false })
-        .eq("activo", true);
-      if (id) query = query.neq("id", id);
-      const { error: deactivateError } = await query;
-      if (deactivateError) throw deactivateError;
-    }
-
+    // Pueden mostrarse varios carteles a la vez (un finde con 2-3 carteles), así
+    // que NO se desactivan los demás: `activo` se aplica solo a este cartel.
     const datos = {
       titulo: titulo.trim(),
       subtitulo: subtitulo?.trim() || null,
@@ -75,27 +65,24 @@ export const POST: APIRoute = async ({ request, cookies }) => {
   }
 };
 
-// Activar un cartel existente (desactiva el resto).
+// Mostrar / ocultar un cartel (toggle de `activo`). No afecta a los demás:
+// pueden mostrarse varios carteles a la vez.
 export const PATCH: APIRoute = async ({ request, cookies }) => {
   try {
     if (!isAdmin(cookies)) {
       return jsonResponse({ success: false, error: "No autorizado" }, 401);
     }
-    const { id } = (await request.json()) as { id?: string };
+    const { id, activo } = (await request.json()) as {
+      id?: string;
+      activo?: boolean;
+    };
     if (!id) {
       return jsonResponse({ success: false, error: "Falta el id" }, 400);
     }
 
-    const { error: deactivateError } = await supabaseAdmin
-      .from("carteles")
-      .update({ activo: false })
-      .eq("activo", true)
-      .neq("id", id);
-    if (deactivateError) throw deactivateError;
-
     const { error } = await supabaseAdmin
       .from("carteles")
-      .update({ activo: true })
+      .update({ activo: Boolean(activo) })
       .eq("id", id);
     if (error) throw error;
 

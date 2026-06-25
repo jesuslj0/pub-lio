@@ -22,6 +22,7 @@ export default function PhotoUploader() {
   const [file, setFile] = useState<File | null>(null);
   const [previewUrl, setPreviewUrl] = useState<string>("");
   const [nombreAutor, setNombreAutor] = useState("");
+  const [instagram, setInstagram] = useState("");
   const [errorMsg, setErrorMsg] = useState("");
 
   const camaraRef = useRef<HTMLInputElement>(null);
@@ -40,6 +41,7 @@ export default function PhotoUploader() {
     setFile(null);
     setPreviewUrl("");
     setNombreAutor("");
+    setInstagram("");
     setErrorMsg("");
     setEstado("idle");
     if (camaraRef.current) camaraRef.current.value = "";
@@ -50,6 +52,10 @@ export default function PhotoUploader() {
     if (!file) return;
     if (nombreAutor.length < 3) {
       setErrorMsg("El nombre debe tener al menos 3 letras");
+      return;
+    }
+    if (!instagram.trim()) {
+      setErrorMsg("El Instagram es obligatorio para verificar autoría");
       return;
     }
     setEstado("uploading");
@@ -79,12 +85,15 @@ export default function PhotoUploader() {
       const cloudinaryUrl = await uploadToCloudinary(file);
 
       // 3. Registrar la foto en el servidor.
+      const instagramClean = instagram.trim().replace(/^@+/, "") || null;
+
       const uploadRes = await fetch("/api/upload-photo", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
           cloudinaryUrl,
           nombreAutor: nombreAutor.trim(),
+          instagram: instagramClean,
           fingerprint,
         }),
       });
@@ -162,15 +171,29 @@ export default function PhotoUploader() {
             required
             style={styles.textInput}
           />
+          <div style={styles.instagramWrapper}>
+            <span style={styles.instagramAt}>@</span>
+            <input
+              type="text"
+              value={instagram}
+              onChange={(e) => setInstagram(e.target.value)}
+              placeholder="tu_instagram"
+              maxLength={30}
+              style={styles.instagramInput}
+            />
+          </div>
+          <p style={styles.instagramHint}>
+            Necesario para verificar autoría si resultas ganador/a
+          </p>
           {errorMsg && <p style={styles.errorText}>{errorMsg}</p>}
           <div style={styles.buttonRow}>
             <button
               style={{
                 ...styles.primaryBtn,
-                ...(nombreAutor.trim() ? {} : styles.primaryBtnDisabled),
+                ...((nombreAutor.trim() && instagram.trim()) ? {} : styles.primaryBtnDisabled),
               }}
               onClick={handleConfirm}
-              disabled={!nombreAutor.trim()}
+              disabled={!nombreAutor.trim() || !instagram.trim()}
             >
               Confirmar
             </button>
@@ -349,5 +372,37 @@ const styles: Record<string, CSSProperties> = {
     borderTopColor: "var(--accent)",
     borderRadius: "50%",
     animation: "lio-spin 0.8s linear infinite",
+  },
+  instagramWrapper: {
+    display: "flex",
+    alignItems: "center",
+    background: "var(--bg)",
+    border: "1px solid var(--border)",
+    overflow: "hidden",
+  },
+  instagramAt: {
+    padding: "0 10px",
+    color: "var(--accent2)",
+    fontFamily: "var(--font-mono)",
+    fontSize: "0.85rem",
+    userSelect: "none",
+  },
+  instagramInput: {
+    flex: 1,
+    background: "transparent",
+    color: "var(--text)",
+    border: "none",
+    padding: "12px 14px 12px 0",
+    fontFamily: "var(--font-mono)",
+    fontSize: "0.8rem",
+    outline: "none",
+    width: "100%",
+  },
+  instagramHint: {
+    color: "var(--muted)",
+    fontSize: "0.65rem",
+    letterSpacing: "0.08em",
+    fontFamily: "var(--font-mono)",
+    marginTop: "-8px",
   },
 };
