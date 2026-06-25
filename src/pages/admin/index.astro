@@ -1,7 +1,7 @@
 ---
 import "../../styles/global.css";
 import { supabaseAdmin } from "../../lib/supabaseAdmin";
-import { getCurrentWeek } from "../../lib/supabase";
+import { getCurrentWeek, getPreviousWeek } from "../../lib/supabase";
 import { isAdmin } from "../../lib/adminAuth";
 import { Trash2 } from "@lucide/astro";
 import type { Foto, Cartel, Premio } from "../../lib/database.types";
@@ -19,6 +19,7 @@ const uploadPreset = import.meta.env.PUBLIC_CLOUDINARY_UPLOAD_PRESET;
 // ─── Datos (solo si está autenticado) ───
 let pendientes: Foto[] = [];
 let aprobadas: Foto[] = [];
+let topPasada: Foto[] = [];
 let cartelActivo: Cartel | null = null;
 let premioActivo: Premio | null = null;
 let carteles: Cartel[] = [];
@@ -26,10 +27,11 @@ let premios: Premio[] = [];
 let historialFotos: Foto[] = [];
 let loadError = false;
 const semana = getCurrentWeek();
+const semanaPasada = getPreviousWeek();
 
 if (authed) {
   try {
-    const [pend, aprob, cartelesRes, premiosRes, fotosRes] = await Promise.all([
+    const [pend, aprob, pasada, cartelesRes, premiosRes, fotosRes] = await Promise.all([
       supabaseAdmin
         .from("fotos")
         .select("*")
@@ -41,6 +43,13 @@ if (authed) {
         .eq("estado", "aprobada")
         .eq("semana", semana)
         .order("votos_count", { ascending: false }),
+      supabaseAdmin
+        .from("fotos")
+        .select("*")
+        .eq("estado", "aprobada")
+        .eq("semana", semanaPasada)
+        .order("votos_count", { ascending: false })
+        .limit(3),
       supabaseAdmin
         .from("carteles")
         .select("*")
@@ -57,11 +66,13 @@ if (authed) {
     ]);
     if (pend.error) throw pend.error;
     if (aprob.error) throw aprob.error;
+    if (pasada.error) throw pasada.error;
     if (cartelesRes.error) throw cartelesRes.error;
     if (premiosRes.error) throw premiosRes.error;
     if (fotosRes.error) throw fotosRes.error;
     pendientes = pend.data ?? [];
     aprobadas = aprob.data ?? [];
+    topPasada = pasada.data ?? [];
     carteles = cartelesRes.data ?? [];
     premios = premiosRes.data ?? [];
     historialFotos = fotosRes.data ?? [];
@@ -165,6 +176,39 @@ const fmt = (iso: string) =>
             )}
             <div class="foto-list">
               {aprobadas.map((foto) => (
+                <div
+                  class:list={["foto-row", "winner-row", { "is-winner": foto.ganadora }]}
+                  data-foto-id={foto.id}
+                >
+                  <img src={foto.cloudinary_url} alt="thumbnail" class="thumb" />
+                  <div class="foto-info">
+                    <strong>{foto.nombre_autor ?? "Anónimo"}</strong>
+                    <span class="muted">{foto.votos_count} votos</span>
+                    <span class="winner-flag">🏆 Ganadora</span>
+                  </div>
+                  <div class="foto-actions">
+                    <button
+                      class:list={["btn", "btn-winner", foto.ganadora ? "btn-ghost" : "btn-primary"]}
+                    >
+                      {foto.ganadora ? "Quitar ganadora" : "Marcar ganadora"}
+                    </button>
+                  </div>
+                </div>
+              ))}
+            </div>
+          </section>
+
+          {/* B2) TOP SEMANA PASADA — marcar ganadora */}
+          <section>
+            <h2>
+              Top semana pasada ({semanaPasada}){" "}
+              <span class="count">{topPasada.length}</span>
+            </h2>
+            {!loadError && topPasada.length === 0 && (
+              <p class="muted">No hay fotos aprobadas de la semana pasada.</p>
+            )}
+            <div class="foto-list">
+              {topPasada.map((foto) => (
                 <div
                   class:list={["foto-row", "winner-row", { "is-winner": foto.ganadora }]}
                   data-foto-id={foto.id}
@@ -525,8 +569,11 @@ const fmt = (iso: string) =>
                 const data = await res.json();
                 if (data.success) {
                   if (marcar) {
-                    // Solo una ganadora por semana: resetea el resto en la UI.
-                    document.querySelectorAll(".winner-row").forEach((r) => {
+                    // Solo una ganadora por semana: resetea el resto en la UI,
+                    // pero acotado a la sección de esta semana (hay dos bloques:
+                    // semana actual y semana pasada, cada uno con su ganadora).
+                    const ambito = row.closest("section") || document;
+                    ambito.querySelectorAll(".winner-row").forEach((r) => {
                       r.classList.remove("is-winner");
                       const b = r.querySelector(".btn-winner");
                       if (b) pintarBotonGanadora(b, false);

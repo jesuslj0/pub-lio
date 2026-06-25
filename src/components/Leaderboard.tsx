@@ -1,17 +1,29 @@
 import { useEffect, useState, type CSSProperties } from "react";
-import { Trophy, Heart, Crown, BarChart3 } from "lucide-react";
+import { Trophy, Heart, Crown, BarChart3, Medal } from "lucide-react";
 import { supabase, getCurrentWeek } from "../lib/supabase";
 import type { Foto } from "../lib/database.types";
 
+type Variante = "actual" | "resultados";
+
 interface LeaderboardProps {
   semana?: string;
+  /**
+   * "actual": clasificación en vivo de la semana en curso (estilo original).
+   * "resultados": podio cerrado de la semana pasada (estética diferenciada).
+   */
+  variante?: Variante;
 }
 
 const RANK_COLORS = ["var(--accent)", "var(--accent3)", "var(--accent2)"];
+// En la variante de resultados desplazamos el acento a cian/menta para que se
+// lea como algo "cerrado/histórico" y no se confunda con la votación en vivo.
+const RANK_COLORS_RESULTADOS = ["var(--accent3)", "var(--accent2)", "var(--muted)"];
 
 export default function Leaderboard({
   semana = getCurrentWeek(),
+  variante = "actual",
 }: LeaderboardProps) {
+  const esResultados = variante === "resultados";
   const [podio, setPodio] = useState<Foto[]>([]);
   const [ganadora, setGanadora] = useState<Foto | null>(null);
   const [loading, setLoading] = useState(true);
@@ -76,10 +88,118 @@ export default function Leaderboard({
   if (podio.length === 0) {
     return (
       <div style={styles.empty}>
-        <BarChart3 size={26} strokeWidth={1.5} color="var(--accent)" />
+        <BarChart3
+          size={26}
+          strokeWidth={1.5}
+          color={esResultados ? "var(--accent3)" : "var(--accent)"}
+        />
         <span style={styles.emptySub}>
-          Aún no hay votos esta semana · ¡sé el primero!
+          {esResultados
+            ? "Sin resultados de la semana anterior."
+            : "Aún no hay votos esta semana · ¡sé el primero!"}
         </span>
+      </div>
+    );
+  }
+
+  // ─── Variante "resultados": podio cerrado de la semana pasada ───
+  if (esResultados) {
+    // Puesto por votos (1º..3º). Si hay ganadora, se muestra destacada arriba y
+    // se excluye del podio pequeño para no duplicarla.
+    const restantesPodio = podio
+      .map((foto, i) => ({ foto, rank: i + 1 }))
+      .filter(({ foto }) => !(ganadora && ganadora.id === foto.id));
+
+    // Item de podio pequeño (2º/3º). Se reutiliza con y sin ganadora.
+    const podioItem = ({ foto, rank }: { foto: Foto; rank: number }) => (
+      <li key={foto.id} style={styles.podiumItem}>
+        <div style={styles.podiumThumbWrap}>
+          <img
+            src={foto.cloudinary_url}
+            alt={foto.nombre_autor ?? `Puesto ${rank}`}
+            style={styles.podiumThumb}
+            loading="lazy"
+          />
+          <span
+            style={{
+              ...styles.podiumRank,
+              color: RANK_COLORS_RESULTADOS[rank - 1] ?? "var(--muted)",
+            }}
+          >
+            {rank}º
+          </span>
+        </div>
+        <span style={styles.podiumName}>{foto.nombre_autor || "Anónimo"}</span>
+        <span style={styles.podiumVotes}>
+          <Heart size={12} strokeWidth={2} fill="var(--accent3)" style={iconStyle} />
+          {foto.votos_count}
+        </span>
+      </li>
+    );
+
+    const ganadoraCard = ganadora && (
+      <div className="lio-lb-result-winner" style={styles.winnerResult}>
+        <div className="lio-lb-result-img" style={styles.winnerImgWrapResult}>
+          <img
+            src={ganadora.cloudinary_url}
+            alt={ganadora.nombre_autor ?? "Foto ganadora"}
+            style={styles.img}
+            loading="lazy"
+          />
+          <span style={styles.crownResult}>
+            <Crown size={14} strokeWidth={2} style={iconStyle} />
+            Ganadora
+          </span>
+        </div>
+        <div style={styles.winnerContent}>
+          <span style={styles.winnerLabel}>Ganadora de la semana pasada</span>
+          <h3 style={styles.winnerName}>{ganadora.nombre_autor || "Anónimo"}</h3>
+          <span style={{ ...styles.winnerVotes, color: "var(--accent3)" }}>
+            <Heart size={16} strokeWidth={2} fill="var(--accent3)" style={iconStyle} />
+            {ganadora.votos_count} {ganadora.votos_count === 1 ? "voto" : "votos"}
+          </span>
+        </div>
+      </div>
+    );
+
+    return (
+      <div style={styles.wrap}>
+        <style>{responsive}</style>
+        <span style={{ ...styles.eyebrow, color: "var(--accent3)" }}>
+          <Medal size={13} strokeWidth={2} style={iconStyle} />
+          Resultados · Semana pasada
+        </span>
+
+        {ganadora ? (
+          // Con ganadora: a la izquierda (grande) y 2º/3º en fila a la derecha,
+          // más pequeñas. En móvil se apila en una sola columna.
+          <div className="lio-lb-resultados-row" style={styles.resultadosRow}>
+            <div style={styles.resultadosWinnerCol}>{ganadoraCard}</div>
+            {restantesPodio.length > 0 && (
+              <ol
+                className="lio-lb-podium"
+                style={{
+                  ...styles.podium,
+                  ...styles.podiumSide,
+                  gridTemplateColumns: `repeat(${restantesPodio.length}, 1fr)`,
+                }}
+              >
+                {restantesPodio.map(podioItem)}
+              </ol>
+            )}
+          </div>
+        ) : (
+          // Sin ganadora: el top-3 por igual, a lo ancho.
+          <ol
+            className="lio-lb-podium"
+            style={{
+              ...styles.podium,
+              gridTemplateColumns: `repeat(${restantesPodio.length}, 1fr)`,
+            }}
+          >
+            {restantesPodio.map(podioItem)}
+          </ol>
+        )}
       </div>
     );
   }
@@ -174,11 +294,23 @@ const iconStyle: CSSProperties = { flexShrink: 0 };
 
 const responsive = `
   @media (max-width: 600px) {
+    /* Variante "actual" */
     .lio-lb-winner { flex-direction: column !important; }
     .lio-lb-winner .lio-lb-winner-img {
       width: 100% !important;
       min-width: 0 !important;
       aspect-ratio: 16 / 10;
+    }
+    /* Variante "resultados": ganadora a pantalla completa, imagen más grande */
+    .lio-lb-resultados-row {
+      flex-direction: column !important;
+      align-items: stretch !important;
+    }
+    .lio-lb-result-winner { flex-direction: column !important; }
+    .lio-lb-result-img {
+      width: 100% !important;
+      min-width: 0 !important;
+      aspect-ratio: 4 / 5;
     }
   }
 `;
@@ -209,11 +341,46 @@ const styles: Record<string, CSSProperties> = {
     overflow: "hidden",
     minHeight: "200px",
   },
+  // Fila de resultados: ganadora grande a la izquierda, 2º/3º a la derecha.
+  resultadosRow: {
+    display: "flex",
+    gap: "16px",
+    alignItems: "flex-start",
+  },
+  resultadosWinnerCol: {
+    flex: "1.4 1 0",
+    minWidth: 0,
+    display: "flex",
+  },
+  podiumSide: {
+    flex: "1 1 0",
+    minWidth: 0,
+  },
+  // Ganadora destacada en la variante de resultados (acento cian, borde frío).
+  winnerResult: {
+    position: "relative",
+    width: "100%",
+    display: "flex",
+    flexDirection: "row",
+    background: "var(--surface)",
+    border: "1px solid color-mix(in srgb, var(--accent3) 35%, var(--border))",
+    overflow: "hidden",
+    minHeight: "200px",
+  },
   winnerImgWrap: {
     position: "relative",
     flexShrink: 0,
     width: "55%",
     minWidth: "200px",
+  },
+  // Imagen de la ganadora en resultados: proporción más vertical (3/4, como
+  // las fotos subidas) para que se vea a tamaño más real y no tan recortada.
+  winnerImgWrapResult: {
+    position: "relative",
+    flexShrink: 0,
+    width: "45%",
+    minWidth: "220px",
+    aspectRatio: "3 / 4",
   },
   img: {
     position: "absolute",
@@ -267,6 +434,81 @@ const styles: Record<string, CSSProperties> = {
     fontSize: "0.95rem",
     color: "var(--accent)",
     fontWeight: 700,
+  },
+  crownResult: {
+    position: "absolute",
+    top: "12px",
+    left: "12px",
+    display: "inline-flex",
+    alignItems: "center",
+    gap: "6px",
+    fontFamily: "var(--font-mono)",
+    fontSize: "0.6rem",
+    letterSpacing: "0.15em",
+    textTransform: "uppercase",
+    fontWeight: 700,
+    background: "var(--accent3)",
+    color: "var(--bg)",
+    padding: "5px 10px",
+  },
+  // --- Podio compacto horizontal (variante resultados) ---
+  podium: {
+    listStyle: "none",
+    margin: 0,
+    padding: 0,
+    display: "grid",
+    gridTemplateColumns: "repeat(3, 1fr)",
+    gap: "12px",
+  },
+  podiumItem: {
+    display: "flex",
+    flexDirection: "column",
+    alignItems: "center",
+    gap: "8px",
+    background: "var(--surface)",
+    border: "1px solid var(--border)",
+    padding: "12px 10px",
+    textAlign: "center",
+  },
+  podiumThumbWrap: {
+    position: "relative",
+    width: "100%",
+    aspectRatio: "1 / 1",
+  },
+  podiumThumb: {
+    width: "100%",
+    height: "100%",
+    objectFit: "cover",
+    border: "1px solid var(--border)",
+  },
+  podiumRank: {
+    position: "absolute",
+    bottom: "-6px",
+    left: "-6px",
+    fontFamily: "var(--font-display)",
+    fontSize: "1.5rem",
+    lineHeight: 1,
+    background: "var(--bg)",
+    border: "1px solid var(--border)",
+    padding: "2px 7px",
+  },
+  podiumName: {
+    fontFamily: "var(--font-body)",
+    fontSize: "0.82rem",
+    color: "var(--text)",
+    fontWeight: 500,
+    whiteSpace: "nowrap",
+    overflow: "hidden",
+    textOverflow: "ellipsis",
+    maxWidth: "100%",
+  },
+  podiumVotes: {
+    display: "inline-flex",
+    alignItems: "center",
+    gap: "5px",
+    fontFamily: "var(--font-mono)",
+    fontSize: "0.78rem",
+    color: "var(--accent3)",
   },
   // --- Lista podio ---
   list: {

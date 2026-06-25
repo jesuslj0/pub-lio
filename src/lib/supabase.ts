@@ -63,6 +63,16 @@ export function getCurrentWeek(date: Date = new Date()): string {
 }
 
 /**
+ * Devuelve la semana de concurso **anterior** a la de `date` (por defecto, la
+ * actual), con el mismo formato `AAAA-Www`. Como las semanas son bloques de 7
+ * días, basta con retroceder 7 días y reutilizar `getCurrentWeek`, que ya
+ * resuelve correctamente el cambio de año y la zona horaria.
+ */
+export function getPreviousWeek(date: Date = new Date()): string {
+  return getCurrentWeek(new Date(date.getTime() - 7 * 86400000));
+}
+
+/**
  * Dado un identificador de semana de concurso (`AAAA-Www`) devuelve el rango de
  * fechas [inicio (jueves 00:00 UTC), fin (miércoles siguiente 23:59:59.999 UTC)].
  * Coherente con `getCurrentWeek`: las semanas empiezan en jueves.

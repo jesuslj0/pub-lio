@@ -14,6 +14,11 @@ import InfoStrip from "../components/InfoStrip.astro";
 import ComoParticipar from "../components/ComoParticipar.astro";
 import Footer from "../components/Footer.astro";
 import { CalendarDays, Images, Gift, ListChecks, ShieldCheck } from "@lucide/astro";
+import { getPreviousWeek } from "../lib/supabase";
+
+// Semana de concurso recién cerrada: su podio se muestra como "anteriores
+// ganadores" hasta que la semana en curso genere el suyo (rota cada jueves).
+const semanaPasada = getPreviousWeek();
 ---
 
 <Base title="Lío Music Pub · El Bonillo (Albacete)">
@@ -47,6 +52,9 @@ import { CalendarDays, Images, Gift, ListChecks, ShieldCheck } from "@lucide/ast
   <section class="section" id="premio" style="padding-top: 0;">
     <p class="section-label"><Gift size={14} stroke-width={2} />· Premio</p>
     <h2 class="section-title">Premio<br /> semanal</h2>
+
+    <!-- Finde actual -->
+    <p class="premio-bloque-label">Finde actual</p>
     <div class="premio-wrap">
       <div class="premio-card-col">
         <PremioSemanal client:load />
@@ -54,6 +62,11 @@ import { CalendarDays, Images, Gift, ListChecks, ShieldCheck } from "@lucide/ast
       <div class="premio-lb-col">
         <Leaderboard client:load />
       </div>
+    </div>
+
+    <!-- Anteriores ganadores (semana pasada) -->
+    <div class="premio-pasada-wrap premio-pasada-wrap--gap">
+      <Leaderboard client:load semana={semanaPasada} variante="resultados" />
     </div>
   </section>
 
@@ -109,6 +122,25 @@ import { CalendarDays, Images, Gift, ListChecks, ShieldCheck } from "@lucide/ast
     grid-template-columns: 1fr 1fr;
     gap: 32px;
     align-items: start;
+  }
+  .premio-bloque-label {
+    max-width: 1140px;
+    margin: 0 auto 18px;
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    font-family: var(--font-mono);
+    font-size: 0.7rem;
+    letter-spacing: 0.2em;
+    text-transform: uppercase;
+    color: var(--accent);
+  }
+  .premio-pasada-wrap {
+    max-width: 1140px;
+    margin: 0 auto;
+  }
+  .premio-pasada-wrap--gap {
+    margin-top: 48px;
   }
   .fotos-header {
     display: flex;
