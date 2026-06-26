@@ -1,0 +1,416 @@
+<!--
+  ════════════════════════════════════════════════════════════════════════
+  PLANTILLA STORY GANADORA · Lío El Bonillo  (Instagram Story 1080×1920)
+  ════════════════════════════════════════════════════════════════════════
+  Reutilizable cada semana. Pasos:
+
+  1) Rellena el bloque CONFIG (más abajo, dentro del <script>):
+       - mention: @ de Instagram del ganador (preguntárselo; no está en la BD)
+       - winner/second/third: img (URL Cloudinary), name, votes
+
+  2) De dónde salen las fotos (URLs de Cloudinary) cada semana:
+       Consulta la tabla `fotos` de Supabase ordenada por votos. La URL de
+       Supabase y la clave anon son públicas (van en el bundle del sitio):
+         curl -sL https://www.liopub.com/_astro/supabase.*.js
+       Endpoint (con headers apikey + Authorization: Bearer <anon>):
+         GET {supabase}/rest/v1/fotos?estado=eq.aprobada
+             &select=nombre_autor,votos_count,ganadora,cloudinary_url
+             &order=votos_count.desc
+       La ganadora es la fila con ganadora=true.
+
+  3) Render a PNG 1080×1920 con Edge headless (desde PowerShell en Windows):
+       & "C:\Program Files (x86)\Microsoft\Edge\Application\msedge.exe" `
+         --headless=new --window-size=1080,1920 --force-device-scale-factor=1 `
+         --virtual-time-budget=10000 --screenshot=story.png `
+         "file:///<ruta>/tools/story-ganadora.html"
+
+  (El <body> tiene padding:0 a propósito para que el PNG salga 1080×1920 exacto.)
+  ════════════════════════════════════════════════════════════════════════
+-->
+<!doctype html>
+<html lang="es">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>Story · Foto ganadora · Lío El Bonillo</title>
+
+<!-- Mismas fuentes que la web -->
+<link rel="preconnect" href="https://fonts.googleapis.com" />
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+<link
+  href="https://fonts.googleapis.com/css2?family=Anton&family=Archivo:wdth,wght@125,700;125,800&family=Space+Grotesk:wght@300;400;500;700&family=Space+Mono:wght@400;700&display=swap"
+  rel="stylesheet"
+/>
+
+<style>
+  /* ── Tokens de marca (idénticos a global.css) ── */
+  :root {
+    --bg: #080810;
+    --bg2: #0e0e1a;
+    --surface: #13131f;
+    --border: rgba(255, 255, 255, 0.07);
+    --accent: #f22c8f;   /* rosa */
+    --accent2: #00e5a8;  /* menta */
+    --accent3: #00cfff;  /* cian (acento de "resultados") */
+    --text: #e8e8f0;
+    --muted: #6b6b80;
+    --font-logo: "Archivo", sans-serif;
+    --font-display: "Anton", sans-serif;
+    --font-body: "Space Grotesk", sans-serif;
+    --font-mono: "Space Mono", monospace;
+  }
+
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+
+  body {
+    background: #000;
+    display: flex;
+    justify-content: center;
+    padding: 0;            /* 0 para que el render headless salga 1080x1920 exacto */
+    font-family: var(--font-body);
+  }
+
+  /* ── Lienzo exacto de Story: 1080 × 1920 ── */
+  #story {
+    position: relative;
+    width: 1080px;
+    height: 1920px;
+    flex-shrink: 0;
+    background: var(--bg);
+    color: var(--text);
+    overflow: hidden;
+  }
+
+  /* Glow de fondo tipo "liquid aurora" de la web */
+  #story::before {
+    content: "";
+    position: absolute;
+    inset: 0;
+    background:
+      radial-gradient(circle at 12% 6%, rgba(242, 44, 143, 0.40), transparent 45%),
+      radial-gradient(circle at 92% 30%, rgba(0, 207, 255, 0.18), transparent 40%),
+      radial-gradient(circle at 80% 96%, rgba(0, 229, 168, 0.16), transparent 42%);
+    pointer-events: none;
+  }
+  /* Ruido sutil */
+  #story::after {
+    content: "";
+    position: absolute;
+    inset: 0;
+    background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 256 256' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)' opacity='1'/%3E%3C/svg%3E");
+    opacity: 0.03;
+    pointer-events: none;
+  }
+
+  .inner {
+    position: relative;
+    z-index: 1;
+    height: 100%;
+    padding: 80px 72px 64px;
+    display: flex;
+    flex-direction: column;
+    gap: 44px;
+  }
+
+  /* ── MINICARD superior: logo LI@DOS + @ del ganador ── */
+  .minicard {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 24px;
+    background: var(--surface);
+    border: 1px solid color-mix(in srgb, var(--accent) 35%, var(--border));
+    padding: 26px 34px;
+  }
+  .brand {
+    font-family: var(--font-logo);
+    font-weight: 800;
+    font-size: 3.4rem;
+    letter-spacing: 0.02em;
+    line-height: 1;
+    color: var(--text);
+  }
+  .brand .at { color: var(--accent); }
+  .mention {
+    display: inline-flex;
+    align-items: center;
+    gap: 12px;
+    font-family: var(--font-mono);
+    font-size: 1.6rem;
+    color: var(--accent3);
+    background: color-mix(in srgb, var(--accent3) 12%, transparent);
+    border: 1px solid color-mix(in srgb, var(--accent3) 40%, var(--border));
+    padding: 12px 22px;
+    white-space: nowrap;
+  }
+
+  /* ── Eyebrow ── */
+  .eyebrow {
+    display: inline-flex;
+    align-items: center;
+    gap: 14px;
+    font-family: var(--font-mono);
+    font-size: 1.15rem;
+    letter-spacing: 0.28em;
+    text-transform: uppercase;
+    color: var(--accent3);
+  }
+  .eyebrow .dot {
+    width: 10px; height: 10px;
+    background: var(--accent3);
+    display: inline-block;
+  }
+
+  /* ── Tarjeta GANADORA ── */
+  .winner {
+    position: relative;
+    flex: 1 1 auto;
+    min-height: 0;
+    background: var(--surface);
+    border: 1px solid color-mix(in srgb, var(--accent3) 35%, var(--border));
+    overflow: hidden;
+    display: flex;
+    flex-direction: column;
+  }
+  .winner-img-wrap {
+    position: relative;
+    width: 100%;
+    flex: 1 1 auto;
+    min-height: 0;
+  }
+  .winner-img-wrap img {
+    position: absolute;
+    inset: 0;
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+  }
+  /* Degradado para que el texto inferior respire si la foto invade */
+  .winner-img-wrap::after {
+    content: "";
+    position: absolute;
+    inset: 0;
+    background: linear-gradient(to bottom, transparent 55%, rgba(8,8,16,0.85));
+  }
+  .badge-crown {
+    position: absolute;
+    top: 28px;
+    left: 28px;
+    z-index: 2;
+    display: inline-flex;
+    align-items: center;
+    gap: 12px;
+    font-family: var(--font-mono);
+    font-size: 1.25rem;
+    letter-spacing: 0.18em;
+    text-transform: uppercase;
+    font-weight: 700;
+    background: var(--accent3);
+    color: var(--bg);
+    padding: 12px 22px;
+  }
+  .winner-foot {
+    position: relative;
+    z-index: 2;
+    padding: 36px 40px 40px;
+    display: flex;
+    flex-direction: column;
+    gap: 14px;
+  }
+  .winner-label {
+    font-family: var(--font-mono);
+    font-size: 1.15rem;
+    letter-spacing: 0.2em;
+    text-transform: uppercase;
+    color: var(--muted);
+  }
+  .winner-name {
+    font-family: var(--font-display);
+    font-size: 5.4rem;
+    line-height: 0.92;
+    color: var(--text);
+  }
+  .winner-votes {
+    display: inline-flex;
+    align-items: center;
+    gap: 14px;
+    font-family: var(--font-mono);
+    font-size: 1.9rem;
+    font-weight: 700;
+    color: var(--accent3);
+  }
+
+  /* ── Podio 2º / 3º ── */
+  .podium {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 28px;
+    list-style: none;
+  }
+  .podium li {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    padding: 22px 22px 26px;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 16px;
+    text-align: center;
+  }
+  .pod-thumb {
+    position: relative;
+    width: 100%;
+    aspect-ratio: 1 / 1;
+  }
+  .pod-thumb img {
+    width: 100%; height: 100%;
+    object-fit: cover;
+    border: 1px solid var(--border);
+  }
+  .pod-rank {
+    position: absolute;
+    bottom: -14px; left: -14px;
+    font-family: var(--font-display);
+    font-size: 3rem;
+    line-height: 1;
+    background: var(--bg);
+    border: 1px solid var(--border);
+    padding: 4px 16px;
+  }
+  .pod-rank.r2 { color: var(--accent2); }
+  .pod-rank.r3 { color: var(--muted); }
+  .pod-name {
+    font-family: var(--font-body);
+    font-weight: 500;
+    font-size: 1.7rem;
+    color: var(--text);
+  }
+  .pod-votes {
+    display: inline-flex;
+    align-items: center;
+    gap: 10px;
+    font-family: var(--font-mono);
+    font-size: 1.4rem;
+    color: var(--accent3);
+  }
+
+  /* corazón simple en SVG para no depender de iconos externos */
+  .heart { width: 1em; height: 1em; display: inline-block; }
+
+  /* ── Footer marca ── */
+  .footer {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    font-family: var(--font-mono);
+    font-size: 1.2rem;
+    letter-spacing: 0.18em;
+    text-transform: uppercase;
+    color: var(--muted);
+  }
+  .footer .ig { color: var(--accent); }
+</style>
+</head>
+<body>
+
+<section id="story">
+  <div class="inner">
+
+    <!-- MINICARD: logo + mención -->
+    <div class="minicard">
+      <div class="brand">LI<span class="at">@</span>DOS</div>
+      <div class="mention" id="mention">@usuario</div>
+    </div>
+
+    <span class="eyebrow"><span class="dot"></span> Resultados · Semana pasada</span>
+
+    <!-- GANADORA -->
+    <div class="winner">
+      <div class="winner-img-wrap">
+        <span class="badge-crown">👑 Ganadora</span>
+        <img id="winnerImg" alt="Foto ganadora" />
+      </div>
+      <div class="winner-foot">
+        <span class="winner-label">Ganadora de la semana pasada</span>
+        <h2 class="winner-name" id="winnerName">Jorge</h2>
+        <span class="winner-votes">
+          <svg class="heart" viewBox="0 0 24 24" fill="var(--accent3)"><path d="M12 21s-7.5-4.6-10-9.4C.4 8 2 4.5 5.3 4.5c2 0 3.4 1.3 4.7 3 1.3-1.7 2.7-3 4.7-3C18 4.5 19.6 8 22 11.6 19.5 16.4 12 21 12 21z"/></svg>
+          <span id="winnerVotes">38</span> votos
+        </span>
+      </div>
+    </div>
+
+    <!-- PODIO -->
+    <ol class="podium">
+      <li>
+        <div class="pod-thumb">
+          <img id="p2Img" alt="Segundo puesto" />
+          <span class="pod-rank r2">2º</span>
+        </div>
+        <span class="pod-name" id="p2Name">Rous</span>
+        <span class="pod-votes">
+          <svg class="heart" viewBox="0 0 24 24" fill="var(--accent3)"><path d="M12 21s-7.5-4.6-10-9.4C.4 8 2 4.5 5.3 4.5c2 0 3.4 1.3 4.7 3 1.3-1.7 2.7-3 4.7-3C18 4.5 19.6 8 22 11.6 19.5 16.4 12 21 12 21z"/></svg>
+          <span id="p2Votes">35</span>
+        </span>
+      </li>
+      <li>
+        <div class="pod-thumb">
+          <img id="p3Img" alt="Tercer puesto" />
+          <span class="pod-rank r3">3º</span>
+        </div>
+        <span class="pod-name" id="p3Name">Mery Mora</span>
+        <span class="pod-votes">
+          <svg class="heart" viewBox="0 0 24 24" fill="var(--accent3)"><path d="M12 21s-7.5-4.6-10-9.4C.4 8 2 4.5 5.3 4.5c2 0 3.4 1.3 4.7 3 1.3-1.7 2.7-3 4.7-3C18 4.5 19.6 8 22 11.6 19.5 16.4 12 21 12 21z"/></svg>
+          <span id="p3Votes">16</span>
+        </span>
+      </li>
+    </ol>
+
+    <div class="footer">
+      <span>Foto ganadora de la semana</span>
+      <span class="ig">@lioelbonillo</span>
+    </div>
+
+  </div>
+</section>
+
+<script>
+  /* ═══════════════════════════════════════════════════════════
+     👉 RELLENA SOLO ESTO Y RECARGA LA PÁGINA
+     ═══════════════════════════════════════════════════════════ */
+  const CONFIG = {
+    mention: "@jorgefr30",   // @ de Instagram de Jorge (ganador)
+
+    winner: {
+      img:   "https://res.cloudinary.com/dicfjiwuy/image/upload/v1781924550/o85yozzcrphopbl5w2aj.jpg",
+      name:  "Jorge",
+      votes: 38,
+    },
+    second: {
+      img:   "https://res.cloudinary.com/dicfjiwuy/image/upload/v1781920446/oksrldlerf9o6hhk0pqp.jpg",
+      name:  "Rous",
+      votes: 35,
+    },
+    third: {
+      img:   "https://res.cloudinary.com/dicfjiwuy/image/upload/v1781994285/lv0knnf60mu3zjskgswn.jpg",
+      name:  "Mery Mora",
+      votes: 16,
+    },
+  };
+  /* ═══════════════════════════════════════════════════════════ */
+
+  const $ = (id) => document.getElementById(id);
+  $("mention").textContent   = CONFIG.mention;
+  $("winnerImg").src         = CONFIG.winner.img;
+  $("winnerName").textContent= CONFIG.winner.name;
+  $("winnerVotes").textContent = CONFIG.winner.votes;
+  $("p2Img").src             = CONFIG.second.img;
+  $("p2Name").textContent    = CONFIG.second.name;
+  $("p2Votes").textContent   = CONFIG.second.votes;
+  $("p3Img").src             = CONFIG.third.img;
+  $("p3Name").textContent    = CONFIG.third.name;
+  $("p3Votes").textContent   = CONFIG.third.votes;
+</script>
+
+</body>
+</html>
