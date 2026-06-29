@@ -4,7 +4,10 @@ import { Share2, Check } from "@lucide/astro";
 ---
 
 <footer>
-  <div class="footer-logo">LÍO<span> EL BONILLO</span></div>
+  <div class="footer-brand">
+    <div class="footer-logo">LÍO<span> EL BONILLO</span></div>
+    <p class="footer-credit">Creada por Propus</p>
+  </div>
 
   <div class="footer-social">
     <span class="footer-social-label">Síguenos</span>
@@ -50,6 +53,13 @@ import { Share2, Check } from "@lucide/astro";
   }
   .footer-logo span {
     color: var(--muted);
+  }
+  .footer-credit {
+    margin-top: 6px;
+    font-family: var(--font-mono);
+    font-size: 0.65rem;
+    color: var(--muted);
+    letter-spacing: 0.1em;
   }
   .footer-social {
     display: flex;
@@ -133,6 +143,9 @@ import { Share2, Check } from "@lucide/astro";
       text-align: center;
     }
     .footer-meta {
+      text-align: center;
+    }
+    .footer-credit {
       text-align: center;
     }
   }
