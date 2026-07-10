@@ -38,3 +38,18 @@ export async function uploadToCloudinary(file: File): Promise<string> {
 
   return data.secure_url;
 }
+
+/**
+ * A partir de una `secure_url` de Cloudinary devuelve una variante JPG de tamaño
+ * contenido (máx. 1080px, sin recortar) pensada para **compartir la foto** por
+ * WhatsApp/redes como archivo adjunto: buena calidad y peso ligero.
+ *
+ * Si la URL no es una de subida de Cloudinary (`/upload/`), se devuelve tal cual.
+ */
+export function imagenCompartir(url: string): string {
+  const marca = "/upload/";
+  const i = url.indexOf(marca);
+  if (i === -1) return url;
+  const transformacion = "c_limit,w_1080,h_1080,f_jpg,q_auto/";
+  return url.slice(0, i + marca.length) + transformacion + url.slice(i + marca.length);
+}
