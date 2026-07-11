@@ -255,13 +255,15 @@ const EVENTO = {
 
   /* Banderas ondeando */
   .mundial-flag {
-    position: absolute; top: 22px; z-index: 2;
+    position: absolute; top: 18px; z-index: 2;
     display: flex; align-items: flex-start;
     filter: drop-shadow(0 8px 10px rgba(0, 0, 0, 0.4));
     opacity: 0.9;
+    --fscale: 0.6; /* móvil: banderas más pequeñas */
+    transform-origin: top center;
   }
-  .mundial-flag--left { left: 20px; }
-  .mundial-flag--right { right: 20px; transform: scaleX(-1); }
+  .mundial-flag--left { left: 12px; transform: scale(var(--fscale)); }
+  .mundial-flag--right { right: 12px; transform: scaleX(-1) scale(var(--fscale)); }
   .mundial-flag-pole {
     width: 3px; height: 66px; border-radius: 3px;
     background: linear-gradient(180deg, #d8bd82, #8a6a34);
@@ -559,12 +561,13 @@ const EVENTO = {
   .mundial-cta:hover svg { transform: translateX(3px); }
 
   /* Responsive */
-  .mundial-flag { display: none; }
   @media (min-width: 640px) {
     .mundial-info { grid-template-columns: repeat(2, 1fr); }
   }
   @media (min-width: 780px) {
-    .mundial-flag { display: flex; }
+    .mundial-flag { --fscale: 1; }
+    .mundial-flag--left { left: 20px; }
+    .mundial-flag--right { right: 20px; }
   }
   @media (min-width: 860px) {
     .mundial { padding: 5rem 2rem 5.5rem; }
