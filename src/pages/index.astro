@@ -3,6 +3,7 @@ import Base from "../layouts/Base.astro";
 import Nav from "../components/Nav.astro";
 import Hero from "../components/Hero.astro";
 import Ticker from "../components/Ticker.astro";
+import EspecialMundial from "../components/EspecialMundial.astro"; // TEMPORAL: quitar tras el partido (mié)
 import CartelFinde from "../components/CartelFinde.tsx";
 import PhotoGrid from "../components/PhotoGrid.tsx";
 import PhotoUploader from "../components/PhotoUploader.tsx";
@@ -26,6 +27,10 @@ const semanaPasada = getPreviousWeek();
   <Nav />
   <main id="contenido">
   <Hero />
+
+  <!-- ═══ TEMPORAL: EVENTO ESPECIAL MUNDIAL (quitar esta línea el miércoles) ═══ -->
+  <EspecialMundial />
+
   <Ticker />
 
   <!-- CARTELES -->
