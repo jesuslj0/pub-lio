@@ -381,11 +381,13 @@ const EVENTO = {
   .mundial-img-tag {
     position: absolute; bottom: 0.9rem; left: 50%; translate: -50% 0; z-index: 2;
     display: inline-flex; align-items: center; gap: 0.5rem; padding: 0.55rem 1rem;
+    max-width: calc(100% - 1.2rem);
     font-family: var(--font-tec); font-size: 0.82rem; font-weight: 700; letter-spacing: 0.06em;
     text-transform: uppercase; color: #1a0d08;
     background: linear-gradient(90deg, var(--es-oro), var(--es-oro-claro));
     border-radius: 0.7rem; box-shadow: 0 12px 28px -12px rgba(0, 0, 0, 0.85); white-space: nowrap;
   }
+  .mundial-img-tag svg { flex: none; }
   .mundial-pie {
     margin: 0.75rem 0 0; font-family: var(--font-tec); font-size: 0.76rem;
     letter-spacing: 0.04em; color: rgba(239, 233, 221, 0.55);
@@ -561,6 +563,16 @@ const EVENTO = {
   .mundial-cta:hover svg { transform: translateX(3px); }
 
   /* Responsive */
+  @media (max-width: 400px) {
+    .mundial { padding: 3.25rem 1rem 3.75rem; }
+    .mundial-flag { --fscale: 0.5; top: 14px; }
+    .mundial-flag--left { left: 8px; }
+    .mundial-flag--right { right: 8px; }
+    .mundial-img-tag {
+      font-size: 0.62rem; padding: 0.4rem 0.7rem; gap: 0.35rem; letter-spacing: 0.04em;
+    }
+    .mundial-marcador { gap: 0.4rem 0.7rem; }
+  }
   @media (min-width: 640px) {
     .mundial-info { grid-template-columns: repeat(2, 1fr); }
   }
