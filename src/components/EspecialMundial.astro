@@ -1,6 +1,6 @@
 ---
 // ─────────────────────────────────────────────────────────────────────────────
-// SECCIÓN TEMPORAL · Semifinal Mundial 2026 (España–Francia en la Plaza)
+// SECCIÓN TEMPORAL · La Gran Final del Mundial 2026 (España en la Plaza)
 // Autónoma: todo su CSS es scoped y no depende de tokens de marca.
 //
 // PARA QUITARLA cuando acabe el evento, en la página borra:
@@ -10,10 +10,11 @@
 // ─────────────────────────────────────────────────────────────────────────────
 
 const EVENTO = {
-  competicion: 'Semifinal · Mundial 2026',
+  competicion: 'La Gran Final · Mundial 2026',
   local: 'España',
-  visitante: 'Francia',
-  fecha: 'Martes 14 de julio', // ⚠️ Verificar fecha/hora reales antes de publicar
+  visitante: 'Ganador Inglaterra o Argentina', // ⚠️ Actualizar al equipo ganador cuando se conozca
+  rivalNota: 'Ganador Inglaterra · Argentina',
+  fecha: 'Domingo 19 de julio',
   hora: '21:00 h',
   lugar: 'Plaza Mayor · El Bonillo',
   pantalla: 'Pantalla gigante 4×3 m',
@@ -51,7 +52,7 @@ const EVENTO = {
     <header class="mundial-head">
       <p class="mundial-pill">
         <span class="mundial-live" aria-hidden="true"></span>
-        Evento especial en la plaza
+        La gran final · en directo
       </p>
       <p class="mundial-comp">{EVENTO.competicion}</p>
 
@@ -63,14 +64,19 @@ const EVENTO = {
         </span>
         <span class="mundial-vs">VS</span>
         <span class="mundial-equipo mundial-equipo--visita">
-          <span class="mundial-bandera mundial-bandera--fr" aria-hidden="true"></span>
-          {EVENTO.visitante}
+          <span class="mundial-rival-flags" aria-hidden="true">
+            <span class="mundial-bandera mundial-bandera--eng"></span>
+            <span class="mundial-rival-q">?</span>
+            <span class="mundial-bandera mundial-bandera--arg"></span>
+          </span>
         </span>
       </div>
+      <p class="mundial-rival-nota">{EVENTO.rivalNota}</p>
 
       <p class="mundial-sub">
-        Lo vemos juntos en la Plaza Mayor, en pantalla gigante. Todo el pueblo
-        animando a la Roja. ¡No te pierdas ni un gol!
+        Nuestra <strong>segunda final</strong> en un Mundial de fútbol. La Roja se
+        juega la gloria y El Bonillo entero se viste de rojo. Lo vivimos juntos en
+        la Plaza Mayor, en pantalla gigante: una noche para hacer historia.
       </p>
     </header>
 
@@ -353,8 +359,32 @@ const EVENTO = {
   .mundial-bandera--es {
     background: linear-gradient(180deg, var(--es-rojo) 0 25%, var(--es-oro) 25% 75%, var(--es-rojo) 75%);
   }
-  .mundial-bandera--fr {
-    background: linear-gradient(90deg, #0055a4 0 33.3%, #fff 33.3% 66.6%, #ef4135 66.6%);
+  /* Rival por decidir: banderas ENG + ARG con un "?" al estilo del cartel */
+  .mundial-equipo--visita { align-items: center; }
+  .mundial-rival-flags { display: inline-flex; align-items: center; gap: 0.35em; }
+  .mundial-bandera--eng {
+    background:
+      linear-gradient(#c8102e, #c8102e) center / 100% 28% no-repeat,
+      linear-gradient(#c8102e, #c8102e) center / 28% 100% no-repeat,
+      #fff;
+  }
+  .mundial-bandera--arg {
+    background: linear-gradient(180deg, #74acdf 0 33.3%, #fff 33.3% 66.6%, #74acdf 66.6%);
+    position: relative;
+  }
+  .mundial-bandera--arg::after {
+    content: ""; position: absolute; top: 50%; left: 50%; translate: -50% -50%;
+    width: 0.34em; height: 0.34em; border-radius: 50%;
+    background: #f6b40e; box-shadow: 0 0 0 1px rgba(246, 180, 14, 0.55);
+  }
+  .mundial-rival-q {
+    font-family: var(--font-tit); font-weight: 700; color: var(--es-oro);
+    line-height: 1; text-shadow: 0 2px 12px rgba(255, 196, 0, 0.5);
+  }
+  .mundial-rival-nota {
+    margin: -0.35rem 0 0; font-family: var(--font-tec); font-size: 0.72rem;
+    font-weight: 700; letter-spacing: 0.16em; text-transform: uppercase;
+    color: var(--es-oro-claro);
   }
   .mundial-sub {
     max-width: 40rem; margin: 0.2rem auto 0; font-family: var(--font-tit);
