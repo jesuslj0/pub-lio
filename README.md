@@ -44,6 +44,48 @@ administración, guardada en una cookie de sesión). Desde ahí el local puede:
 3. La comunidad vota durante la semana.
 4. El finde siguiente se anuncia la ganadora y recoge su premio en el local.
 
+## 🔍 Forense de votos (anti-fraude)
+
+Herramienta de línea de comandos para revisar si una foto ha inflado votos con
+auto-voto (abrir la web en varios navegadores para votarse). **No forma parte de
+la web** y se ejecuta a mano desde la raíz del proyecto: [`scripts/votos-forense.mjs`](scripts/votos-forense.mjs).
+
+Analiza los votos con dos señales: la **huella** del navegador (`fingerprint`) y
+la **hora** de cada voto. No usa IP (no se guarda en la tabla `votos`), así que es
+una **estimación heurística, no una prueba**.
+
+```bash
+# Informe (solo lectura) de la foto más votada cuyo autor contiene "amador":
+node --env-file=.env.local scripts/votos-forense.mjs
+
+# Informe de una foto concreta:
+node --env-file=.env.local scripts/votos-forense.mjs --foto <UUID>
+
+# Otro autor / ajustar sensibilidad de las ráfagas:
+node --env-file=.env.local scripts/votos-forense.mjs --autor "amador" --ventana 120 --min-rafaga 3
+```
+
+El informe muestra el reparto de votos por hora, las **ráfagas** (votos
+encadenados en pocos segundos), cuántas son de **huella nueva** y una estimación
+de votos *probablemente reales* vs. *probablemente inflados*.
+
+**Quitar votos es una decisión manual y va bloqueado por defecto:**
+
+```bash
+# SIMULA la purga de los votos de sospecha alta (NO borra nada):
+node --env-file=.env.local scripts/votos-forense.mjs --quitar
+
+# SIMULA la purga de una lista concreta que eliges tú:
+node --env-file=.env.local scripts/votos-forense.mjs --quitar --ids id1,id2,id3
+
+# EJECUTA de verdad (borra votos y recalcula votos_count):
+node --env-file=.env.local scripts/votos-forense.mjs --quitar --ejecutar
+```
+
+Sin `--ejecutar` solo simula y no toca la base de datos. Requiere
+`PUBLIC_SUPABASE_URL` y `SUPABASE_SERVICE_ROLE_KEY` en `.env.local` (por eso el
+`--env-file`).
+
 ---
 
 _Plaza Mayor · El Bonillo · Albacete · Castilla-La Mancha_
