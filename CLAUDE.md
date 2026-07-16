@@ -60,11 +60,19 @@ PUBLIC_CLOUDINARY_UPLOAD_PRESET
 CLOUDINARY_API_KEY
 CLOUDINARY_API_SECRET
 ADMIN_SECRET
+VOTE_IP_SALT
 ```
 
 Las que empiezan por `PUBLIC_` son accesibles en cliente; el resto **solo en servidor**
 (nunca exponer `SUPABASE_SERVICE_ROLE_KEY`, `CLOUDINARY_API_SECRET` ni `ADMIN_SECRET`
 en componentes de cliente). Acceder siempre con `import.meta.env.X`.
+
+`VOTE_IP_SALT` es la sal secreta con la que `src/lib/ipHash.ts` hashea la IP de cada
+voto (columna `votos.ip_hash`). Sirve para detectar votos que salen de la misma
+conexión sin guardar la IP en claro. **No cambiarla nunca** una vez en producción: los
+hashes de antes y de después dejarían de casar y el histórico se vuelve inservible.
+Si falta, los votos se guardan con `ip_hash = null` (se avisa en logs) pero la web
+sigue funcionando.
 
 `CLOUDINARY_API_KEY` y `CLOUDINARY_API_SECRET` (Cloudinary → *Settings → API Keys*)
 se usan para el **borrado firmado** de archivos en Cloudinary (`src/lib/cloudinaryAdmin.ts`),

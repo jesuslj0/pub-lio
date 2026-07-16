@@ -1,9 +1,10 @@
 import type { APIRoute } from "astro";
 import { supabaseAdmin } from "../../lib/supabaseAdmin";
+import { hashIp } from "../../lib/ipHash";
 
 export const prerender = false;
 
-export const POST: APIRoute = async ({ request }) => {
+export const POST: APIRoute = async ({ request, clientAddress }) => {
   try {
     const { fotoId, fingerprint } = (await request.json()) as {
       fotoId?: string;
@@ -17,10 +18,15 @@ export const POST: APIRoute = async ({ request }) => {
       );
     }
 
+    // La IP se saca solo de clientAddress (la deriva el servidor de las
+    // cabeceras de Vercel). Nunca del body: sería el propio votante quien
+    // decidiría con qué IP consta, que es justo lo que queremos evitar.
+    const ipHash = hashIp(clientAddress);
+
     // El unique constraint (foto_id, fingerprint) impide votos duplicados.
     const { error: insertError } = await supabaseAdmin
       .from("votos")
-      .insert({ foto_id: fotoId, fingerprint });
+      .insert({ foto_id: fotoId, fingerprint, ip_hash: ipHash });
 
     if (insertError) {
       // 23505 = unique_violation en Postgres → ya había votado.

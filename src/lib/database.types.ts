@@ -23,6 +23,8 @@ export type Voto = {
   id: string;
   foto_id: string;
   fingerprint: string;
+  /** SHA-256 de la IP con sal (ver lib/ipHash.ts). Nunca la IP en claro. */
+  ip_hash: string | null;
   created_at: string;
 }
 
@@ -75,6 +77,7 @@ export interface Database {
           id?: string;
           foto_id: string;
           fingerprint: string;
+          ip_hash?: string | null;
           created_at?: string;
         };
         Update: Partial<Voto>;
