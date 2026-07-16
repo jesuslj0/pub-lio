@@ -538,5 +538,24 @@ const carruselStyles = `
     .lio-carteles .lio-cartel-dots {
       display: none;
     }
+
+    /* Cartel único: el cartel a la izquierda y su texto descriptivo a la
+       derecha. El :has() limita la regla a los slides que llevan descripción,
+       para que los estados de carga y "sin cartel" (que no la tienen) sigan
+       centrados como hasta ahora. */
+    .lio-carteles.is-single .lio-cartel-slide:has(.lio-cartel-caption) {
+      flex-direction: row;
+      align-items: center;
+      gap: 40px;
+    }
+    .lio-carteles.is-single .lio-cartel-slide:has(.lio-cartel-caption) .lio-cartel-media {
+      flex: 0 0 380px;
+      margin: 0;
+    }
+    .lio-carteles.is-single .lio-cartel-slide:has(.lio-cartel-caption) .lio-cartel-caption {
+      flex: 1 1 auto;
+      max-width: none;
+      margin: 0;
+    }
   }
 `;
