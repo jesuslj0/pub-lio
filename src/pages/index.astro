@@ -3,7 +3,9 @@ import Base from "../layouts/Base.astro";
 import Nav from "../components/Nav.astro";
 import Hero from "../components/Hero.astro";
 import Ticker from "../components/Ticker.astro";
-import EspecialMundial from "../components/EspecialMundial.astro"; // TEMPORAL: quitar tras el partido (mié)
+// TEMPORAL (evento pasado, final del 19/07/2026): sección del Mundial desactivada.
+// Para reactivarla, descomenta este import y el <EspecialMundial /> del body.
+// import EspecialMundial from "../components/EspecialMundial.astro";
 import CartelFinde from "../components/CartelFinde.tsx";
 import PhotoGrid from "../components/PhotoGrid.tsx";
 import PhotoUploader from "../components/PhotoUploader.tsx";
@@ -28,8 +30,8 @@ const semanaPasada = getPreviousWeek();
   <main id="contenido">
   <Hero />
 
-  <!-- ═══ TEMPORAL: EVENTO ESPECIAL MUNDIAL (quitar esta línea el miércoles) ═══ -->
-  <EspecialMundial />
+  <!-- ═══ TEMPORAL: EVENTO ESPECIAL MUNDIAL (desactivado tras el partido) ═══ -->
+  <!-- <EspecialMundial /> -->
 
   <Ticker />
 

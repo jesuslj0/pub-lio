@@ -5,18 +5,17 @@
   Reutilizable cada semana. Pasos:
 
   1) Rellena el bloque CONFIG (más abajo, dentro del <script>):
-       - mention: @ de Instagram del ganador (preguntárselo; no está en la BD)
+       - mention: @ de Instagram del ganador (columna `instagram` de la BD, sin la @)
        - winner/second/third: img (URL Cloudinary), name, votes
 
-  2) De dónde salen las fotos (URLs de Cloudinary) cada semana:
-       Consulta la tabla `fotos` de Supabase ordenada por votos. La URL de
-       Supabase y la clave anon son públicas (van en el bundle del sitio):
-         curl -sL https://www.liopub.com/_astro/supabase.*.js
-       Endpoint (con headers apikey + Authorization: Bearer <anon>):
-         GET {supabase}/rest/v1/fotos?estado=eq.aprobada
-             &select=nombre_autor,votos_count,ganadora,cloudinary_url
-             &order=votos_count.desc
+  2) De dónde salen los datos cada semana. Con `.env.local` en la raíz:
+       node --env-file=.env.local -e "…"  contra la tabla `fotos`:
+         select nombre_autor, instagram, votos_count, ganadora, cloudinary_url
+         where semana = '<AAAA-Wnn>' and estado = 'aprobada'
+         order by votos_count desc  limit 3
        La ganadora es la fila con ganadora=true.
+       (Sin .env: la URL de Supabase y la clave anon son públicas y van en el
+        bundle del sitio → curl -sL https://www.liopub.com/_astro/supabase.*.js)
 
   3) Render a PNG 1080×1920 con Edge headless (desde PowerShell en Windows):
        & "C:\Program Files (x86)\Microsoft\Edge\Application\msedge.exe" `
@@ -379,22 +378,22 @@
      👉 RELLENA SOLO ESTO Y RECARGA LA PÁGINA
      ═══════════════════════════════════════════════════════════ */
   const CONFIG = {
-    mention: "@jorgefr30",   // @ de Instagram de Jorge (ganador)
+    mention: "@cristian_pana16",   // @ de Instagram de Cristian (ganador)
 
     winner: {
-      img:   "https://res.cloudinary.com/dicfjiwuy/image/upload/v1781924550/o85yozzcrphopbl5w2aj.jpg",
-      name:  "Jorge",
-      votes: 38,
+      img:   "https://res.cloudinary.com/dicfjiwuy/image/upload/v1783729237/ivc5wwvpl5kk8b1hzb0m.jpg",
+      name:  "Cristian",
+      votes: 132,
     },
     second: {
-      img:   "https://res.cloudinary.com/dicfjiwuy/image/upload/v1781920446/oksrldlerf9o6hhk0pqp.jpg",
-      name:  "Rous",
-      votes: 35,
+      img:   "https://res.cloudinary.com/dicfjiwuy/image/upload/v1783715884/etdmmtk4vstorcocnaof.jpg",
+      name:  "Amador",
+      votes: 130,
     },
     third: {
-      img:   "https://res.cloudinary.com/dicfjiwuy/image/upload/v1781994285/lv0knnf60mu3zjskgswn.jpg",
-      name:  "Mery Mora",
-      votes: 16,
+      img:   "https://res.cloudinary.com/dicfjiwuy/image/upload/v1783725562/wdfpfy1vfoopczso1j5e.jpg",
+      name:  "las rojas bailan",
+      votes: 49,
     },
   };
   /* ═══════════════════════════════════════════════════════════ */
