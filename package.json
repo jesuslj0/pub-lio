@@ -10,6 +10,7 @@
     "build": "astro build",
     "preview": "astro preview",
     "img:optimize": "node scripts/optimize-images.mjs",
+    "story": "node --env-file=.env.local scripts/story-semana.mjs",
     "astro": "astro"
   },
   "dependencies": {

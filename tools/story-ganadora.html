@@ -2,8 +2,14 @@
   ════════════════════════════════════════════════════════════════════════
   PLANTILLA STORY GANADORA · Lío El Bonillo  (Instagram Story 1080×1920)
   ════════════════════════════════════════════════════════════════════════
-  Reutilizable cada semana. Pasos:
+  Reutilizable cada semana.
 
+  ⚡ MODO AUTOMÁTICO (recomendado): en vez de rellenar el CONFIG a mano, usa el
+     script que saca el top 3 de Supabase y renderiza el PNG de un tirón:
+        npm run story -- 2026-W30      (o sin semana = la semana pasada)
+     Ver scripts/story-semana.mjs. Lo de abajo es el flujo MANUAL de respaldo.
+
+  ── FLUJO MANUAL ──
   1) Rellena el bloque CONFIG (más abajo, dentro del <script>):
        - mention: @ de Instagram del ganador (columna `instagram` de la BD, sin la @)
        - winner/second/third: img (URL Cloudinary), name, votes

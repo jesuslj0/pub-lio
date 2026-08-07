@@ -27,5 +27,10 @@ pnpm-debug.log*
 
 .claude
 
-.vscode 
+.vscode
 .vercel
+
+# temporales del generador de Story del podio (scripts/story-semana.mjs)
+story-*.png
+.story-*.tmp.html
+.story-*.edge-profile/
