@@ -2,4 +2,55 @@ User-agent: *
 Allow: /
 Disallow: /admin
 
+# ─────────────────────────────────────────────────────────────
+#  Rastreadores de IA: bienvenidos.
+#  Queremos que ChatGPT, Claude, Perplexity y la IA de Google
+#  citen la web y manden visitas.
+#
+#  OJO al declararlos: un grupo propio SUSTITUYE al de `*` para
+#  ese agente. Por eso cada bloque repite los Disallow; sin
+#  repetirlos, estos bots serían los únicos con acceso a lo que
+#  está cerrado para el resto.
+# ─────────────────────────────────────────────────────────────
+
+User-agent: GPTBot
+Allow: /
+Disallow: /admin
+
+User-agent: OAI-SearchBot
+Allow: /
+Disallow: /admin
+
+User-agent: ChatGPT-User
+Allow: /
+Disallow: /admin
+
+User-agent: ClaudeBot
+Allow: /
+Disallow: /admin
+
+User-agent: Claude-User
+Allow: /
+Disallow: /admin
+
+User-agent: Claude-SearchBot
+Allow: /
+Disallow: /admin
+
+User-agent: PerplexityBot
+Allow: /
+Disallow: /admin
+
+User-agent: Perplexity-User
+Allow: /
+Disallow: /admin
+
+User-agent: Google-Extended
+Allow: /
+Disallow: /admin
+
+User-agent: Applebot-Extended
+Allow: /
+Disallow: /admin
+
 Sitemap: https://liopub.com/sitemap-index.xml
