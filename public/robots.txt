@@ -53,4 +53,4 @@ User-agent: Applebot-Extended
 Allow: /
 Disallow: /admin
 
-Sitemap: https://liopub.com/sitemap-index.xml
+Sitemap: https://www.liopub.com/sitemap-index.xml
