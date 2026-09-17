@@ -1,20 +1,25 @@
 ---
 import { Menu, X, Camera } from "@lucide/astro";
+
+// Fuera de la home las anclas deben apuntar a "/#seccion".
+const base = Astro.url.pathname === "/" ? "" : "/";
+const enHistorial = Astro.url.pathname.replace(/\/$/, "") === "/fotos";
 ---
 
 <nav>
-  <a href="#" class="nav-logo inline-flex gap-2" aria-label="Lío El Bonillo"><strong>LÍO</strong> EL BONILLO</a>
+  <a href={`${base}#`} class="nav-logo inline-flex gap-2" aria-label="Lío El Bonillo"><strong>LÍO</strong> EL BONILLO</a>
   <ul class="nav-links">
-    <li><a href="#carteles">Carteles</a></li>
-    <li><a href="#fotos">Fotos</a></li>
-    <li><a href="#subir">Concurso</a></li>
-    <li><a href="#local">Local</a></li>
-    <li><a href="#info">Info</a></li>
+    <li><a href={`${base}#carteles`}>Carteles</a></li>
+    <li><a href={`${base}#fotos`}>Fotos</a></li>
+    <li><a href="/fotos" aria-current={enHistorial ? "page" : undefined}>Ranking</a></li>
+    <li><a href={`${base}#subir`}>Concurso</a></li>
+    <li><a href={`${base}#local`}>Local</a></li>
+    <li><a href={`${base}#info`}>Info</a></li>
   </ul>
-  <a href="#subir" class="nav-cta">Subir foto</a>
+  <a href={`${base}#subir`} class="nav-cta">Subir foto</a>
 
   <!-- CTA solo móvil: acceso directo al uploader (cámara/galería) -->
-  <a href="#subir-foto" class="nav-cta-mobile" aria-label="Subir foto: usar cámara o galería">
+  <a href={`${base}#subir-foto`} class="nav-cta-mobile" aria-label="Subir foto: usar cámara o galería">
     <Camera size={16} stroke-width={2} />
     <span>Subir foto</span>
   </a>
@@ -36,13 +41,14 @@ import { Menu, X, Camera } from "@lucide/astro";
 <div class="mobile-backdrop" data-nav-backdrop hidden></div>
 <div id="mobile-menu" class="mobile-menu" data-mobile-menu role="dialog" aria-modal="true" aria-label="Menú de navegación" hidden>
   <ul class="mobile-menu-links">
-    <li><a href="#carteles" data-nav-link>Carteles</a></li>
-    <li><a href="#fotos" data-nav-link>Fotos</a></li>
-    <li><a href="#subir" data-nav-link>Concurso</a></li>
-    <li><a href="#local" data-nav-link>Local</a></li>
-    <li><a href="#info" data-nav-link>Info</a></li>
+    <li><a href={`${base}#carteles`} data-nav-link>Carteles</a></li>
+    <li><a href={`${base}#fotos`} data-nav-link>Fotos</a></li>
+    <li><a href="/fotos" data-nav-link aria-current={enHistorial ? "page" : undefined}>Ranking</a></li>
+    <li><a href={`${base}#subir`} data-nav-link>Concurso</a></li>
+    <li><a href={`${base}#local`} data-nav-link>Local</a></li>
+    <li><a href={`${base}#info`} data-nav-link>Info</a></li>
   </ul>
-  <a href="#subir" class="mobile-menu-cta" data-nav-link>Subir foto</a>
+  <a href={`${base}#subir`} class="mobile-menu-cta" data-nav-link>Subir foto</a>
 </div>
 
 <script>
@@ -134,6 +140,9 @@ import { Menu, X, Camera } from "@lucide/astro";
     color: var(--muted);
     text-decoration: none;
     transition: color 0.2s, text-shadow 0.2s ease;
+  }
+  .nav-links a[aria-current="page"] {
+    color: var(--accent);
   }
   .nav-links a:hover {
     color: var(--accent);
@@ -291,6 +300,13 @@ import { Menu, X, Camera } from "@lucide/astro";
 
   :global(body.nav-locked) {
     overflow: hidden;
+  }
+
+  /* Tablet: menos aire entre enlaces para que quepan todos */
+  @media (max-width: 1024px) {
+    .nav-links {
+      gap: 22px;
+    }
   }
 
   @media (max-width: 768px) {

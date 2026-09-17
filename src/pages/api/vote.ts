@@ -1,6 +1,7 @@
 import type { APIRoute } from "astro";
 import { supabaseAdmin } from "../../lib/supabaseAdmin";
 import { hashIp } from "../../lib/ipHash";
+import { getCurrentWeek } from "../../lib/supabase";
 
 export const prerender = false;
 
@@ -17,6 +18,9 @@ export const POST: APIRoute = async ({ request, clientAddress }) => {
         400,
       );
     }
+
+    const cerrada = await votacionCerrada(fotoId);
+    if (cerrada) return cerrada;
 
     // La IP se saca solo de clientAddress (la deriva el servidor de las
     // cabeceras de Vercel). Nunca del body: sería el propio votante quien
@@ -66,6 +70,9 @@ export const DELETE: APIRoute = async ({ request }) => {
       );
     }
 
+    const cerrada = await votacionCerrada(fotoId);
+    if (cerrada) return cerrada;
+
     // Borra el voto de este fingerprint sobre la foto (si existe).
     const { data: borrados, error: deleteError } = await supabaseAdmin
       .from("votos")
@@ -95,6 +102,31 @@ export const DELETE: APIRoute = async ({ request }) => {
     return jsonResponse({ success: false, reason: "Error interno" }, 500);
   }
 };
+
+/**
+ * Solo se vota (o se quita el voto) en fotos aprobadas de la semana en curso:
+ * las de semanas pasadas quedan en el historial con sus votos congelados.
+ * Devuelve la respuesta de error si no se puede votar, o null si todo está bien.
+ */
+async function votacionCerrada(fotoId: string): Promise<Response | null> {
+  const { data: foto, error } = await supabaseAdmin
+    .from("fotos")
+    .select("semana, estado")
+    .eq("id", fotoId)
+    .maybeSingle();
+
+  if (error) throw error;
+  if (!foto || foto.estado !== "aprobada") {
+    return jsonResponse({ success: false, reason: "Foto no encontrada" }, 404);
+  }
+  if (foto.semana !== getCurrentWeek()) {
+    return jsonResponse(
+      { success: false, reason: "La votación de esa semana está cerrada" },
+      403,
+    );
+  }
+  return null;
+}
 
 function jsonResponse(body: unknown, status = 200): Response {
   return new Response(JSON.stringify(body), {

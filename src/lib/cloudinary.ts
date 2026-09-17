@@ -53,3 +53,17 @@ export function imagenCompartir(url: string): string {
   const transformacion = "c_limit,w_1080,h_1080,f_jpg,q_auto/";
   return url.slice(0, i + marca.length) + transformacion + url.slice(i + marca.length);
 }
+
+/**
+ * Miniatura de una imagen de Cloudinary limitada a `ancho` px, en el formato y
+ * calidad óptimos para cada navegador. Pensada para grids con muchas fotos.
+ *
+ * Si la URL no es una de subida de Cloudinary (`/upload/`), se devuelve tal cual.
+ */
+export function miniatura(url: string, ancho: number): string {
+  const marca = "/upload/";
+  const i = url.indexOf(marca);
+  if (i === -1) return url;
+  const transformacion = `c_limit,w_${ancho},f_auto,q_auto/`;
+  return url.slice(0, i + marca.length) + transformacion + url.slice(i + marca.length);
+}

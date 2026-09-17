@@ -17,7 +17,7 @@ import NacionSection from "../components/NacionSection.astro";
 import InfoStrip from "../components/InfoStrip.astro";
 import ComoParticipar from "../components/ComoParticipar.astro";
 import Footer from "../components/Footer.astro";
-import { CalendarDays, Images, Gift, ListChecks, ShieldCheck, UserCheck } from "@lucide/astro";
+import { ArrowRight, CalendarDays, Images, Gift, ListChecks, ShieldCheck, Trophy, UserCheck } from "@lucide/astro";
 import { getPreviousWeek } from "../lib/supabase";
 
 // Semana de concurso recién cerrada: su podio se muestra como "anteriores
@@ -52,6 +52,18 @@ const semanaPasada = getPreviousWeek();
         <h2 class="section-title fotos-title">Liad@s</h2>
         <p class="fotos-sub">Mira cómo se lió el finde</p>
       </div>
+      <a href="/fotos" class="fotos-historial">
+        <span class="fotos-historial-icono" aria-hidden="true">
+          <Trophy size={18} stroke-width={1.75} />
+        </span>
+        <span class="fotos-historial-texto">
+          <span class="fotos-historial-eyebrow">Todas las semanas</span>
+          <span class="fotos-historial-titulo">Ranking histórico</span>
+        </span>
+        <span class="fotos-historial-flecha" aria-hidden="true">
+          <ArrowRight size={16} stroke-width={2} />
+        </span>
+      </a>
     </div>
     <PhotoGrid client:load mostrarGanadora={true} />
   </section>
@@ -106,8 +118,9 @@ const semanaPasada = getPreviousWeek();
                 consentimiento — una vez validadas serán
                 <span class="mark">públicas</span> para todo el que visite la web.
                 Las imágenes se usan <span class="mark">únicamente</span> para esta
-                galería y el concurso, no se ceden a terceros y se
-                <span class="mark">eliminan automáticamente</span> pasado un tiempo.
+                galería y el concurso, no se ceden a terceros y quedan en el
+                <span class="mark">historial</span> de la web. Si quieres que
+                retiremos la tuya, escríbenos por Instagram.
               </span>
             </p>
             <p class="upload-aviso">
@@ -195,6 +208,94 @@ const semanaPasada = getPreviousWeek();
     margin-top: 14px;
     border-radius: 999px;
     background: linear-gradient(90deg, var(--accent), var(--accent3));
+  }
+  .fotos-historial {
+    position: relative;
+    display: inline-flex;
+    align-items: center;
+    gap: 14px;
+    flex-shrink: 0;
+    padding: 12px 14px 12px 12px;
+    background: color-mix(in srgb, var(--bg2) 80%, transparent);
+    border: 1px solid var(--border);
+    color: var(--text);
+    text-decoration: none;
+    overflow: hidden;
+    transition:
+      border-color 0.25s ease,
+      box-shadow 0.25s ease;
+  }
+  /* Barra de acento inferior que se rellena al pasar el ratón */
+  .fotos-historial::after {
+    content: "";
+    position: absolute;
+    left: 0;
+    bottom: 0;
+    width: 100%;
+    height: 2px;
+    background: linear-gradient(90deg, var(--accent), var(--accent3));
+    transform: scaleX(0.18);
+    transform-origin: left;
+    transition: transform 0.35s ease;
+  }
+  .fotos-historial-icono {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 42px;
+    height: 42px;
+    flex-shrink: 0;
+    border-radius: 999px;
+    color: var(--accent);
+    background: color-mix(in srgb, var(--accent) 12%, transparent);
+    border: 1px solid color-mix(in srgb, var(--accent) 35%, transparent);
+    box-shadow: 0 0 18px color-mix(in srgb, var(--accent) 25%, transparent);
+    transition:
+      background 0.25s ease,
+      color 0.25s ease;
+  }
+  .fotos-historial-texto {
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+    line-height: 1;
+  }
+  .fotos-historial-eyebrow {
+    font-family: var(--font-mono);
+    font-size: 0.58rem;
+    letter-spacing: 0.2em;
+    text-transform: uppercase;
+    color: var(--muted);
+  }
+  .fotos-historial-titulo {
+    font-family: var(--font-display);
+    font-size: 1.45rem;
+    letter-spacing: 0.03em;
+    color: var(--text);
+  }
+  .fotos-historial-flecha {
+    display: inline-flex;
+    margin-left: 10px;
+    color: var(--accent);
+    transition: transform 0.25s ease;
+  }
+  .fotos-historial:hover {
+    border-color: color-mix(in srgb, var(--accent) 55%, transparent);
+    box-shadow: 0 0 28px color-mix(in srgb, var(--accent) 18%, transparent);
+  }
+  .fotos-historial:hover::after {
+    transform: scaleX(1);
+  }
+  .fotos-historial:hover .fotos-historial-icono {
+    background: var(--accent);
+    color: var(--bg);
+  }
+  .fotos-historial:hover .fotos-historial-flecha {
+    transform: translateX(4px);
+  }
+  .fotos-historial:focus-visible {
+    outline: 2px solid var(--accent);
+    outline-offset: 3px;
   }
   .fotos-note {
     font-family: var(--font-mono);
@@ -296,6 +397,12 @@ const semanaPasada = getPreviousWeek();
     .fotos-header {
       flex-direction: column;
       align-items: flex-start;
+    }
+    .fotos-historial {
+      width: 100%;
+    }
+    .fotos-historial-flecha {
+      margin-left: auto;
     }
     .upload-grid {
       grid-template-columns: 1fr;

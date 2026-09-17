@@ -1,46 +1,15 @@
-import { useEffect, useRef, useState, type CSSProperties } from "react";
-import {
-  Heart,
-  Star,
-  Trophy,
-  Share2,
-  X,
-  ChevronLeft,
-  ChevronRight,
-  Link2,
-  Check,
-  Maximize2,
-  ImagePlus,
-  Play,
-} from "lucide-react";
-import { siWhatsapp, siInstagram } from "simple-icons";
-
-// Renderiza un logo de marca (simple-icons) a partir de su path SVG.
-function BrandIcon({
-  icon,
-  size = 20,
-  color = "#fff",
-}: {
-  icon: { path: string; title: string };
-  size?: number;
-  color?: string;
-}) {
-  return (
-    <svg
-      role="img"
-      aria-label={icon.title}
-      viewBox="0 0 24 24"
-      width={size}
-      height={size}
-      fill={color}
-    >
-      <path d={icon.path} />
-    </svg>
-  );
-}
+import { useEffect, useState, type CSSProperties } from "react";
+import { Heart, Star, Trophy, Share2, Maximize2, ImagePlus, Play } from "lucide-react";
 import FingerprintJS from "@fingerprintjs/fingerprintjs";
 import { supabase, getCurrentWeek } from "../lib/supabase";
 import type { Foto } from "../lib/database.types";
+import {
+  HeartBurst,
+  haVotado,
+  useDobleToque,
+  useVisorFotos,
+  type FotoVisor,
+} from "./VisorFotos";
 
 interface PhotoGridProps {
   semana?: string;
@@ -60,23 +29,11 @@ export default function PhotoGrid({
   const [fotos, setFotos] = useState<Foto[]>([]);
   const [loading, setLoading] = useState(true);
   const [voting, setVoting] = useState<Record<string, boolean>>({});
-  // Índice de la foto abierta en el visor a pantalla completa (null = cerrado).
-  const [openIndex, setOpenIndex] = useState<number | null>(null);
-  // Modo "reels" a pantalla completa (scroll vertical) para móvil.
-  // null = cerrado; número = índice de la foto donde arrancar.
-  const [reelsStart, setReelsStart] = useState<number | null>(null);
-  const reelsTrackRef = useRef<HTMLDivElement>(null);
-  // Foto sobre la que se ha abierto la hoja de compartir (null = cerrada).
-  const [shareTarget, setShareTarget] = useState<Foto | null>(null);
-  const [copied, setCopied] = useState(false);
-  const touchX = useRef<number | null>(null);
   // Corazón animado (doble toque estilo Instagram): foto activa + key para
   // reiniciar la animación en taps consecutivos.
   const [heartBurst, setHeartBurst] = useState<{ id: string; key: number } | null>(
     null,
   );
-  // Control de doble toque en táctil: marca del último tap por foto.
-  const lastTap = useRef<{ id: string; t: number } | null>(null);
 
   // Carga inicial + suscripción Realtime.
   useEffect(() => {
@@ -144,7 +101,7 @@ export default function PhotoGrid({
   // Vota o, si ya se había votado, quita el voto (toggle).
   const handleVote = async (fotoId: string) => {
     if (voting[fotoId]) return;
-    const yaVotada = localStorage.getItem(`voted_${fotoId}`) !== null;
+    const yaVotada = haVotado(fotoId);
     setVoting((v) => ({ ...v, [fotoId]: true }));
     try {
       const fingerprint = await getFingerprint();
@@ -181,170 +138,18 @@ export default function PhotoGrid({
     }
   };
 
+  // Visor (slider en escritorio / reels en móvil) + hoja de compartir.
+  const visor = useVisorFotos({ fotos, onVote: handleVote, votando: voting });
+
   // Dispara el corazón animado y vota (si no se había votado ya).
-  const meEncanta = (foto: Foto) => {
+  const meEncanta = (foto: FotoVisor) => {
     setHeartBurst({ id: foto.id, key: Date.now() });
-    if (typeof window !== "undefined" && !localStorage.getItem(`voted_${foto.id}`)) {
-      handleVote(foto.id);
-    }
+    if (!haVotado(foto.id)) handleVote(foto.id);
   };
 
-  // Tap sobre la imagen. Usamos onPointerUp (no onClick) porque en móvil el
-  // click llega con ~300ms de retardo y rompe la detección del doble toque.
   // En táctil: 2 toques rápidos = me encanta; el toque simple no hace nada (el
   // visor se abre con su botón). Con ratón/lápiz el clic tampoco abre nada.
-  const handleImagePointerUp = (e: React.PointerEvent, foto: Foto) => {
-    if (e.pointerType !== "touch") return;
-    const now = Date.now();
-    const prev = lastTap.current;
-    if (prev && prev.id === foto.id && now - prev.t < 300) {
-      lastTap.current = null;
-      meEncanta(foto);
-    } else {
-      lastTap.current = { id: foto.id, t: now };
-    }
-  };
-
-  // ─── Visor / slider ───
-  const cerrar = () => setOpenIndex(null);
-  const irA = (i: number) =>
-    setOpenIndex((prev) =>
-      prev === null ? prev : (i + fotos.length) % fotos.length,
-    );
-  const anterior = () => openIndex !== null && irA(openIndex - 1);
-  const siguiente = () => openIndex !== null && irA(openIndex + 1);
-
-  // Teclado: flechas para navegar, Esc para cerrar. Bloquea scroll de fondo.
-  useEffect(() => {
-    if (openIndex === null) return;
-    const onKey = (e: KeyboardEvent) => {
-      if (e.key === "Escape") cerrar();
-      else if (e.key === "ArrowLeft") anterior();
-      else if (e.key === "ArrowRight") siguiente();
-    };
-    window.addEventListener("keydown", onKey);
-    const prevOverflow = document.body.style.overflow;
-    document.body.style.overflow = "hidden";
-    return () => {
-      window.removeEventListener("keydown", onKey);
-      document.body.style.overflow = prevOverflow;
-    };
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [openIndex, fotos.length]);
-
-  // Modo reels: bloquea el scroll de fondo, salta a la foto de inicio y permite
-  // cerrar con Esc.
-  useEffect(() => {
-    if (reelsStart === null) return;
-    // Posiciona el scroll en la foto desde la que se abrió (sin animación).
-    const track = reelsTrackRef.current;
-    if (track) track.scrollTop = reelsStart * track.clientHeight;
-
-    const onKey = (e: KeyboardEvent) => {
-      if (e.key === "Escape") setReelsStart(null);
-    };
-    window.addEventListener("keydown", onKey);
-    const prevOverflow = document.body.style.overflow;
-    document.body.style.overflow = "hidden";
-    return () => {
-      window.removeEventListener("keydown", onKey);
-      document.body.style.overflow = prevOverflow;
-    };
-  }, [reelsStart]);
-
-  // Abre el visor adecuado al tamaño: reels en móvil/tablet, slider en escritorio.
-  const abrirVisor = (i: number) => {
-    if (
-      typeof window !== "undefined" &&
-      window.matchMedia("(max-width: 900px)").matches
-    ) {
-      setReelsStart(i);
-    } else {
-      setOpenIndex(i);
-    }
-  };
-
-  // Swipe en táctil dentro del visor.
-  const onTouchStart = (e: React.TouchEvent) => {
-    touchX.current = e.touches[0].clientX;
-  };
-  const onTouchEnd = (e: React.TouchEvent) => {
-    if (touchX.current === null) return;
-    const dx = e.changedTouches[0].clientX - touchX.current;
-    if (Math.abs(dx) > 50) (dx > 0 ? anterior : siguiente)();
-    touchX.current = null;
-  };
-
-  const verPantallaCompleta = () => {
-    const el = document.getElementById("lio-visor-img");
-    if (el?.requestFullscreen) el.requestFullscreen().catch(() => {});
-  };
-
-  // ─── Compartir ───
-  const textoCompartir = "Mira esta foto del finde en Lío El Bonillo 🪩";
-  // Compartimos la página de la app (no la URL directa de Cloudinary) para
-  // generar tráfico. La preview en WhatsApp/Instagram sigue siendo la foto
-  // gracias a las etiquetas Open Graph de /foto/[id].
-  const urlDe = (foto: Foto) =>
-    typeof window !== "undefined"
-      ? `${window.location.origin}/foto/${foto.id}`
-      : `/foto/${foto.id}`;
-
-  const compartirNativo = async (foto: Foto) => {
-    if (typeof navigator !== "undefined" && navigator.share) {
-      try {
-        // Incluimos la URL dentro del texto (no en un campo `url` aparte): en
-        // Android, WhatsApp y otras apps solo despliegan la preview Open Graph
-        // cuando el enlace forma parte del cuerpo del mensaje. Si va en el campo
-        // `url` separado, muchas apps no hacen el unfurl y se comparte sin foto.
-        await navigator.share({
-          title: "Lío El Bonillo",
-          text: `${textoCompartir} ${urlDe(foto)}`,
-        });
-        return true;
-      } catch {
-        return false;
-      }
-    }
-    return false;
-  };
-
-  const abrirCompartir = async (foto: Foto) => {
-    // En móvil con menú nativo lo usamos directamente (incluye WhatsApp e
-    // Instagram). Si no hay, abrimos nuestra hoja con opciones.
-    const ok = await compartirNativo(foto);
-    if (!ok) {
-      setCopied(false);
-      setShareTarget(foto);
-    }
-  };
-
-  const compartirWhatsApp = (foto: Foto) => {
-    const txt = encodeURIComponent(`${textoCompartir} ${urlDe(foto)}`);
-    window.open(`https://wa.me/?text=${txt}`, "_blank", "noopener,noreferrer");
-    setShareTarget(null);
-  };
-
-  const compartirInstagram = async (foto: Foto) => {
-    // Instagram no admite compartir un enlace por web: copiamos el enlace y
-    // abrimos Instagram para que el usuario lo pegue.
-    const ok = await compartirNativo(foto);
-    if (!ok) {
-      await copiarEnlace(foto, false);
-      window.open("https://www.instagram.com/", "_blank", "noopener,noreferrer");
-      setShareTarget(null);
-    }
-  };
-
-  const copiarEnlace = async (foto: Foto, cerrarHoja = true) => {
-    try {
-      await navigator.clipboard.writeText(urlDe(foto));
-      setCopied(true);
-      if (cerrarHoja) setTimeout(() => setShareTarget(null), 900);
-    } catch {
-      /* sin portapapeles */
-    }
-  };
+  const handleImagePointerUp = useDobleToque(meEncanta);
 
   const maxVotos = fotos.length
     ? Math.max(...fotos.map((f) => f.votos_count))
@@ -382,7 +187,7 @@ export default function PhotoGrid({
       <button
         type="button"
         className="lio-reels-trigger"
-        onClick={() => setReelsStart(0)}
+        onClick={() => visor.abrirReels(0)}
       >
         <Play size={15} strokeWidth={2} fill="currentColor" />
         Ver en pantalla completa
@@ -390,9 +195,7 @@ export default function PhotoGrid({
 
       <div className="lio-photo-grid" style={styles.grid}>
       {fotos.map((foto, i) => {
-        const yaVotada =
-          typeof window !== "undefined" &&
-          localStorage.getItem(`voted_${foto.id}`) !== null;
+        const yaVotada = haVotado(foto.id);
         const esMasVotada = foto.votos_count === maxVotos && maxVotos > 0;
         return (
           <div key={foto.id} className="foto-card" style={styles.card}>
@@ -419,14 +222,11 @@ export default function PhotoGrid({
               onDoubleClick={() => meEncanta(foto)}
             />
             {heartBurst?.id === foto.id && (
-              <span
+              <HeartBurst
                 key={heartBurst.key}
-                style={styles.heartBurst}
-                onAnimationEnd={() => setHeartBurst(null)}
-                aria-hidden="true"
-              >
-                <Heart size={96} strokeWidth={1.5} fill="currentColor" />
-              </span>
+                size={96}
+                onEnd={() => setHeartBurst(null)}
+              />
             )}
             <div style={styles.overlay}>
               {/* Arriba izquierda: avatar + nombre + fecha (cabecera tipo post) */}
@@ -454,7 +254,7 @@ export default function PhotoGrid({
                   </span>
                   <button
                     style={styles.shareBtn}
-                    onClick={() => abrirVisor(i)}
+                    onClick={() => visor.abrir(i)}
                     aria-label="Ver foto"
                     title="Ver"
                   >
@@ -462,7 +262,7 @@ export default function PhotoGrid({
                   </button>
                   <button
                     style={styles.shareBtn}
-                    onClick={() => abrirCompartir(foto)}
+                    onClick={() => visor.compartir(foto)}
                     aria-label="Compartir foto"
                     title="Compartir"
                   >
@@ -486,266 +286,16 @@ export default function PhotoGrid({
           </div>
         );
       })}
-
-      {/* ─── Visor a pantalla completa / slider ─── */}
-      {openIndex !== null && fotos[openIndex] && (
-        <div
-          style={styles.modalOverlay}
-          onClick={cerrar}
-          role="dialog"
-          aria-modal="true"
-        >
-          <button
-            style={{ ...styles.modalBtn, ...styles.modalClose }}
-            onClick={cerrar}
-            aria-label="Cerrar"
-          >
-            <X size={22} strokeWidth={2} />
-          </button>
-
-          {fotos.length > 1 && (
-            <button
-              style={{ ...styles.modalBtn, ...styles.modalPrev }}
-              onClick={(e) => {
-                e.stopPropagation();
-                anterior();
-              }}
-              aria-label="Anterior"
-            >
-              <ChevronLeft size={28} strokeWidth={2} />
-            </button>
-          )}
-
-          <figure
-            style={styles.modalFigure}
-            onClick={(e) => e.stopPropagation()}
-            onTouchStart={onTouchStart}
-            onTouchEnd={onTouchEnd}
-          >
-            <img
-              id="lio-visor-img"
-              src={fotos[openIndex].cloudinary_url}
-              alt={fotos[openIndex].nombre_autor ?? "Foto del finde"}
-              style={styles.modalImg}
-            />
-            <figcaption style={styles.modalCaption}>
-              <div style={styles.modalInfo}>
-                {fotos[openIndex].nombre_autor && (
-                  <span style={styles.modalAutor}>
-                    {fotos[openIndex].nombre_autor}
-                  </span>
-                )}
-                <span style={styles.count}>
-                  <Heart size={13} strokeWidth={2} fill="currentColor" />
-                  {fotos[openIndex].votos_count}
-                </span>
-                <span style={styles.modalContador}>
-                  {openIndex + 1} / {fotos.length}
-                </span>
-              </div>
-              <div style={styles.modalActions}>
-                <button
-                  style={styles.modalActionBtn}
-                  onClick={verPantallaCompleta}
-                  aria-label="Pantalla completa"
-                  title="Pantalla completa"
-                >
-                  <Maximize2 size={16} strokeWidth={2} />
-                </button>
-                <button
-                  style={styles.modalActionBtn}
-                  onClick={() => abrirCompartir(fotos[openIndex])}
-                  aria-label="Compartir"
-                  title="Compartir"
-                >
-                  <Share2 size={16} strokeWidth={2} />
-                </button>
-              </div>
-            </figcaption>
-          </figure>
-
-          {fotos.length > 1 && (
-            <button
-              style={{ ...styles.modalBtn, ...styles.modalNext }}
-              onClick={(e) => {
-                e.stopPropagation();
-                siguiente();
-              }}
-              aria-label="Siguiente"
-            >
-              <ChevronRight size={28} strokeWidth={2} />
-            </button>
-          )}
-        </div>
-      )}
-
-      {/* ─── Hoja de compartir (fallback sin menú nativo) ─── */}
-      {shareTarget && (
-        <div
-          style={styles.shareOverlay}
-          onClick={() => setShareTarget(null)}
-          role="dialog"
-          aria-modal="true"
-        >
-          <div style={styles.shareSheet} onClick={(e) => e.stopPropagation()}>
-            <div style={styles.shareHead}>
-              {/* <span style={styles.shareTitle}>Compartir</span> */}
-              <button
-                style={styles.shareClose}
-                onClick={() => setShareTarget(null)}
-                aria-label="Cerrar"
-              >
-                <X size={18} strokeWidth={2} />
-              </button>
-            </div>
-            <div style={styles.shareOptions}>
-              <button
-                style={styles.shareOption}
-                onClick={() => compartirWhatsApp(shareTarget)}
-              >
-                <span style={{ ...styles.shareIcon, background: `#${siWhatsapp.hex}` }}>
-                  <BrandIcon icon={siWhatsapp} />
-                </span>
-                WhatsApp
-              </button>
-              <button
-                style={styles.shareOption}
-                onClick={() => compartirInstagram(shareTarget)}
-              >
-                <span
-                  style={{
-                    ...styles.shareIcon,
-                    background:
-                      "linear-gradient(45deg, #f09433, #e6683c, #dc2743, #cc2366, #bc1888)",
-                  }}
-                >
-                  <BrandIcon icon={siInstagram} />
-                </span>
-                Instagram
-              </button>
-              <button
-                style={styles.shareOption}
-                onClick={() => copiarEnlace(shareTarget)}
-              >
-                <span style={{ ...styles.shareIcon, background: "var(--surface)" }}>
-                  {copied ? (
-                    <Check size={20} strokeWidth={2} color="var(--accent)" />
-                  ) : (
-                    <Link2 size={20} strokeWidth={2} color="var(--text)" />
-                  )}
-                </span>
-                {copied ? "¡Copiado!" : "Copiar enlace"}
-              </button>
-            </div>
-          </div>
-        </div>
-      )}
-
       <style>{pulseKeyframes}</style>
       <style>{gridResponsive}</style>
       </div>
 
-      {/* ─── Feed inmersivo tipo reels (scroll vertical con snap) ─── */}
-      {reelsStart !== null && (
-        <div className="lio-reels" role="dialog" aria-modal="true">
-          <button
-            type="button"
-            className="lio-reels-close"
-            onClick={() => setReelsStart(null)}
-            aria-label="Cerrar"
-          >
-            <X size={24} strokeWidth={2} />
-          </button>
-
-          <div className="lio-reels-track" ref={reelsTrackRef}>
-            {fotos.map((foto) => {
-              const yaVotada =
-                typeof window !== "undefined" &&
-                localStorage.getItem(`voted_${foto.id}`) !== null;
-              return (
-                <div key={foto.id} className="lio-reels-slide">
-                  <img
-                    src={foto.cloudinary_url}
-                    alt={foto.nombre_autor ?? "Foto del finde"}
-                    className="lio-reels-img"
-                    loading="lazy"
-                    onPointerUp={(e) => handleImagePointerUp(e, foto)}
-                    onDoubleClick={() => meEncanta(foto)}
-                  />
-                  {heartBurst?.id === foto.id && (
-                    <span
-                      key={heartBurst.key}
-                      style={styles.heartBurst}
-                      onAnimationEnd={() => setHeartBurst(null)}
-                      aria-hidden="true"
-                    >
-                      <Heart size={110} strokeWidth={1.5} fill="currentColor" />
-                    </span>
-                  )}
-
-                  {/* Columna de acciones a la derecha (estilo reels) */}
-                  <div className="lio-reels-actions">
-                    <button
-                      type="button"
-                      className="lio-reels-action"
-                      onClick={() => handleVote(foto.id)}
-                      disabled={voting[foto.id]}
-                      aria-label={yaVotada ? "Quitar voto" : "Votar"}
-                    >
-                      <Heart
-                        size={30}
-                        strokeWidth={2}
-                        fill={yaVotada ? "var(--accent)" : "none"}
-                        color={yaVotada ? "var(--accent)" : "#fff"}
-                      />
-                      <span>{foto.votos_count}</span>
-                    </button>
-                    <button
-                      type="button"
-                      className="lio-reels-action"
-                      onClick={() => abrirCompartir(foto)}
-                      aria-label="Compartir"
-                    >
-                      <Share2 size={28} strokeWidth={2} />
-                    </button>
-                  </div>
-
-                  {/* Info del autor abajo a la izquierda */}
-                  <div className="lio-reels-info">
-                    <span className="lio-reels-avatar" aria-hidden="true">
-                      {(foto.nombre_autor?.trim()?.[0] ?? "?").toUpperCase()}
-                    </span>
-                    <div className="lio-reels-meta">
-                      {foto.nombre_autor && (
-                        <span className="lio-reels-autor">{foto.nombre_autor}</span>
-                      )}
-                      <span className="lio-reels-fecha">
-                        {new Date(foto.created_at).toLocaleDateString("es-ES", { day: "numeric", month: "short" })}
-                        {" · "}
-                        {new Date(foto.created_at).toLocaleTimeString("es-ES", { hour: "2-digit", minute: "2-digit" })}
-                      </span>
-                    </div>
-                  </div>
-                </div>
-              );
-            })}
-          </div>
-          <style>{reelsStyles}</style>
-        </div>
-      )}
+      {visor.visor}
     </>
   );
 }
 
-const pulseKeyframes = `@keyframes lio-pulse { 0%,100% { opacity: 1; } 50% { opacity: 0.4; } }
-@keyframes lio-heart-burst {
-  0%   { opacity: 0; transform: translate(-50%, -50%) scale(0.3); }
-  15%  { opacity: 1; transform: translate(-50%, -50%) scale(1.15); }
-  30%  { transform: translate(-50%, -50%) scale(0.95); }
-  45%  { transform: translate(-50%, -50%) scale(1); }
-  70%  { opacity: 1; transform: translate(-50%, -50%) scale(1); }
-  100% { opacity: 0; transform: translate(-50%, -50%) scale(1.1); }
-}`;
+const pulseKeyframes = `@keyframes lio-pulse { 0%,100% { opacity: 1; } 50% { opacity: 0.4; } }`;
 
 const gridResponsive = `
   @media (max-width: 1024px) {
@@ -793,130 +343,6 @@ const gridResponsive = `
   }
 `;
 
-// Estilos del overlay "reels" (scroll vertical a pantalla completa).
-const reelsStyles = `
-  .lio-reels {
-    position: fixed;
-    inset: 0;
-    z-index: 9994;
-    background: #000;
-  }
-  .lio-reels-close {
-    position: absolute;
-    top: max(14px, env(safe-area-inset-top));
-    right: 14px;
-    z-index: 2;
-    display: inline-flex;
-    align-items: center;
-    justify-content: center;
-    width: 42px;
-    height: 42px;
-    border-radius: 999px;
-    border: 1px solid var(--border);
-    background: rgba(8, 8, 16, 0.55);
-    backdrop-filter: blur(6px);
-    color: #fff;
-    cursor: pointer;
-  }
-  .lio-reels-track {
-    height: 100%;
-    overflow-y: scroll;
-    overflow-x: hidden;
-    scroll-snap-type: y mandatory;
-    -webkit-overflow-scrolling: touch;
-    scrollbar-width: none;
-    -ms-overflow-style: none;
-  }
-  .lio-reels-track::-webkit-scrollbar { width: 0; height: 0; display: none; }
-  .lio-reels-slide {
-    position: relative;
-    height: 100%;
-    width: 100%;
-    scroll-snap-align: start;
-    scroll-snap-stop: always;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    overflow: hidden;
-  }
-  .lio-reels-img {
-    width: 100%;
-    height: 100%;
-    object-fit: contain;
-    background: #000;
-    user-select: none;
-    -webkit-user-select: none;
-    touch-action: manipulation;
-  }
-  .lio-reels-actions {
-    position: absolute;
-    right: 14px;
-    bottom: calc(28px + env(safe-area-inset-bottom));
-    z-index: 2;
-    display: flex;
-    flex-direction: column;
-    align-items: center;
-    gap: 22px;
-  }
-  .lio-reels-action {
-    display: inline-flex;
-    flex-direction: column;
-    align-items: center;
-    gap: 6px;
-    background: transparent;
-    border: none;
-    color: #fff;
-    cursor: pointer;
-    font-family: var(--font-mono);
-    font-size: 0.62rem;
-    letter-spacing: 0.05em;
-    filter: drop-shadow(0 2px 8px rgba(0, 0, 0, 0.6));
-  }
-  .lio-reels-action:disabled { cursor: default; }
-  .lio-reels-info {
-    position: absolute;
-    left: 16px;
-    right: 78px;
-    bottom: calc(28px + env(safe-area-inset-bottom));
-    z-index: 2;
-    display: flex;
-    align-items: center;
-    gap: 10px;
-    filter: drop-shadow(0 2px 10px rgba(0, 0, 0, 0.7));
-  }
-  .lio-reels-avatar {
-    flex-shrink: 0;
-    display: inline-flex;
-    align-items: center;
-    justify-content: center;
-    width: 36px;
-    height: 36px;
-    border-radius: 999px;
-    background: linear-gradient(135deg, var(--accent), var(--accent3));
-    color: var(--bg);
-    font-family: var(--font-display);
-    font-size: 1rem;
-    border: 1.5px solid rgba(255, 255, 255, 0.25);
-  }
-  .lio-reels-meta {
-    display: flex;
-    flex-direction: column;
-    line-height: 1.2;
-    min-width: 0;
-  }
-  .lio-reels-autor {
-    font-family: var(--font-mono);
-    font-size: 0.8rem;
-    font-weight: 700;
-    color: #fff;
-  }
-  .lio-reels-fecha {
-    font-family: var(--font-mono);
-    font-size: 0.62rem;
-    color: rgba(255, 255, 255, 0.7);
-  }
-`;
-
 const styles: Record<string, CSSProperties> = {
   grid: {
     display: "grid",
@@ -938,16 +364,6 @@ const styles: Record<string, CSSProperties> = {
     touchAction: "manipulation",
     WebkitUserSelect: "none",
     userSelect: "none",
-  },
-  heartBurst: {
-    position: "absolute",
-    top: "50%",
-    left: "50%",
-    color: "#fff",
-    pointerEvents: "none",
-    zIndex: 3,
-    filter: "drop-shadow(0 2px 12px rgba(0,0,0,0.45))",
-    animation: "lio-heart-burst 0.9s ease-out forwards",
   },
   overlay: {
     position: "absolute",
@@ -1096,171 +512,6 @@ const styles: Record<string, CSSProperties> = {
     textTransform: "uppercase",
     padding: "4px 10px",
     lineHeight: 1,
-  },
-  // ─── Visor / slider ───
-  modalOverlay: {
-    position: "fixed",
-    inset: 0,
-    zIndex: 9990,
-    background: "rgba(4, 4, 10, 0.92)",
-    backdropFilter: "blur(8px)",
-    display: "flex",
-    alignItems: "center",
-    justifyContent: "center",
-    padding: "24px",
-  },
-  modalFigure: {
-    position: "relative",
-    margin: 0,
-    maxWidth: "min(92vw, 700px)",
-    maxHeight: "88vh",
-    display: "flex",
-    flexDirection: "column",
-    alignItems: "center",
-  },
-  modalImg: {
-    maxWidth: "100%",
-    maxHeight: "78vh",
-    objectFit: "contain",
-    display: "block",
-    border: "1px solid var(--border)",
-  },
-  modalCaption: {
-    width: "100%",
-    display: "flex",
-    alignItems: "center",
-    justifyContent: "space-between",
-    gap: "12px",
-    padding: "12px 4px 0",
-  },
-  modalInfo: {
-    display: "flex",
-    alignItems: "center",
-    gap: "14px",
-    flexWrap: "wrap",
-  },
-  modalAutor: {
-    fontFamily: "var(--font-mono)",
-    fontSize: "0.75rem",
-    color: "var(--text)",
-    letterSpacing: "0.05em",
-  },
-  modalContador: {
-    fontFamily: "var(--font-mono)",
-    fontSize: "0.7rem",
-    color: "var(--muted)",
-    letterSpacing: "0.1em",
-  },
-  modalActions: {
-    display: "flex",
-    alignItems: "center",
-    gap: "8px",
-  },
-  modalActionBtn: {
-    display: "inline-flex",
-    alignItems: "center",
-    justifyContent: "center",
-    width: "38px",
-    height: "38px",
-    background: "var(--surface)",
-    border: "1px solid var(--border)",
-    color: "var(--text)",
-    cursor: "pointer",
-    borderRadius: "999px",
-  },
-  modalBtn: {
-    position: "absolute",
-    display: "inline-flex",
-    alignItems: "center",
-    justifyContent: "center",
-    width: "44px",
-    height: "44px",
-    background: "color-mix(in srgb, var(--surface) 80%, transparent)",
-    border: "1px solid var(--border)",
-    color: "var(--text)",
-    cursor: "pointer",
-    borderRadius: "999px",
-    zIndex: 9991,
-  },
-  modalClose: {
-    top: "20px",
-    right: "20px",
-  },
-  modalPrev: {
-    left: "16px",
-    top: "50%",
-    transform: "translateY(-50%)",
-  },
-  modalNext: {
-    right: "16px",
-    top: "50%",
-    transform: "translateY(-50%)",
-  },
-  // ─── Hoja de compartir ───
-  shareOverlay: {
-    position: "fixed",
-    inset: 0,
-    zIndex: 9995,
-    background: "rgba(4, 4, 10, 0.7)",
-    backdropFilter: "blur(4px)",
-    display: "flex",
-    alignItems: "flex-end",
-    justifyContent: "center",
-  },
-  shareSheet: {
-    width: "100%",
-    maxWidth: "420px",
-    background: "var(--bg2)",
-    border: "1px solid var(--border)",
-    borderBottom: "none",
-    borderRadius: "20px 20px 0 0",
-    padding: "20px 20px 28px",
-  },
-  shareHead: {
-    display: "flex",
-    alignItems: "center",
-    justifyContent: "space-between",
-    marginBottom: "18px",
-  },
-  shareTitle: {
-    fontFamily: "var(--font-display)",
-    fontSize: "1.6rem",
-    letterSpacing: "0.03em",
-    color: "var(--text)",
-  },
-  shareClose: {
-    display: "inline-flex",
-    background: "transparent",
-    border: "none",
-    color: "var(--muted)",
-    cursor: "pointer",
-  },
-  shareOptions: {
-    display: "flex",
-    justifyContent: "space-around",
-    gap: "12px",
-  },
-  shareOption: {
-    display: "flex",
-    flexDirection: "column",
-    alignItems: "center",
-    gap: "8px",
-    background: "transparent",
-    border: "none",
-    color: "var(--text)",
-    cursor: "pointer",
-    fontFamily: "var(--font-mono)",
-    fontSize: "0.7rem",
-    letterSpacing: "0.03em",
-  },
-  shareIcon: {
-    display: "inline-flex",
-    alignItems: "center",
-    justifyContent: "center",
-    width: "56px",
-    height: "56px",
-    borderRadius: "999px",
-    border: "1px solid var(--border)",
   },
   skeleton: {
     background: "var(--surface)",
