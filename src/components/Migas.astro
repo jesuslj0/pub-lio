@@ -1,0 +1,30 @@
+---
+import { ChevronRight } from "@lucide/astro";
+
+// Migas de pan visibles. El JSON-LD BreadcrumbList lo declara cada página.
+interface Props {
+  migas: { nombre: string; ruta?: string }[];
+}
+const { migas } = Astro.props;
+---
+
+<nav aria-label="Migas de pan" class="mb-8">
+  <ol class="flex flex-wrap items-center gap-x-1.5 gap-y-1 font-mono text-[0.62rem] uppercase tracking-[0.18em] text-muted">
+    {
+      migas.map((m, i) => (
+        <li class="inline-flex items-center gap-1.5">
+          {i > 0 && <ChevronRight size={11} stroke-width={2} aria-hidden="true" />}
+          {m.ruta && i < migas.length - 1 ? (
+            <a href={m.ruta} class="transition-colors hover:text-accent">
+              {m.nombre}
+            </a>
+          ) : (
+            <span aria-current="page" class="max-w-[40ch] truncate text-text/80">
+              {m.nombre}
+            </span>
+          )}
+        </li>
+      ))
+    }
+  </ol>
+</nav>

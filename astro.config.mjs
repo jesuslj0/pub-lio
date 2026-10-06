@@ -19,8 +19,17 @@ export default defineConfig({
   integrations: [
     react(),
     sitemap({
-      // No indexar el panel de administración ni las páginas dinámicas de fotos.
-      filter: (page) => !page.includes('/admin') && !page.includes('/foto/'),
+      // Fuera: panel de administración, API, fotos sueltas (/foto/[id]) y 404.
+      // /fotos/ (el historial) sí entra: '/foto/' no casa con '/fotos/'.
+      // Los borradores del blog no se generan, así que tampoco aparecen.
+      filter: (page) =>
+        !page.includes('/admin') &&
+        !page.includes('/api/') &&
+        !page.includes('/foto/') &&
+        !page.includes('/404'),
+      // Las fichas de evento son SSR (salen de Supabase) y la integración no
+      // las ve: las sirve un endpoint propio que se añade al índice.
+      customSitemaps: ['https://www.liopub.com/sitemap-eventos.xml'],
     }),
   ],
 

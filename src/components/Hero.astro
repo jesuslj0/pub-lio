@@ -5,11 +5,10 @@ import { Disc3 } from "@lucide/astro";
 <section class="hero">
   <div class="hero-bg"></div>
   <p class="hero-eyebrow"><Disc3 size={14} stroke-width={2} /> Music Pub · El Bonillo (AB)</p>
+  <!-- Saltos con <br> y espacios reales: con spans en display:block, quien lee
+       el texto (Google, lectores de pantalla) unía "vas" y "a liar" ("vasa liar"). -->
   <h1 class="hero-title">
-    <span class="stroke-text">te</span>
-    vas
-    <span class="accent-word">a liar</span>
-    <span class="sr-only"> — Lío, disco pub en El Bonillo (Albacete)</span>
+    <span class="stroke-text">Te</span> <br />vas <br /><span class="accent-word">a liar</span><span class="sr-only"> — Lío Music Pub, disco pub en El Bonillo (Albacete)</span>
   </h1>
   <div class="hero-sub">
     <p>
@@ -110,12 +109,10 @@ import { Disc3 } from "@lucide/astro";
   }
   .hero-title .accent-word {
     color: var(--accent);
-    display: block;
   }
   .hero-title .stroke-text {
     -webkit-text-stroke: 2.5px rgba(232, 232, 240, 0.4);
     color: transparent;
-    display: block;
   }
   .hero-sub {
     margin-top: 32px;

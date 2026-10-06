@@ -11,6 +11,7 @@
     "preview": "astro preview",
     "img:optimize": "node scripts/optimize-images.mjs",
     "story": "node --env-file=.env.local scripts/story-semana.mjs",
+    "test:sorteo": "node scripts/test-sorteo.mjs",
     "astro": "astro"
   },
   "dependencies": {

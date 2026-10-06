@@ -19,13 +19,21 @@ import ComoParticipar from "../components/ComoParticipar.astro";
 import Footer from "../components/Footer.astro";
 import { ArrowRight, CalendarDays, Images, Gift, ListChecks, ShieldCheck, Trophy, UserCheck } from "@lucide/astro";
 import { getPreviousWeek } from "../lib/supabase";
+import { negocioJsonLd } from "../lib/seo";
 
 // Semana de concurso recién cerrada: su podio se muestra como "anteriores
 // ganadores" hasta que la semana en curso genere el suyo (rota cada jueves).
 const semanaPasada = getPreviousWeek();
+
+const descripcion =
+  "Lío Music Pub, disco pub en la Plaza Mayor de El Bonillo (Albacete). Cañas a 1 € los viernes hasta las 22:00, carteles del finde, fotos del público y sorteo semanal.";
 ---
 
-<Base title="Lío Music Pub · El Bonillo (Albacete)">
+<Base
+  title="Lío Music Pub · Disco pub en El Bonillo (Albacete)"
+  description={descripcion}
+  jsonLd={negocioJsonLd(descripcion)}
+>
   <Nav />
   <main id="contenido">
   <Hero />
@@ -100,10 +108,13 @@ const semanaPasada = getPreviousWeek();
       <div class="upload-left">
         <h2 class="upload-left-title">¿Estuviste<br />con nosotros?</h2>
         <p class="upload-left-sub">
-          Sube tu <span class="mark">mejor foto del finde</span> en el Lío, consigue votos y gana el <span class="mark">premio</span> de la semana
-          siguiente. Sin registro: solo tu foto y un nombre. Máximo 3 fotos por
-          dispositivo. <span class="mark" style="font-style: italic">¡Comparte tu momento!</span>
+          Sube tu <span class="mark">foto del finde</span> en el Lío y entras en el
+          <span class="mark">sorteo del premio</span> de la semana siguiente. ¡Y si es
+          de las más votadas, sale en el podio! Sin registro: solo tu foto y un
+          nombre. Máximo 3 fotos por dispositivo (cuentan como una sola
+          participación). <span class="mark" style="font-style: italic">¡Comparte tu momento!</span>
         </p>
+        <a href="/bases-sorteo/" class="upload-bases">Bases del sorteo →</a>
       </div>
       <div class="upload-right">
         <ComoParticipar />
@@ -126,10 +137,10 @@ const semanaPasada = getPreviousWeek();
             <p class="upload-aviso">
               <UserCheck size={14} stroke-width={2} />
               <span>
-                Si tu foto resulta <span class="mark">ganadora</span>, verificaremos
-                la autoría a través del Instagram indicado. Si no podemos
-                confirmarla o la cuenta no coincide con la foto, se
-                <span class="mark">reelegirá un nuevo ganador</span>.
+                Si sales en el <span class="mark">sorteo</span>, te escribiremos al
+                Instagram que indiques y verificaremos que la foto es tuya. Si no
+                podemos confirmarlo o la cuenta no coincide con la foto, el sorteo
+                <span class="mark">se anula y se repite</span>.
               </span>
             </p>
           </div>
@@ -341,6 +352,20 @@ const semanaPasada = getPreviousWeek();
     font-weight: 300;
     max-width: 360px;
     margin-top: 16px;
+  }
+  .upload-bases {
+    display: inline-block;
+    margin-top: 14px;
+    font-family: var(--font-mono);
+    font-size: 0.65rem;
+    letter-spacing: 0.15em;
+    text-transform: uppercase;
+    color: var(--accent);
+    text-decoration: none;
+  }
+  .upload-bases:hover {
+    text-decoration: underline;
+    text-underline-offset: 4px;
   }
   .upload-right {
     display: flex;

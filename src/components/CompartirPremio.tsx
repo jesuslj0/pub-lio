@@ -62,7 +62,7 @@ export default function CompartirPremio() {
 
   const mensaje =
     `🎁🔥 ¡Mira el pedazo de premio semanal que hay en Lío El Bonillo este finde! ` +
-    `Sube tu mejor foto del finde, consigue votos y llévatelo. 🪩🍸 ` +
+    `Sube tu foto del finde y entras en el sorteo. 🪩🍸 ` +
     `¡Tenemos que participar! 👇`;
 
   const textoCompleto = url ? `${mensaje}\n${url}` : mensaje;

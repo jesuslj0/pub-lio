@@ -1,50 +1,37 @@
 ---
 import "../styles/global.css";
 import LiquidAurora from "../components/LiquidAurora.astro";
+import { NEGOCIO, OG_DEFAULT, urlAbsoluta, urlCanonica } from "../lib/seo";
 
 interface Props {
   title?: string;
   description?: string;
+  /** Imagen OG (ruta interna o URL absoluta). Por defecto, la de la marca. */
   image?: string;
+  imageAlt?: string;
   noindex?: boolean;
+  /** "article" en los artículos del blog. */
+  ogType?: "website" | "article";
+  /** Datos estructurados propios de la página (uno o varios bloques). */
+  jsonLd?: Record<string, unknown> | Record<string, unknown>[];
 }
 
 const {
-  title = "Lío El Bonillo",
-  description = "Disco pub en El Bonillo (Albacete). Carteles del finde, galería de fotos del público y premio semanal a la foto más votada. Copas, música y buen ambiente cada viernes y sábado.",
-  image = "/img/og-default.png",
+  title = "Lío Music Pub · Disco pub en El Bonillo (Albacete)",
+  description = "Lío Music Pub, disco pub en la Plaza Mayor de El Bonillo (Albacete). Carteles del finde, galería de fotos del público y sorteo semanal entre quienes suben su foto.",
+  image = OG_DEFAULT,
+  imageAlt = "Lío Music Pub, El Bonillo",
   noindex = false,
+  ogType = "website",
+  jsonLd,
 } = Astro.props;
 
-// URL canónica y absoluta para OG. Si no hay site configurado, usamos el origin de la request.
-const site = Astro.site ?? new URL(Astro.url.origin);
-const canonical = new URL(Astro.url.pathname, site).href;
-const ogImage = new URL(image, site).href;
-
-const jsonLd = {
-  "@context": "https://schema.org",
-  "@type": "NightClub",
-  name: "Lío El Bonillo",
-  description,
-  url: site.href,
-  image: ogImage,
-  address: {
-    "@type": "PostalAddress",
-    streetAddress: "Plaza Mayor",
-    addressLocality: "El Bonillo",
-    addressRegion: "Albacete",
-    postalCode: "02610",
-    addressCountry: "ES",
-  },
-  geo: {
-    "@type": "GeoCoordinates",
-    latitude: 38.95044287201614,
-    longitude: -2.5398941420405077,
-  },
-  priceRange: "€€",
-  sameAs: ["https://www.instagram.com/lioelbonillo/"],
-  openingHours: ["Fr 20:00-04:00", "Sa 20:00-04:00"],
-};
+// Canonical siempre con www y barra final (igual que el sitemap).
+const canonical = urlCanonica(Astro.url.pathname);
+const ogImage = urlAbsoluta(image);
+// Ancho/alto/tipo solo se conocen para la imagen por defecto.
+const esOgPorDefecto = image === OG_DEFAULT;
+const bloquesJsonLd = jsonLd ? (Array.isArray(jsonLd) ? jsonLd : [jsonLd]) : [];
 ---
 
 <!DOCTYPE html>
@@ -59,15 +46,16 @@ const jsonLd = {
     {noindex && <meta name="robots" content="noindex, nofollow" />}
 
     <!-- Open Graph (WhatsApp, Instagram, Facebook…) -->
-    <meta property="og:type" content="website" />
-    <meta property="og:site_name" content="Lío El Bonillo" />
+    <meta property="og:type" content={ogType} />
+    <meta property="og:site_name" content={NEGOCIO.nombreCompleto} />
     <meta property="og:title" content={title} />
     <meta property="og:description" content={description} />
     <meta property="og:url" content={canonical} />
     <meta property="og:image" content={ogImage} />
-    <meta property="og:image:type" content="image/png" />
-    <meta property="og:image:width" content="1200" />
-    <meta property="og:image:height" content="630" />
+    <meta property="og:image:alt" content={imageAlt} />
+    {esOgPorDefecto && <meta property="og:image:type" content="image/png" />}
+    {esOgPorDefecto && <meta property="og:image:width" content="1200" />}
+    {esOgPorDefecto && <meta property="og:image:height" content="630" />}
     <meta property="og:locale" content="es_ES" />
 
     <!-- Twitter / X -->
@@ -75,9 +63,14 @@ const jsonLd = {
     <meta name="twitter:title" content={title} />
     <meta name="twitter:description" content={description} />
     <meta name="twitter:image" content={ogImage} />
+    <meta name="twitter:image:alt" content={imageAlt} />
 
-    <!-- Datos estructurados (Google) -->
-    <script type="application/ld+json" set:html={JSON.stringify(jsonLd)} />
+    <!-- Datos estructurados (Google): cada página declara los suyos -->
+    {
+      bloquesJsonLd.map((bloque) => (
+        <script is:inline type="application/ld+json" set:html={JSON.stringify(bloque).replace(/</g, "\\u003c")} />
+      ))
+    }
 
     <!-- Favicons -->
     <link rel="icon" href="/favicon/favicon.ico" sizes="any" />

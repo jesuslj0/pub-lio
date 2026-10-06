@@ -17,3 +17,22 @@
   --font-body: "Space Grotesk", sans-serif;
   --font-mono: "Space Mono", monospace;
 }
+
+/* Parpadeo suave de los indicadores "en directo" (eventos de hoy). */
+@keyframes lio-pulso {
+  0%,
+  100% {
+    opacity: 1;
+  }
+  50% {
+    opacity: 0.45;
+  }
+}
+.lio-pulso {
+  animation: lio-pulso 1.6s ease-in-out infinite;
+}
+@media (prefers-reduced-motion: reduce) {
+  .lio-pulso {
+    animation: none;
+  }
+}

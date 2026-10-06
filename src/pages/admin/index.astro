@@ -5,6 +5,9 @@ import { getCurrentWeek, getPreviousWeek } from "../../lib/supabase";
 import { isAdmin } from "../../lib/adminAuth";
 import { Trash2 } from "@lucide/astro";
 import type { Foto, Cartel, Premio } from "../../lib/database.types";
+import { SEMANA_INICIO_SORTEO, estadoSorteo, type EstadoSorteo } from "../../lib/sorteo";
+import { repoSupabase } from "../../lib/sorteoRepo";
+import { etiquetaSemana } from "../../lib/historial";
 
 export const prerender = false;
 
@@ -28,6 +31,12 @@ let historialFotos: Foto[] = [];
 let loadError = false;
 const semana = getCurrentWeek();
 const semanaPasada = getPreviousWeek();
+// Desde SEMANA_INICIO_SORTEO el premio se sortea; antes se elegía a mano por votos.
+const sorteoEnSemanaPasada = semanaPasada >= SEMANA_INICIO_SORTEO;
+const sorteoEnSemanaActual = semana >= SEMANA_INICIO_SORTEO;
+let fotosPasada: Foto[] = [];
+let sorteo: EstadoSorteo | null = null;
+let sorteoError = false;
 
 if (authed) {
   try {
@@ -48,8 +57,7 @@ if (authed) {
         .select("*")
         .eq("estado", "aprobada")
         .eq("semana", semanaPasada)
-        .order("votos_count", { ascending: false })
-        .limit(3),
+        .order("votos_count", { ascending: false }),
       supabaseAdmin
         .from("carteles")
         .select("*")
@@ -72,7 +80,8 @@ if (authed) {
     if (fotosRes.error) throw fotosRes.error;
     pendientes = pend.data ?? [];
     aprobadas = aprob.data ?? [];
-    topPasada = pasada.data ?? [];
+    fotosPasada = pasada.data ?? [];
+    topPasada = fotosPasada.slice(0, 3);
     carteles = cartelesRes.data ?? [];
     premios = premiosRes.data ?? [];
     historialFotos = fotosRes.data ?? [];
@@ -81,7 +90,37 @@ if (authed) {
     console.error("[admin] cargar datos", err);
     loadError = true;
   }
+
+  // Aparte: si la tabla `sorteos` aún no existe (migración sin ejecutar), el
+  // resto del panel sigue funcionando.
+  if (sorteoEnSemanaPasada) {
+    try {
+      sorteo = await estadoSorteo(repoSupabase, semanaPasada);
+    } catch (err) {
+      console.error("[admin] cargar sorteo", err);
+      sorteoError = true;
+    }
+  }
 }
+
+// Datos del sorteo para pintar (nombres y miniaturas, sin Instagram ni fingerprint).
+const fotoPorId = new Map(fotosPasada.map((f) => [f.id, f]));
+const ganadoraSorteo = sorteo?.vigente?.foto_ganadora_id
+  ? (fotoPorId.get(sorteo.vigente.foto_ganadora_id) ?? null)
+  : null;
+const bomboDatos = (sorteo?.participantes ?? []).map((p) => {
+  const f = fotoPorId.get(p.id);
+  return { n: f?.nombre_autor || "Anónimo", i: f?.cloudinary_url ?? "" };
+});
+const fechaHora = (iso: string) =>
+  new Date(iso).toLocaleString("es-ES", {
+    timeZone: "Europe/Madrid",
+    day: "2-digit",
+    month: "2-digit",
+    year: "numeric",
+    hour: "2-digit",
+    minute: "2-digit",
+  });
 
 const fmt = (iso: string) =>
   new Date(iso).toLocaleString("es-ES", {
@@ -164,12 +203,18 @@ const fmt = (iso: string) =>
             </div>
           </section>
 
-          {/* B) FOTOS APROBADAS — marcar ganadora */}
+          {/* B) FOTOS APROBADAS DE ESTA SEMANA */}
           <section>
             <h2>
               Fotos aprobadas (esta semana){" "}
               <span class="count">{aprobadas.length}</span>
             </h2>
+            {sorteoEnSemanaActual && (
+              <p class="muted small">
+                El premio de esta semana se sortea cuando termine (a partir del jueves).
+                Los votos solo deciden el podio de las más votadas.
+              </p>
+            )}
             {!loadError && aprobadas.length === 0 && (
               <p class="muted">Aún no hay fotos aprobadas esta semana.</p>
             )}
@@ -185,50 +230,194 @@ const fmt = (iso: string) =>
                     <span class="muted">{foto.votos_count} votos</span>
                     <span class="winner-flag">🏆 Ganadora</span>
                   </div>
-                  <div class="foto-actions">
-                    <button
-                      class:list={["btn", "btn-winner", foto.ganadora ? "btn-ghost" : "btn-primary"]}
-                    >
-                      {foto.ganadora ? "Quitar ganadora" : "Marcar ganadora"}
-                    </button>
-                  </div>
+                  {!sorteoEnSemanaActual && (
+                    <div class="foto-actions">
+                      <button
+                        class:list={["btn", "btn-winner", foto.ganadora ? "btn-ghost" : "btn-primary"]}
+                      >
+                        {foto.ganadora ? "Quitar ganadora" : "Marcar ganadora"}
+                      </button>
+                    </div>
+                  )}
                 </div>
               ))}
             </div>
           </section>
 
-          {/* B2) TOP SEMANA PASADA — marcar ganadora */}
-          <section>
-            <h2>
-              Top semana pasada ({semanaPasada}){" "}
-              <span class="count">{topPasada.length}</span>
-            </h2>
-            {!loadError && topPasada.length === 0 && (
-              <p class="muted">No hay fotos aprobadas de la semana pasada.</p>
-            )}
-            <div class="foto-list">
-              {topPasada.map((foto) => (
-                <div
-                  class:list={["foto-row", "winner-row", { "is-winner": foto.ganadora }]}
-                  data-foto-id={foto.id}
-                >
-                  <img src={foto.cloudinary_url} alt="thumbnail" class="thumb" />
-                  <div class="foto-info">
-                    <strong>{foto.nombre_autor ?? "Anónimo"}</strong>
-                    <span class="muted">{foto.votos_count} votos</span>
-                    <span class="winner-flag">🏆 Ganadora</span>
-                  </div>
-                  <div class="foto-actions">
-                    <button
-                      class:list={["btn", "btn-winner", foto.ganadora ? "btn-ghost" : "btn-primary"]}
-                    >
-                      {foto.ganadora ? "Quitar ganadora" : "Marcar ganadora"}
+          {/* B2) SEMANA PASADA: sorteo (desde SEMANA_INICIO_SORTEO) o marcado manual (antes) */}
+          {sorteoEnSemanaPasada ? (
+            <section id="sorteo" data-semana={semanaPasada}>
+              <h2>
+                🎲 Sorteo de la semana pasada{" "}
+                <span class="count">{semanaPasada} · {etiquetaSemana(semanaPasada)}</span>
+              </h2>
+
+              {sorteoError ? (
+                <p class="error">
+                  No se pudo cargar el sorteo. ¿Está ejecutada la migración de la tabla
+                  <code> sorteos</code> en Supabase?
+                </p>
+              ) : sorteo?.vigente ? (
+                <div class="sorteo-resultado">
+                  {ganadoraSorteo ? (
+                    <img src={ganadoraSorteo.cloudinary_url} alt="Foto ganadora del sorteo" class="sorteo-foto" />
+                  ) : (
+                    <div class="sorteo-foto thumb-empty">—</div>
+                  )}
+                  <div class="sorteo-datos">
+                    <span class="tag">Ganador/a del sorteo</span>
+                    <strong class="sorteo-nombre">{ganadoraSorteo?.nombre_autor ?? (ganadoraSorteo ? "Anónimo" : "Foto borrada")}</strong>
+                    {ganadoraSorteo?.instagram && (
+                      <a
+                        class="sorteo-ig"
+                        href={`https://www.instagram.com/${ganadoraSorteo.instagram.replace(/^@+/, "").replace(/^https?:\/\/(www\.)?instagram\.com\//, "")}`}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                      >
+                        Contactar: {ganadoraSorteo.instagram}
+                      </a>
+                    )}
+                    <span class="muted small">
+                      Entre {sorteo.vigente.participantes}{" "}
+                      {sorteo.vigente.participantes === 1 ? "persona" : "personas"} ·{" "}
+                      {fechaHora(sorteo.vigente.realizado_at)}
+                    </span>
+                    <span class="muted small sorteo-hash" title="SHA-256 de la lista de participantes">
+                      Huella: {sorteo.vigente.participantes_hash.slice(0, 16)}…
+                    </span>
+                    <button type="button" class="btn btn-ghost" id="sorteo-anular-btn">
+                      Anular sorteo
                     </button>
+                    <form id="sorteo-anular-form" class="sorteo-anular" hidden>
+                      <label>
+                        Motivo de la anulación *
+                        <textarea
+                          name="motivo"
+                          rows="2"
+                          required
+                          minlength="3"
+                          placeholder="Ej.: no responde por Instagram en el plazo / no cumple las bases"
+                        ></textarea>
+                      </label>
+                      <p class="muted small">
+                        Quedará registrado. Después podrás repetir el sorteo, y esta persona
+                        no volverá a entrar en el bombo de esta semana.
+                      </p>
+                      <button type="submit" class="btn btn-reject">Confirmar anulación</button>
+                      <p class="msg" id="sorteo-anular-msg"></p>
+                    </form>
                   </div>
                 </div>
-              ))}
-            </div>
-          </section>
+              ) : (
+                <div class="sorteo-panel">
+                  <p class="sorteo-cuenta">
+                    <strong>{sorteo?.participantes.length ?? 0}</strong>
+                    {(sorteo?.participantes.length ?? 0) === 1 ? "persona entra" : "personas entran"} en el bombo
+                    <span class="muted small">
+                      ({sorteo?.totalFotos ?? 0} fotos aprobadas · una participación por persona)
+                    </span>
+                  </p>
+                  <button
+                    type="button"
+                    class="btn btn-primary btn-sortear"
+                    id="sorteo-btn"
+                    disabled={!sorteo || sorteo.participantes.length === 0}
+                  >
+                    🎲 Sortear ganador/a
+                  </button>
+                  <div class="bombo" id="bombo" hidden aria-live="polite">
+                    <img class="bombo-foto" id="bombo-foto" alt="" />
+                    <span class="bombo-nombre" id="bombo-nombre">…</span>
+                  </div>
+                  <p class="msg" id="sorteo-msg"></p>
+                  <script is:inline type="application/json" id="bombo-datos" set:html={JSON.stringify(bomboDatos).replace(/</g, "\\u003c")} />
+                </div>
+              )}
+
+              {sorteo && sorteo.anulados.length > 0 && (
+                <details class="sorteo-anulados">
+                  <summary>Sorteos anulados esta semana ({sorteo.anulados.length})</summary>
+                  <ul>
+                    {sorteo.anulados.map((s) => {
+                      const f = s.foto_ganadora_id ? fotoPorId.get(s.foto_ganadora_id) : null;
+                      return (
+                        <li class="muted small">
+                          {fechaHora(s.realizado_at)} · salió {f?.nombre_autor ?? "—"} · motivo: {s.motivo_anulacion}
+                        </li>
+                      );
+                    })}
+                  </ul>
+                </details>
+              )}
+
+              <details class="emergencia">
+                <summary>Emergencia: marcar ganadora a mano</summary>
+                <p class="muted small">
+                  Solo si el sorteo no se puede usar (p. ej. un fallo técnico). El marcado a mano
+                  <strong> no queda registrado como sorteo</strong> ni tiene huella de participantes.
+                </p>
+                <div class="foto-list">
+                  {topPasada.map((foto) => (
+                    <div
+                      class:list={["foto-row", "winner-row", { "is-winner": foto.ganadora }]}
+                      data-foto-id={foto.id}
+                    >
+                      <img src={foto.cloudinary_url} alt="thumbnail" class="thumb" />
+                      <div class="foto-info">
+                        <strong>{foto.nombre_autor ?? "Anónimo"}</strong>
+                        <span class="muted">{foto.votos_count} votos</span>
+                        <span class="winner-flag">🏆 Ganadora</span>
+                      </div>
+                      <div class="foto-actions">
+                        <button
+                          class:list={["btn", "btn-winner", foto.ganadora ? "btn-ghost" : "btn-primary"]}
+                        >
+                          {foto.ganadora ? "Quitar ganadora" : "Marcar ganadora"}
+                        </button>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              </details>
+            </section>
+          ) : (
+            <section>
+              <h2>
+                Top semana pasada ({semanaPasada}){" "}
+                <span class="count">{topPasada.length}</span>
+              </h2>
+              <p class="muted small">
+                Semana anterior al cambio de reglas: la ganadora se elige por votos, como
+                siempre. Desde la semana {SEMANA_INICIO_SORTEO} ({etiquetaSemana(SEMANA_INICIO_SORTEO)})
+                el premio se sortea y aquí aparecerá el botón del sorteo.
+              </p>
+              {!loadError && topPasada.length === 0 && (
+                <p class="muted">No hay fotos aprobadas de la semana pasada.</p>
+              )}
+              <div class="foto-list">
+                {topPasada.map((foto) => (
+                  <div
+                    class:list={["foto-row", "winner-row", { "is-winner": foto.ganadora }]}
+                    data-foto-id={foto.id}
+                  >
+                    <img src={foto.cloudinary_url} alt="thumbnail" class="thumb" />
+                    <div class="foto-info">
+                      <strong>{foto.nombre_autor ?? "Anónimo"}</strong>
+                      <span class="muted">{foto.votos_count} votos</span>
+                      <span class="winner-flag">🏆 Ganadora</span>
+                    </div>
+                    <div class="foto-actions">
+                      <button
+                        class:list={["btn", "btn-winner", foto.ganadora ? "btn-ghost" : "btn-primary"]}
+                      >
+                        {foto.ganadora ? "Quitar ganadora" : "Marcar ganadora"}
+                      </button>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            </section>
+          )}
 
           {/* C) CARTELES */}
           <section>
@@ -239,6 +428,12 @@ const fmt = (iso: string) =>
             <p class="muted small">
               Puedes mostrar varios carteles a la vez (p. ej. los 2-3 de un finde).
               Marca cuáles se muestran desde el historial de abajo.
+            </p>
+            <p class="aviso-eventos">
+              💡 Consejo: no borres los carteles pasados, desactívalos («Quitar»). Así siguen
+              en <a href="/eventos/" target="_blank" rel="noopener">/eventos</a> y ayudan a que
+              Google encuentre el Lío. Pon siempre la <strong>fecha de inicio</strong>: sin ella
+              el cartel no tiene página propia.
             </p>
             <div id="cartel-form-wrap" hidden>
             <div class="section-head form-subhead">
@@ -612,6 +807,108 @@ const fmt = (iso: string) =>
               }
             });
           });
+
+          // ─── Sorteo semanal: bombo + anulación ───
+          (() => {
+            const seccion = document.getElementById("sorteo");
+            if (!seccion) return;
+            const semanaSorteo = seccion.getAttribute("data-semana");
+            const sinMovimiento = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
+
+            const btn = document.getElementById("sorteo-btn");
+            const bombo = document.getElementById("bombo");
+            const bomboFoto = document.getElementById("bombo-foto");
+            const bomboNombre = document.getElementById("bombo-nombre");
+            const msg = document.getElementById("sorteo-msg");
+            let datos = [];
+            try {
+              datos = JSON.parse(document.getElementById("bombo-datos")?.textContent || "[]");
+            } catch {}
+
+            const pintar = (d) => {
+              if (!d) return;
+              bomboNombre.textContent = d.n;
+              if (d.i) bomboFoto.src = d.i;
+              bomboFoto.hidden = !d.i;
+            };
+            const esperar = (ms) => new Promise((r) => setTimeout(r, ms));
+
+            // Bombo: los nombres giran cada vez más despacio mientras el servidor
+            // sortea. El resultado lo decide SIEMPRE el servidor (crypto.randomInt).
+            async function girar(hasta) {
+              let i = 0;
+              let paso = 60;
+              while (Date.now() < hasta || paso < 260) {
+                pintar(datos[i++ % datos.length]);
+                await esperar(paso);
+                if (Date.now() >= hasta) paso *= 1.25;
+              }
+            }
+
+            btn?.addEventListener("click", async () => {
+              const n = datos.length;
+              if (!confirm(`¿Sortear ahora entre ${n} ${n === 1 ? "persona" : "personas"}? El resultado queda registrado.`)) return;
+              btn.disabled = true;
+              msg.textContent = "";
+              msg.className = "msg";
+              bombo.hidden = false;
+              bombo.classList.add("girando");
+
+              const peticion = fetch("/api/admin/sorteo", {
+                method: "POST",
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify({ semana: semanaSorteo }),
+              }).then((r) => r.json());
+
+              try {
+                if (sinMovimiento) bomboNombre.textContent = "Sorteando…";
+                else await girar(Date.now() + 2200);
+                const data = await peticion;
+                bombo.classList.remove("girando");
+                if (!data.success) throw new Error(data.error || "No se pudo sortear");
+                pintar({ n: data.ganadora?.nombre_autor || "Anónimo", i: data.ganadora?.cloudinary_url || "" });
+                bombo.classList.add("ganador");
+                msg.textContent = `🎉 ¡${data.ganadora?.nombre_autor || "Anónimo"}! (entre ${data.participantes})`;
+                msg.classList.add("ok");
+                setTimeout(() => location.reload(), 2600);
+              } catch (err) {
+                bombo.classList.remove("girando");
+                bombo.hidden = true;
+                msg.textContent = err instanceof Error ? err.message : "Error de red";
+                msg.classList.add("err");
+                btn.disabled = false;
+              }
+            });
+
+            // Anular (pide motivo) y recargar para poder repetir.
+            const anularBtn = document.getElementById("sorteo-anular-btn");
+            const anularForm = document.getElementById("sorteo-anular-form");
+            const anularMsg = document.getElementById("sorteo-anular-msg");
+            anularBtn?.addEventListener("click", () => {
+              anularForm.hidden = !anularForm.hidden;
+              if (!anularForm.hidden) anularForm.querySelector("textarea")?.focus();
+            });
+            anularForm?.addEventListener("submit", async (e) => {
+              e.preventDefault();
+              const motivo = new FormData(anularForm).get("motivo");
+              const enviar = anularForm.querySelector("button[type=submit]");
+              enviar.disabled = true;
+              try {
+                const res = await fetch("/api/admin/sorteo", {
+                  method: "PATCH",
+                  headers: { "Content-Type": "application/json" },
+                  body: JSON.stringify({ semana: semanaSorteo, motivo }),
+                });
+                const data = await res.json();
+                if (!data.success) throw new Error(data.error || "No se pudo anular");
+                location.reload();
+              } catch (err) {
+                anularMsg.textContent = err instanceof Error ? err.message : "Error de red";
+                anularMsg.className = "msg err";
+                enviar.disabled = false;
+              }
+            });
+          })();
 
           // ─── Vista previa de la imagen/vídeo del cartel ───
           const imagenInput = document.getElementById("cartel-imagen");
@@ -1459,6 +1756,150 @@ const fmt = (iso: string) =>
       }
       .msg.err {
         color: var(--red);
+      }
+      /* Aviso de carteles → /eventos */
+      .aviso-eventos {
+        margin: 10px 0 4px;
+        padding: 10px 14px;
+        border-left: 2px solid var(--accent);
+        background: var(--surface);
+        color: var(--text);
+        font-size: 0.8rem;
+      }
+      .aviso-eventos a {
+        color: var(--accent);
+      }
+      /* Sorteo */
+      .sorteo-panel {
+        display: flex;
+        flex-direction: column;
+        align-items: flex-start;
+        gap: 14px;
+        padding: 20px;
+        background: var(--surface);
+        border: 1px solid var(--border);
+      }
+      .sorteo-cuenta {
+        display: flex;
+        align-items: baseline;
+        flex-wrap: wrap;
+        gap: 6px;
+      }
+      .sorteo-cuenta strong {
+        font-size: 2rem;
+        line-height: 1;
+        color: var(--accent);
+      }
+      .btn-sortear {
+        font-size: 0.95rem;
+        padding: 12px 22px;
+      }
+      .bombo {
+        display: flex;
+        align-items: center;
+        gap: 14px;
+        width: 100%;
+        padding: 14px;
+        border: 1px dashed var(--accent);
+        background: var(--bg);
+      }
+      .bombo[hidden] {
+        display: none;
+      }
+      .bombo-foto {
+        width: 64px;
+        height: 64px;
+        object-fit: cover;
+      }
+      .bombo-nombre {
+        font-size: 1.4rem;
+        font-weight: 700;
+      }
+      .bombo.girando .bombo-foto {
+        filter: blur(1.5px);
+      }
+      .bombo.ganador {
+        border-style: solid;
+        box-shadow: 0 0 24px color-mix(in srgb, var(--accent) 45%, transparent);
+      }
+      .bombo.ganador .bombo-nombre {
+        color: var(--accent);
+      }
+      .sorteo-resultado {
+        display: flex;
+        gap: 18px;
+        padding: 18px;
+        background: var(--surface);
+        border: 1px solid var(--accent);
+      }
+      .sorteo-foto {
+        width: 140px;
+        aspect-ratio: 3 / 4;
+        object-fit: cover;
+        flex-shrink: 0;
+      }
+      .sorteo-datos {
+        display: flex;
+        flex-direction: column;
+        align-items: flex-start;
+        gap: 6px;
+        min-width: 0;
+      }
+      .sorteo-nombre {
+        font-size: 1.5rem;
+      }
+      .sorteo-ig {
+        color: var(--accent);
+        font-size: 0.9rem;
+      }
+      .sorteo-hash {
+        font-family: ui-monospace, monospace;
+        word-break: break-all;
+      }
+      .sorteo-anular {
+        display: flex;
+        flex-direction: column;
+        gap: 8px;
+        width: 100%;
+        margin-top: 6px;
+      }
+      .sorteo-anular[hidden] {
+        display: none;
+      }
+      .sorteo-anular label {
+        display: flex;
+        flex-direction: column;
+        gap: 6px;
+        font-size: 0.8rem;
+      }
+      .sorteo-anular textarea {
+        background: var(--bg);
+        color: var(--text);
+        border: 1px solid var(--border);
+        padding: 8px;
+        font: inherit;
+      }
+      .sorteo-anulados,
+      .emergencia {
+        margin-top: 14px;
+        font-size: 0.85rem;
+      }
+      .sorteo-anulados summary,
+      .emergencia summary {
+        cursor: pointer;
+        color: var(--muted);
+      }
+      .sorteo-anulados ul {
+        margin: 8px 0 0 18px;
+      }
+      .emergencia[open] summary {
+        margin-bottom: 8px;
+        color: var(--red);
+      }
+      @media (max-width: 680px) {
+        .sorteo-resultado {
+          flex-direction: column;
+        }
       }
       /* Modal de confirmación */
       .modal-overlay {

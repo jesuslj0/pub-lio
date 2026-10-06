@@ -183,7 +183,7 @@ export default function PhotoUploader() {
             />
           </div>
           <p style={styles.instagramHint}>
-            Necesario para verificar autoría si resultas ganador/a
+            Necesario para contactarte y verificar la autoría si te toca el sorteo
           </p>
           {errorMsg && <p style={styles.errorText}>{errorMsg}</p>}
           <div style={styles.buttonRow}>

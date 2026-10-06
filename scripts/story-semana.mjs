@@ -7,8 +7,8 @@
 //
 // QUÉ HACE:
 //   1) Consulta la tabla `fotos` (estado='aprobada') de la semana indicada.
-//   2) Elige ganadora (fila con ganadora=true, o la más votada si no hay) y
-//      2º/3º por votos.
+//   2) Elige ganadora y 2º/3º por votos. Desde 2026-W41 la ganadora es la del
+//      sorteo (tabla `sorteos`); antes, la fila con ganadora=true o la más votada.
 //   3) Inyecta esos datos en la plantilla y renderiza un PNG 1080×1920 con Edge
 //      headless. El render se hace en el %TEMP% de Windows (Edge no sabe escribir
 //      en rutas \\wsl.localhost) y luego copia el PNG al repo.
@@ -123,8 +123,46 @@ if (!fotos || fotos.length === 0) {
   process.exit(1);
 }
 
-// Ganadora: la marcada (ganadora=true) o, si no hay, la más votada.
-const ganadora = fotos.find((f) => f.ganadora) || fotos[0];
+// Desde 2026-W41 (src/lib/sorteoConfig.ts) el premio se sortea: la ganadora es
+// la del sorteo válido de la semana, no la más votada.
+const SEMANA_INICIO_SORTEO = "2026-W41";
+const conSorteo = SEMANA >= SEMANA_INICIO_SORTEO;
+
+let sorteo = null;
+if (conSorteo) {
+  const { data, error: errSorteo } = await db
+    .from("sorteos")
+    .select("participantes, foto_ganadora_id")
+    .eq("semana", SEMANA)
+    .eq("anulado", false)
+    .maybeSingle();
+  if (errSorteo) console.warn("⚠ No se pudo leer la tabla sorteos:", errSorteo.message);
+  sorteo = data ?? null;
+  if (!sorteo && !USAR_ACTUAL) {
+    console.error(
+      `✖ La semana ${SEMANA} se resuelve por sorteo y todavía no se ha sorteado.\n` +
+        "  Haz el sorteo en /admin y vuelve a lanzar el script.",
+    );
+    process.exit(1);
+  }
+}
+
+// La del sorteo puede estar fuera del top 12 por votos: se busca aparte.
+let ganadoraSorteo = null;
+if (sorteo?.foto_ganadora_id) {
+  ganadoraSorteo =
+    fotos.find((f) => f.id === sorteo.foto_ganadora_id) ??
+    (
+      await db
+        .from("fotos")
+        .select("id, nombre_autor, instagram, votos_count, ganadora, cloudinary_url")
+        .eq("id", sorteo.foto_ganadora_id)
+        .maybeSingle()
+    ).data;
+}
+
+// Ganadora: la del sorteo; si no, la marcada (ganadora=true); si no, la más votada.
+const ganadora = ganadoraSorteo || fotos.find((f) => f.ganadora) || fotos[0];
 const resto = fotos.filter((f) => f.id !== ganadora.id); // ya vienen por votos desc
 const podio = [ganadora, resto[0], resto[1]]; // [1º, 2º, 3º] (2º/3º pueden faltar)
 
@@ -172,6 +210,7 @@ const CONFIG_JS = `const CONFIG = {
       name:  ${J(t.name)},
       votes: ${t.votes},
     },
+    sorteo: ${sorteo ? J({ participantes: sorteo.participantes }) : "null"},
   };`;
 
 let html;
@@ -192,9 +231,9 @@ if (!reConfig.test(html)) {
 html = html.replace(reConfig, CONFIG_JS);
 
 // ── Resumen por consola ────────────────────────────────────────────────────────
-console.log(`\n  STORY · semana ${SEMANA}`);
+console.log(`\n  STORY · semana ${SEMANA}${sorteo ? ` · 🎲 sorteo entre ${sorteo.participantes}` : ""}`);
 console.log(
-  `  1º  ${w.name.padEnd(18)} ${String(w.votes).padStart(4)}v   ${limpiaIg(ganadora.instagram)}`,
+  `  ${sorteo ? "🎲" : "1º"}  ${w.name.padEnd(18)} ${String(w.votes).padStart(4)}v   ${limpiaIg(ganadora.instagram)}`,
 );
 if (podio[1]) console.log(`  2º  ${s.name.padEnd(18)} ${String(s.votes).padStart(4)}v`);
 if (podio[2]) console.log(`  3º  ${t.name.padEnd(18)} ${String(t.votes).padStart(4)}v`);

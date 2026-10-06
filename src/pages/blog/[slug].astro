@@ -1,0 +1,236 @@
+---
+import { render } from "astro:content";
+import Base from "../../layouts/Base.astro";
+import Nav from "../../components/Nav.astro";
+import Footer from "../../components/Footer.astro";
+import Migas from "../../components/Migas.astro";
+import { ArrowRight, CalendarDays } from "@lucide/astro";
+import { articulosVisibles, fechaIso, fechaLarga, variantesImagen, type Articulo } from "../../lib/blog";
+import {
+  OG_DEFAULT,
+  breadcrumbJsonLd,
+  organizacionJsonLd,
+  urlAbsoluta,
+  urlCanonica,
+} from "../../lib/seo";
+
+export const prerender = true;
+
+export async function getStaticPaths() {
+  const articulos = await articulosVisibles();
+  return articulos.map((articulo) => ({
+    params: { slug: articulo.id },
+    props: { articulo, otros: articulos.filter((a) => a.id !== articulo.id).slice(0, 3) },
+  }));
+}
+
+interface Props {
+  articulo: Articulo;
+  otros: Articulo[];
+}
+const { articulo, otros } = Astro.props;
+const { data } = articulo;
+const { Content } = await render(articulo);
+
+const ruta = `/blog/${articulo.id}/`;
+const imagen = data.heroImage ?? OG_DEFAULT;
+const hero = data.heroImage ? variantesImagen(data.heroImage) : null;
+
+const jsonLd = [
+  {
+    "@context": "https://schema.org",
+    "@type": "BlogPosting",
+    headline: data.title,
+    description: data.description,
+    datePublished: fechaIso(data.pubDate),
+    dateModified: fechaIso(data.updatedDate ?? data.pubDate),
+    image: [urlAbsoluta(imagen)],
+    inLanguage: "es-ES",
+    mainEntityOfPage: urlCanonica(ruta),
+    url: urlCanonica(ruta),
+    author: organizacionJsonLd(),
+    publisher: organizacionJsonLd(),
+    keywords: data.tags.join(", "),
+  },
+  breadcrumbJsonLd([
+    { nombre: "Inicio", ruta: "/" },
+    { nombre: "Blog", ruta: "/blog/" },
+    { nombre: data.title, ruta },
+  ]),
+];
+---
+
+<Base
+  title={data.title}
+  description={data.description}
+  image={imagen}
+  imageAlt={data.heroAlt ?? data.title}
+  ogType="article"
+  noindex={data.draft}
+  jsonLd={jsonLd}
+>
+  <Nav />
+  <main id="contenido" class="px-5 pt-24 pb-20 md:px-10 md:pt-32">
+    <article class="mx-auto max-w-[760px]">
+      <Migas migas={[{ nombre: "Inicio", ruta: "/" }, { nombre: "Blog", ruta: "/blog/" }, { nombre: data.title }]} />
+
+      {
+        data.draft && (
+          <p class="mb-8 border-l-2 border-accent bg-accent/10 px-4 py-3 font-mono text-[0.7rem] tracking-wide text-text">
+            BORRADOR: solo visible en desarrollo. No se publica ni entra en el sitemap hasta poner
+            <code> draft: false</code>.
+          </p>
+        )
+      }
+
+      <header class="mb-10">
+        <p class="mb-4 flex flex-wrap items-center gap-x-3 gap-y-2 font-mono text-[0.62rem] uppercase tracking-[0.18em] text-muted">
+          <time datetime={fechaIso(data.pubDate)}>{fechaLarga(data.pubDate)}</time>
+          {
+            data.updatedDate && (
+              <span>
+                · Actualizado el <time datetime={fechaIso(data.updatedDate)}>{fechaLarga(data.updatedDate)}</time>
+              </span>
+            )
+          }
+        </p>
+        <h1 class="font-display text-[clamp(2.4rem,6.5vw,4.6rem)] leading-[0.95] tracking-[0.01em] text-text">
+          {data.title}
+        </h1>
+        <p class="mt-5 text-lg font-light text-muted">{data.description}</p>
+        {
+          data.tags.length > 0 && (
+            <ul class="mt-5 flex flex-wrap gap-2" aria-label="Etiquetas">
+              {data.tags.map((t) => (
+                <li class="border border-border px-2.5 py-1 font-mono text-[0.58rem] uppercase tracking-[0.15em] text-muted">
+                  #{t}
+                </li>
+              ))}
+            </ul>
+          )
+        }
+      </header>
+
+      {
+        hero && (
+          <figure class="mb-12 border border-border">
+            <picture>
+              <source srcset={hero.avif} type="image/avif" />
+              <source srcset={hero.webp} type="image/webp" />
+              <img
+                src={hero.original}
+                alt={data.heroAlt ?? ""}
+                width="1600"
+                height="1200"
+                class="block aspect-[4/3] w-full object-cover"
+                fetchpriority="high"
+              />
+            </picture>
+          </figure>
+        )
+      }
+
+      <div class="prosa">
+        <Content />
+      </div>
+
+      <aside class="mt-14 flex flex-col gap-5 border border-accent/40 bg-accent/5 p-6 md:flex-row md:items-center md:justify-between md:p-8">
+        <div>
+          <p class="font-mono text-[0.6rem] uppercase tracking-[0.2em] text-accent">Agenda</p>
+          <p class="mt-2 font-display text-3xl leading-none text-text">¿Qué hay este finde en el Lío?</p>
+        </div>
+        <a
+          href="/eventos/"
+          class="inline-flex shrink-0 items-center gap-2 bg-accent px-5 py-3 font-mono text-[0.7rem] font-bold uppercase tracking-[0.12em] text-bg transition-transform hover:-translate-y-0.5"
+        >
+          <CalendarDays size={15} stroke-width={2} />
+          Ver eventos
+        </a>
+      </aside>
+    </article>
+
+    {
+      otros.length > 0 && (
+        <section aria-labelledby="mas-blog" class="mx-auto mt-20 max-w-[760px] border-t border-border pt-10">
+          <h2 id="mas-blog" class="mb-6 font-display text-3xl text-text">Más del blog</h2>
+          <ul class="flex flex-col gap-3">
+            {otros.map((o) => (
+              <li>
+                <a
+                  href={`/blog/${o.id}/`}
+                  class="group flex items-center justify-between gap-4 border border-border bg-bg2 px-5 py-4 transition-colors hover:border-accent/50"
+                >
+                  <span class="text-sm font-medium text-text">{o.data.title}</span>
+                  <ArrowRight size={16} stroke-width={2} class="shrink-0 text-accent transition-transform group-hover:translate-x-1" />
+                </a>
+              </li>
+            ))}
+          </ul>
+        </section>
+      )
+    }
+  </main>
+  <Footer />
+</Base>
+
+<style>
+  /* Tipografía del Markdown (Tailwind no trae estilos de prosa sin plugin). */
+  .prosa {
+    color: color-mix(in srgb, var(--text) 86%, transparent);
+    font-size: 1.06rem;
+    line-height: 1.75;
+    font-weight: 300;
+  }
+  .prosa :global(> * + *) {
+    margin-top: 1.15em;
+  }
+  .prosa :global(h2) {
+    margin-top: 2.2em;
+    font-family: var(--font-display);
+    font-weight: 400;
+    font-size: clamp(1.7rem, 3.4vw, 2.3rem);
+    line-height: 1.05;
+    color: var(--text);
+    letter-spacing: 0.01em;
+  }
+  .prosa :global(h3) {
+    margin-top: 1.8em;
+    font-family: var(--font-mono);
+    font-size: 0.8rem;
+    letter-spacing: 0.16em;
+    text-transform: uppercase;
+    color: var(--accent);
+  }
+  .prosa :global(strong) {
+    color: var(--text);
+    font-weight: 600;
+  }
+  .prosa :global(a) {
+    color: var(--accent);
+    text-decoration: underline;
+    text-decoration-thickness: 1px;
+    text-underline-offset: 3px;
+  }
+  .prosa :global(a:hover) {
+    text-shadow: 0 0 12px color-mix(in srgb, var(--accent) 45%, transparent);
+  }
+  .prosa :global(ul),
+  .prosa :global(ol) {
+    padding-left: 1.3em;
+  }
+  .prosa :global(li + li) {
+    margin-top: 0.45em;
+  }
+  .prosa :global(li::marker) {
+    color: var(--accent);
+  }
+  /* Bloques de cita: en los borradores se usan para los TODO visibles. */
+  .prosa :global(blockquote) {
+    border-left: 2px solid var(--accent);
+    background: color-mix(in srgb, var(--accent) 8%, transparent);
+    padding: 0.9em 1.1em;
+    font-family: var(--font-mono);
+    font-size: 0.82rem;
+    line-height: 1.6;
+  }
+</style>

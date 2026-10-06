@@ -1,6 +1,7 @@
 import { useEffect, useState, type CSSProperties } from "react";
-import { Trophy, Heart, Crown, BarChart3, Medal } from "lucide-react";
+import { Trophy, Heart, Crown, BarChart3, Medal, Dices, Users } from "lucide-react";
 import { supabase, getCurrentWeek } from "../lib/supabase";
+import { semanaConSorteo } from "../lib/sorteoConfig";
 import type { Foto } from "../lib/database.types";
 
 type Variante = "actual" | "resultados";
@@ -26,30 +27,45 @@ export default function Leaderboard({
   const esResultados = variante === "resultados";
   const [podio, setPodio] = useState<Foto[]>([]);
   const [ganadora, setGanadora] = useState<Foto | null>(null);
+  // Desde SEMANA_INICIO_SORTEO la ganadora sale de un sorteo (no de los votos):
+  // aquí guardamos cuántas personas entraron en el bombo.
+  const [participantesSorteo, setParticipantesSorteo] = useState<number | null>(null);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
     let activo = true;
 
     async function cargar() {
-      // Top fotos aprobadas de la semana, ordenadas por votos.
-      const { data, error } = await supabase
-        .from("fotos")
-        .select("*")
-        .eq("semana", semana)
-        .eq("estado", "aprobada")
-        .order("votos_count", { ascending: false })
-        .limit(6);
+      // Podio (top 3 por votos), ganadora (puede estar fuera del top si salió
+      // por sorteo) y el sorteo válido de la semana, en paralelo.
+      const base = () =>
+        supabase.from("fotos").select("*").eq("semana", semana).eq("estado", "aprobada");
+      const [top, gan, sor] = await Promise.all([
+        base().order("votos_count", { ascending: false }).limit(3),
+        base().eq("ganadora", true).limit(1).maybeSingle(),
+        semanaConSorteo(semana)
+          ? supabase
+              .from("sorteos")
+              .select("participantes, foto_ganadora_id")
+              .eq("semana", semana)
+              .eq("anulado", false)
+              .maybeSingle()
+          : Promise.resolve({ data: null, error: null }),
+      ]);
 
       if (!activo) return;
-      if (error) {
-        console.error(error);
+      if (top.error) {
+        console.error(top.error);
         setPodio([]);
         setGanadora(null);
+        setParticipantesSorteo(null);
       } else {
-        const fotos = data ?? [];
-        setGanadora(fotos.find((f) => f.ganadora) ?? null);
-        setPodio(fotos.slice(0, 3));
+        // Si la tabla de sorteos aún no existe, se ignora: la web sigue igual.
+        const s = sor.error ? null : sor.data;
+        const g = gan.data ?? null;
+        setPodio(top.data ?? []);
+        setGanadora(g);
+        setParticipantesSorteo(s && g && s.foto_ganadora_id === g.id ? s.participantes : null);
       }
       setLoading(false);
     }
@@ -78,8 +94,12 @@ export default function Leaderboard({
   }, [semana]);
 
   if (loading) {
+    // `key` propia: al llegar los datos React sustituye este nodo en vez de
+    // reutilizarlo. Reutilizado (con su animación de opacidad), Chrome medía su
+    // cambio de tamaño como un layout shift enorme aunque estuviera fuera de
+    // pantalla (~0,2 de CLS en Lighthouse móvil por cada Leaderboard).
     return (
-      <div style={styles.skeleton}>
+      <div key="lb-cargando" style={styles.skeleton}>
         <style>{pulse}</style>
       </div>
     );
@@ -102,13 +122,20 @@ export default function Leaderboard({
     );
   }
 
+  // ¿La ganadora salió del sorteo? Entonces no se muestran sus votos como
+  // motivo y el podio de votos va aparte, completo, sin premio.
+  const porSorteo = participantesSorteo !== null;
+  const textoParticipantes = porSorteo
+    ? `Entre ${participantesSorteo} ${participantesSorteo === 1 ? "persona" : "personas"}`
+    : "";
+
   // ─── Variante "resultados": podio cerrado de la semana pasada ───
   if (esResultados) {
-    // Puesto por votos (1º..3º). Si hay ganadora, se muestra destacada arriba y
-    // se excluye del podio pequeño para no duplicarla.
+    // Puesto por votos (1º..3º). Con ganadora por votos (semanas antiguas), se
+    // muestra destacada y se excluye del podio pequeño para no duplicarla.
     const restantesPodio = podio
       .map((foto, i) => ({ foto, rank: i + 1 }))
-      .filter(({ foto }) => !(ganadora && ganadora.id === foto.id));
+      .filter(({ foto }) => porSorteo || !(ganadora && ganadora.id === foto.id));
 
     // Item de podio pequeño (2º/3º). Se reutiliza con y sin ganadora.
     const podioItem = ({ foto, rank }: { foto: Foto; rank: number }) => (
@@ -147,20 +174,61 @@ export default function Leaderboard({
             loading="lazy"
           />
           <span style={styles.crownResult}>
-            <Crown size={14} strokeWidth={2} style={iconStyle} />
-            Ganadora
+            {porSorteo ? (
+              "🎲 Sorteo"
+            ) : (
+              <>
+                <Crown size={14} strokeWidth={2} style={iconStyle} />
+                Ganadora
+              </>
+            )}
           </span>
         </div>
         <div style={styles.winnerContent}>
-          <span style={styles.winnerLabel}>Ganadora de la semana pasada</span>
-          <h3 style={styles.winnerName}>{ganadora.nombre_autor || "Anónimo"}</h3>
-          <span style={{ ...styles.winnerVotes, color: "var(--accent3)" }}>
-            <Heart size={16} strokeWidth={2} fill="var(--accent3)" style={iconStyle} />
-            {ganadora.votos_count} {ganadora.votos_count === 1 ? "voto" : "votos"}
+          <span style={styles.winnerLabel}>
+            {porSorteo ? "Ganador/a del sorteo · semana pasada" : "Ganadora de la semana pasada"}
           </span>
+          <h3 style={styles.winnerName}>{ganadora.nombre_autor || "Anónimo"}</h3>
+          {porSorteo ? (
+            <span style={{ ...styles.winnerVotes, color: "var(--accent3)" }}>
+              <Users size={16} strokeWidth={2} style={iconStyle} />
+              {textoParticipantes} participaron
+            </span>
+          ) : (
+            <span style={{ ...styles.winnerVotes, color: "var(--accent3)" }}>
+              <Heart size={16} strokeWidth={2} fill="var(--accent3)" style={iconStyle} />
+              {ganadora.votos_count} {ganadora.votos_count === 1 ? "voto" : "votos"}
+            </span>
+          )}
         </div>
       </div>
     );
+
+    const podioLista = (lateral: boolean) => (
+      <ol
+        className="lio-lb-podium"
+        style={{
+          ...styles.podium,
+          ...(lateral ? styles.podiumSide : null),
+          gridTemplateColumns: `repeat(${restantesPodio.length}, 1fr)`,
+        }}
+      >
+        {restantesPodio.map(podioItem)}
+      </ol>
+    );
+
+    // Con sorteo, el podio de votos lleva su propio rótulo: no da premio.
+    const podioMasVotadas = (lateral: boolean) => (
+      <div style={{ ...styles.masVotadas, ...(lateral ? styles.podiumSide : null) }}>
+        <span style={styles.masVotadasLabel}>
+          <Heart size={12} strokeWidth={2} style={iconStyle} />
+          Las más votadas
+        </span>
+        {podioLista(false)}
+      </div>
+    );
+
+    const conSorteo = semanaConSorteo(semana);
 
     return (
       <div style={styles.wrap}>
@@ -171,34 +239,24 @@ export default function Leaderboard({
         </span>
 
         {ganadora ? (
-          // Con ganadora: a la izquierda (grande) y 2º/3º en fila a la derecha,
-          // más pequeñas. En móvil se apila en una sola columna.
+          // Con ganadora: a la izquierda (grande) y el podio en fila a la
+          // derecha, más pequeño. En móvil se apila en una sola columna.
           <div className="lio-lb-resultados-row" style={styles.resultadosRow}>
             <div style={styles.resultadosWinnerCol}>{ganadoraCard}</div>
-            {restantesPodio.length > 0 && (
-              <ol
-                className="lio-lb-podium"
-                style={{
-                  ...styles.podium,
-                  ...styles.podiumSide,
-                  gridTemplateColumns: `repeat(${restantesPodio.length}, 1fr)`,
-                }}
-              >
-                {restantesPodio.map(podioItem)}
-              </ol>
-            )}
+            {restantesPodio.length > 0 && (porSorteo ? podioMasVotadas(true) : podioLista(true))}
           </div>
+        ) : conSorteo ? (
+          // Semana con sorteo aún sin resolver: el podio de votos y el aviso.
+          <>
+            <p style={styles.sorteoPendiente}>
+              <Dices size={14} strokeWidth={2} style={iconStyle} />
+              El sorteo del premio se hace en cuanto cierra la semana. ¡Atento/a!
+            </p>
+            {podioMasVotadas(false)}
+          </>
         ) : (
           // Sin ganadora: el top-3 por igual, a lo ancho.
-          <ol
-            className="lio-lb-podium"
-            style={{
-              ...styles.podium,
-              gridTemplateColumns: `repeat(${restantesPodio.length}, 1fr)`,
-            }}
-          >
-            {restantesPodio.map(podioItem)}
-          </ol>
+          podioLista(false)
         )}
       </div>
     );
@@ -209,7 +267,7 @@ export default function Leaderboard({
       <style>{responsive}</style>
       <span style={styles.eyebrow}>
         <Trophy size={13} strokeWidth={2} style={iconStyle} />
-        Clasificación · Top votos
+        Las más votadas · En directo
       </span>
 
       {ganadora && (
@@ -222,19 +280,34 @@ export default function Leaderboard({
               loading="lazy"
             />
             <span style={styles.crown}>
-              <Crown size={14} strokeWidth={2} style={iconStyle} />
-              Ganadora
+              {porSorteo ? (
+                "🎲 Sorteo"
+              ) : (
+                <>
+                  <Crown size={14} strokeWidth={2} style={iconStyle} />
+                  Ganadora
+                </>
+              )}
             </span>
           </div>
           <div style={styles.winnerContent}>
-            <span style={styles.winnerLabel}>Foto ganadora de la semana</span>
+            <span style={styles.winnerLabel}>
+              {porSorteo ? "Ganador/a del sorteo" : "Foto ganadora de la semana"}
+            </span>
             <h3 style={styles.winnerName}>
               {ganadora.nombre_autor || "Anónimo"}
             </h3>
-            <span style={styles.winnerVotes}>
-              <Heart size={16} strokeWidth={2} fill="var(--accent)" style={iconStyle} />
-              {ganadora.votos_count} {ganadora.votos_count === 1 ? "voto" : "votos"}
-            </span>
+            {porSorteo ? (
+              <span style={styles.winnerVotes}>
+                <Users size={16} strokeWidth={2} style={iconStyle} />
+                {textoParticipantes} participaron
+              </span>
+            ) : (
+              <span style={styles.winnerVotes}>
+                <Heart size={16} strokeWidth={2} fill="var(--accent)" style={iconStyle} />
+                {ganadora.votos_count} {ganadora.votos_count === 1 ? "voto" : "votos"}
+              </span>
+            )}
           </div>
         </div>
       )}
@@ -355,6 +428,34 @@ const styles: Record<string, CSSProperties> = {
   podiumSide: {
     flex: "1 1 0",
     minWidth: 0,
+  },
+  // Podio de votos con rótulo propio (semanas con sorteo: no da premio).
+  masVotadas: {
+    display: "flex",
+    flexDirection: "column",
+    gap: "10px",
+  },
+  masVotadasLabel: {
+    display: "inline-flex",
+    alignItems: "center",
+    gap: "6px",
+    fontFamily: "var(--font-mono)",
+    fontSize: "0.58rem",
+    letterSpacing: "0.18em",
+    textTransform: "uppercase",
+    color: "var(--muted)",
+  },
+  sorteoPendiente: {
+    display: "inline-flex",
+    alignItems: "center",
+    gap: "8px",
+    fontFamily: "var(--font-mono)",
+    fontSize: "0.68rem",
+    letterSpacing: "0.06em",
+    color: "var(--text)",
+    background: "var(--surface)",
+    borderLeft: "2px solid var(--accent3)",
+    padding: "10px 14px",
   },
   // Ganadora destacada en la variante de resultados (acento cian, borde frío).
   winnerResult: {

@@ -1,5 +1,5 @@
 ---
-import { PartyPopper, Camera, Upload, Trophy } from "@lucide/astro";
+import { PartyPopper, Camera, Upload, Dices } from "@lucide/astro";
 
 const pasos = [
   {
@@ -17,21 +17,22 @@ const pasos = [
   {
     Icon: Upload,
     titulo: "Súbela a la galería",
-    texto: "Sin registro, solo tu foto, un nombre y tu Instagram. Lo usamos para verificar tu autoría si ganas el premio.",
+    texto: "Sin registro, solo tu foto, un nombre y tu Instagram. Por ahí te escribimos si te toca el premio.",
     nota: "Máx. 3 por dispositivo",
   },
   {
-    Icon: Trophy,
-    titulo: "Gana el premio",
-    texto: "Compártela y consigue likes para ser la foto ganadora. Será destacada en la web al terminar el concurso.",
-    nota: "Ganador del finde",
+    Icon: Dices,
+    titulo: "Entra en el sorteo",
+    texto: "Con tu foto aprobada entras en el sorteo del premio de la semana siguiente (una participación por persona). ¡Y si es de las más votadas, sale en el podio!",
+    nota: "Ver bases del sorteo",
+    enlace: "/bases-sorteo/",
   },
-];
+] as { Icon: typeof PartyPopper; titulo: string; texto: string; nota: string; enlace?: string }[];
 ---
 
 <div class="grid grid-cols-1 gap-5 sm:grid-cols-2 lg:gap-6">
   {
-    pasos.map(({ Icon, titulo, texto, nota }, i) => (
+    pasos.map(({ Icon, titulo, texto, nota, enlace }, i) => (
       <div class="paso group relative flex flex-col border border-border bg-bg2 p-4 transition-all duration-300 hover:-translate-y-1 hover:border-accent/30 hover:bg-surface lg:p-6">
         <div class="mb-7 flex items-center justify-between">
           <span class="paso-num font-display text-6xl leading-none text-accent/20 transition-colors duration-300 group-hover:text-accent/60">
@@ -47,9 +48,18 @@ const pasos = [
         <p class="mt-4 text-[0.95rem] font-light leading-relaxed text-muted">
           {texto}
         </p>
-        <p class="mt-8 inline-flex w-fit font-mono text-[0.6rem] uppercase tracking-[0.18em] text-accent">
-          {nota}
-        </p>
+        {enlace ? (
+          <a
+            href={enlace}
+            class="mt-8 inline-flex w-fit font-mono text-[0.6rem] uppercase tracking-[0.18em] text-accent underline-offset-4 hover:underline"
+          >
+            {nota} →
+          </a>
+        ) : (
+          <p class="mt-8 inline-flex w-fit font-mono text-[0.6rem] uppercase tracking-[0.18em] text-accent">
+            {nota}
+          </p>
+        )}
       </div>
     ))
   }

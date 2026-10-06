@@ -1,0 +1,279 @@
+---
+import Base from "../../layouts/Base.astro";
+import Nav from "../../components/Nav.astro";
+import Footer from "../../components/Footer.astro";
+import Migas from "../../components/Migas.astro";
+import TicketFecha from "../../components/TicketFecha.astro";
+import CuentaAtras from "../../components/CuentaAtras.tsx";
+import { ArrowLeft, ArrowRight, Navigation } from "@lucide/astro";
+import { siInstagram } from "simple-icons";
+import {
+  HORA_APERTURA,
+  buscarEvento,
+  fechasJsonLd,
+  finCuentaAtras,
+  imagenCloudinary,
+  inicioCuentaAtras,
+  otrosEventos,
+  rangoCorto,
+  type Evento,
+} from "../../lib/eventos";
+import {
+  NEGOCIO,
+  OG_DEFAULT,
+  breadcrumbJsonLd,
+  lugarJsonLd,
+  organizacionJsonLd,
+  urlAbsoluta,
+  urlCanonica,
+} from "../../lib/seo";
+
+export const prerender = false;
+
+const slug = Astro.params.slug ?? "";
+
+let evento: Evento | null = null;
+let otros: Evento[] = [];
+try {
+  evento = await buscarEvento(slug);
+  if (evento) otros = await otrosEventos(evento.id);
+} catch (err) {
+  console.error("[eventos/slug]", err);
+  return new Response("Error cargando el evento", { status: 500 });
+}
+
+// Si el cartel se borró en el admin, su página desaparece (404).
+if (!evento) {
+  return Astro.rewrite("/404");
+}
+
+// Slug viejo (cambió el título o la fecha): a la URL actual.
+if (evento.slug !== slug) {
+  return Astro.redirect(evento.ruta!, 301);
+}
+
+Astro.response.headers.set("Cache-Control", "public, s-maxage=300, stale-while-revalidate=600");
+
+const proximo = evento.estado === "proximo" || evento.estado === "en-curso";
+const ahora = Date.now();
+const tInicio = inicioCuentaAtras(evento);
+const tFin = finCuentaAtras(evento);
+
+const imagenWeb = evento.imagenFija ? imagenCloudinary(evento.imagenFija, 900) : null;
+const imagenOg = evento.imagenFija ? imagenCloudinary(evento.imagenFija, 1200, "jpg") : OG_DEFAULT;
+
+const rango = rangoCorto(evento, true);
+const titulo = `${evento.titulo} · ${rango} · Lío Music Pub, El Bonillo`;
+const resumen = evento.subtitulo?.replace(/\s+/g, " ").trim();
+const descripcion = (
+  resumen
+    ? `${resumen} — ${rango} en el Lío Music Pub, Plaza Mayor de El Bonillo (Albacete).`
+    : `${evento.titulo}: ${rango} en el Lío Music Pub, disco pub en la Plaza Mayor de El Bonillo (Albacete).`
+).slice(0, 300);
+
+const fechas = fechasJsonLd(evento)!;
+const jsonLd = [
+  {
+    "@context": "https://schema.org",
+    "@type": "Event",
+    name: evento.titulo,
+    startDate: fechas.startDate,
+    endDate: fechas.endDate,
+    eventStatus: "https://schema.org/EventScheduled",
+    eventAttendanceMode: "https://schema.org/OfflineEventAttendanceMode",
+    location: lugarJsonLd(),
+    image: [urlAbsoluta(imagenOg)],
+    description: resumen || `${evento.titulo} en el Lío Music Pub, El Bonillo.`,
+    organizer: organizacionJsonLd(),
+    url: urlCanonica(evento.ruta!),
+  },
+  breadcrumbJsonLd([
+    { nombre: "Inicio", ruta: "/" },
+    { nombre: "Eventos", ruta: "/eventos/" },
+    { nombre: evento.titulo, ruta: evento.ruta! },
+  ]),
+];
+---
+
+<Base title={titulo} description={descripcion} image={imagenOg} imageAlt={`Cartel de ${evento.titulo}`} jsonLd={jsonLd}>
+  <Nav />
+  <main id="contenido" class="px-5 pt-24 pb-20 md:px-10 md:pt-32">
+    <div class="mx-auto max-w-[1180px]">
+      <Migas migas={[{ nombre: "Inicio", ruta: "/" }, { nombre: "Eventos", ruta: "/eventos/" }, { nombre: evento.titulo }]} />
+
+      <article class="grid items-start gap-10 md:grid-cols-[minmax(0,420px)_1fr] md:gap-14 lg:gap-20">
+        <!-- Cartel grande con brillo neón -->
+        <div class="cartel-neon relative mx-auto w-full max-w-[300px] sm:max-w-[360px] md:max-w-[420px]">
+          <div class="relative aspect-[9/16] overflow-hidden bg-surface">
+            {
+              evento.esVideo && evento.mediaUrl ? (
+                <video
+                  src={evento.mediaUrl}
+                  poster={imagenWeb ?? undefined}
+                  controls
+                  playsinline
+                  preload="none"
+                  class="size-full object-cover"
+                  aria-label={`Vídeo del cartel de ${evento.titulo}`}
+                />
+              ) : imagenWeb ? (
+                <img
+                  src={imagenWeb}
+                  alt={`Cartel de ${evento.titulo} en el Lío Music Pub, El Bonillo`}
+                  class="size-full object-cover"
+                  fetchpriority="high"
+                />
+              ) : (
+                <span class="flex size-full items-center justify-center font-display text-6xl text-accent/15">LÍO</span>
+              )
+            }
+          </div>
+        </div>
+
+        <div class="flex flex-col gap-7">
+          <div>
+            <p class="mb-4">
+              <span
+                class:list={[
+                  "inline-block px-3 py-1.5 font-mono text-[0.6rem] font-bold uppercase tracking-[0.2em]",
+                  proximo ? "bg-accent text-bg" : "border border-border text-muted",
+                ]}
+              >
+                {evento.estado === "en-curso" ? "Hoy" : proximo ? "Próximo evento" : "Evento pasado"}
+              </span>
+            </p>
+            <h1 class="font-display leading-[0.92] tracking-[0.01em] text-text">
+              <span class="block text-[clamp(2.8rem,7vw,5.6rem)]">{evento.titulo}</span>
+              <span class="mt-3 block font-mono text-[clamp(0.7rem,1.5vw,0.85rem)] font-normal tracking-[0.18em] text-accent uppercase">
+                · Lío Music Pub, El Bonillo
+              </span>
+            </h1>
+          </div>
+
+          <TicketFecha evento={evento} />
+
+          {
+            proximo && tInicio && tFin && (
+              <CuentaAtras client:load inicio={tInicio} fin={tFin} conHora={!!HORA_APERTURA} ahoraServidor={ahora} />
+            )
+          }
+
+          {
+            evento.subtitulo && (
+              <p class="max-w-prose text-base leading-relaxed font-light whitespace-pre-line text-text/80 md:text-lg">
+                {evento.subtitulo}
+              </p>
+            )
+          }
+
+          <div class="flex flex-wrap gap-3">
+            <a
+              href={NEGOCIO.mapsUrl}
+              target="_blank"
+              rel="noopener noreferrer"
+              class="inline-flex items-center gap-2 bg-accent px-5 py-3 font-mono text-[0.7rem] font-bold uppercase tracking-[0.12em] text-bg shadow-[0_0_18px_color-mix(in_srgb,var(--color-accent)_40%,transparent)] transition-transform hover:-translate-y-0.5"
+            >
+              <Navigation size={15} stroke-width={2} />
+              Cómo llegar
+            </a>
+            <a
+              href={NEGOCIO.instagram}
+              target="_blank"
+              rel="noopener noreferrer"
+              class="inline-flex items-center gap-2 border border-border px-5 py-3 font-mono text-[0.7rem] font-bold uppercase tracking-[0.12em] text-text transition-colors hover:border-accent hover:text-accent"
+            >
+              <svg viewBox="0 0 24 24" class="size-4 fill-current" aria-hidden="true"><path d={siInstagram.path} /></svg>
+              {NEGOCIO.instagramHandle}
+            </a>
+          </div>
+
+          <a
+            href="/eventos/"
+            class="inline-flex w-fit items-center gap-2 font-mono text-[0.65rem] uppercase tracking-[0.2em] text-muted transition-colors hover:text-accent"
+          >
+            <ArrowLeft size={14} stroke-width={2} />
+            Todos los eventos
+          </a>
+        </div>
+      </article>
+
+      {
+        otros.length > 0 && (
+          <section aria-labelledby="otros-titulo" class="mt-24 border-t border-border pt-12">
+            <h2 id="otros-titulo" class="mb-8 font-display text-[clamp(2rem,4.5vw,3.2rem)] leading-none text-text">
+              Más noches en el Lío
+            </h2>
+            <ul class="grid grid-cols-2 gap-3 sm:gap-4 lg:grid-cols-4">
+              {otros.map((o) => (
+                <li>
+                  <a href={o.ruta!} class="otro group relative block aspect-[9/16] overflow-hidden border border-border bg-surface">
+                    {o.imagenFija ? (
+                      <img
+                        src={imagenCloudinary(o.imagenFija, 480)}
+                        alt={`Cartel de ${o.titulo}`}
+                        class="size-full object-cover transition-transform duration-500 group-hover:scale-[1.04]"
+                        loading="lazy"
+                        decoding="async"
+                      />
+                    ) : (
+                      <span class="flex size-full items-center justify-center font-display text-3xl text-accent/15">LÍO</span>
+                    )}
+                    <span class="absolute inset-x-0 bottom-0 flex flex-col gap-1 bg-gradient-to-t from-bg via-bg/85 to-transparent px-3 pt-10 pb-3">
+                      <span class="font-mono text-[0.58rem] uppercase tracking-[0.18em] text-accent">{rangoCorto(o, true)}</span>
+                      <span class="font-display text-lg leading-tight text-text">{o.titulo}</span>
+                    </span>
+                  </a>
+                </li>
+              ))}
+            </ul>
+            <a
+              href="/eventos/"
+              class="mt-8 inline-flex items-center gap-2 font-mono text-[0.68rem] uppercase tracking-[0.18em] text-accent hover:underline hover:underline-offset-4"
+            >
+              Ver todos los eventos <ArrowRight size={14} stroke-width={2} />
+            </a>
+          </section>
+        )
+      }
+    </div>
+  </main>
+  <Footer />
+</Base>
+
+<style>
+  /* Brillo neón sutil alrededor del cartel: halo que "respira" despacio */
+  .cartel-neon {
+    border: 1px solid color-mix(in srgb, var(--accent) 45%, transparent);
+    box-shadow:
+      0 0 0 1px color-mix(in srgb, var(--accent) 12%, transparent),
+      0 0 28px color-mix(in srgb, var(--accent) 28%, transparent),
+      0 0 70px color-mix(in srgb, var(--accent) 12%, transparent);
+  }
+  .cartel-neon::after {
+    content: "";
+    position: absolute;
+    inset: -1px;
+    pointer-events: none;
+    box-shadow: 0 0 46px color-mix(in srgb, var(--accent) 35%, transparent);
+    opacity: 0.35;
+    animation: lio-neon-respira 4s ease-in-out infinite;
+  }
+  @keyframes lio-neon-respira {
+    0%,
+    100% {
+      opacity: 0.35;
+    }
+    50% {
+      opacity: 0.9;
+    }
+  }
+  .otro:hover,
+  .otro:focus-visible {
+    border-color: color-mix(in srgb, var(--accent) 55%, transparent);
+  }
+  @media (prefers-reduced-motion: reduce) {
+    .cartel-neon::after {
+      animation: none;
+    }
+  }
+</style>

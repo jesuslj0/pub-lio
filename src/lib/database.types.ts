@@ -50,6 +50,22 @@ export type Premio = {
   created_at: string;
 }
 
+/** Sorteo semanal del premio (ver lib/sorteo.ts y supabase/migrations). */
+export type Sorteo = {
+  id: string;
+  semana: string; // ej: '2026-W41'
+  /** null si la foto ganadora se borró después (el registro se conserva). */
+  foto_ganadora_id: string | null;
+  /** Participaciones que entraron en el bombo (una por persona). */
+  participantes: number;
+  /** SHA-256 (hex) de los ids de foto participantes, ordenados y unidos por "\n". */
+  participantes_hash: string;
+  realizado_at: string;
+  anulado: boolean;
+  motivo_anulacion: string | null;
+  anulado_at: string | null;
+}
+
 export interface Database {
   public: {
     Tables: {
@@ -111,6 +127,22 @@ export interface Database {
           created_at?: string;
         };
         Update: Partial<Premio>;
+        Relationships: [];
+      };
+      sorteos: {
+        Row: Sorteo;
+        Insert: {
+          id?: string;
+          semana: string;
+          foto_ganadora_id: string | null;
+          participantes: number;
+          participantes_hash: string;
+          realizado_at?: string;
+          anulado?: boolean;
+          motivo_anulacion?: string | null;
+          anulado_at?: string | null;
+        };
+        Update: Partial<Sorteo>;
         Relationships: [];
       };
     };

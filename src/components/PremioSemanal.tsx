@@ -42,7 +42,8 @@ export default function PremioSemanal() {
 
   if (loading) {
     return (
-      <div style={{ ...styles.card, ...styles.skeleton }}>
+      // `key` propia: el nodo se sustituye al cargar (ver Leaderboard.tsx).
+      <div key="premio-cargando" style={{ ...styles.card, ...styles.skeleton }}>
         <style>{pulse}</style>
       </div>
     );

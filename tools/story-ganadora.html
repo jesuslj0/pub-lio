@@ -332,20 +332,21 @@
     <!-- GANADORA -->
     <div class="winner">
       <div class="winner-img-wrap">
-        <span class="badge-crown">👑 Ganadora</span>
+        <span class="badge-crown" id="winnerBadge">👑 Ganadora</span>
         <img id="winnerImg" alt="Foto ganadora" />
       </div>
       <div class="winner-foot">
-        <span class="winner-label">Ganadora de la semana pasada</span>
+        <span class="winner-label" id="winnerLabel">Ganadora de la semana pasada</span>
         <h2 class="winner-name" id="winnerName">Jorge</h2>
-        <span class="winner-votes">
+        <span class="winner-votes" id="winnerVotesLine">
           <svg class="heart" viewBox="0 0 24 24" fill="var(--accent3)"><path d="M12 21s-7.5-4.6-10-9.4C.4 8 2 4.5 5.3 4.5c2 0 3.4 1.3 4.7 3 1.3-1.7 2.7-3 4.7-3C18 4.5 19.6 8 22 11.6 19.5 16.4 12 21 12 21z"/></svg>
           <span id="winnerVotes">38</span> votos
         </span>
       </div>
     </div>
 
-    <!-- PODIO -->
+    <!-- PODIO (con sorteo: "Las más votadas", sin puestos de premio) -->
+    <span class="winner-label" id="podiumTitle" style="display: none">Las más votadas</span>
     <ol class="podium">
       <li>
         <div class="pod-thumb">
@@ -372,7 +373,7 @@
     </ol>
 
     <div class="footer">
-      <span>Foto ganadora de la semana</span>
+      <span id="footerText">Foto ganadora de la semana</span>
       <span class="ig">@lioelbonillo</span>
     </div>
 
@@ -401,6 +402,8 @@
       name:  "las rojas bailan",
       votes: 49,
     },
+    // Desde 2026-W41 el premio se sortea: { participantes: N }. null = ganadora por votos.
+    sorteo: null,
   };
   /* ═══════════════════════════════════════════════════════════ */
 
@@ -415,6 +418,17 @@
   $("p3Img").src             = CONFIG.third.img;
   $("p3Name").textContent    = CONFIG.third.name;
   $("p3Votes").textContent   = CONFIG.third.votes;
+
+  // Ganador/a por sorteo: sin votos como motivo; el podio pasa a "Las más votadas".
+  if (CONFIG.sorteo) {
+    const n = CONFIG.sorteo.participantes;
+    $("winnerBadge").textContent = "🎲 Sorteo";
+    $("winnerLabel").textContent = "Ganador/a del sorteo";
+    $("winnerVotesLine").textContent = `Entre ${n} ${n === 1 ? "persona" : "personas"}`;
+    $("podiumTitle").style.display = "";
+    document.querySelectorAll(".pod-rank").forEach((el) => (el.style.display = "none"));
+    $("footerText").textContent = "Sube tu foto y entra en el sorteo";
+  }
 </script>
 
 </body>

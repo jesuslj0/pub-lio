@@ -1,12 +1,31 @@
 ---
 import { siInstagram } from "simple-icons";
-import { Share2, Check } from "@lucide/astro";
+import { Share2, Check, UtensilsCrossed, ArrowUpRight } from "@lucide/astro";
+import { CASINO_URL } from "../lib/seo";
 ---
 
 <footer>
+  <div class="footer-extra">
+    <nav class="footer-nav" aria-label="Más del Lío">
+      <a href="/eventos/">Eventos</a>
+      <a href="/blog/">Blog</a>
+      <a href="/fotos/">Ranking</a>
+      <a href="/bases-sorteo/">Bases del sorteo</a>
+    </nav>
+    <a class="footer-casino" href={CASINO_URL} target="_blank" rel="noopener">
+      <UtensilsCrossed size={18} stroke-width={1.5} />
+      <span>
+        <strong>¿Cenamos antes?</strong>
+        El Casino, en la misma Plaza Mayor
+      </span>
+      <ArrowUpRight size={16} stroke-width={1.75} />
+    </a>
+  </div>
+
+  <div class="footer-main">
   <div class="footer-brand">
     <div class="footer-logo">LÍO<span> EL BONILLO</span></div>
-    <p class="footer-credit">Creada por Propus</p>
+    <p class="footer-credit">Creada por <a class="propus-link" href="https://propus.ink/" target="_blank" rel="noopener">Propus<span class="sr-only"> (se abre en una pestaña nueva)</span></a></p>
   </div>
 
   <div class="footer-social">
@@ -31,8 +50,10 @@ import { Share2, Check } from "@lucide/astro";
   </div>
 
   <div class="footer-meta">
-    <p>Plaza Mayor · El Bonillo · Albacete</p>
+    <p>Lío Music Pub · Plaza Mayor, 6</p>
+    <p>02610 El Bonillo · Albacete</p>
     <p class="footer-copy">© 2025 Lío El Bonillo</p>
+  </div>
   </div>
 </footer>
 
@@ -40,9 +61,73 @@ import { Share2, Check } from "@lucide/astro";
   footer {
     border-top: 1px solid var(--border);
     padding: 40px;
+  }
+  .footer-main {
     display: flex;
     align-items: center;
     justify-content: space-between;
+  }
+  /* Fila superior: enlaces secundarios (Eventos, Blog…) y el Casino */
+  .footer-extra {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 20px;
+    flex-wrap: wrap;
+    padding-bottom: 28px;
+    margin-bottom: 28px;
+    border-bottom: 1px solid var(--border);
+  }
+  .footer-nav {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 8px 28px;
+  }
+  .footer-nav a {
+    font-family: var(--font-mono);
+    font-size: 0.68rem;
+    letter-spacing: 0.15em;
+    text-transform: uppercase;
+    color: var(--muted);
+    text-decoration: none;
+    transition: color 0.2s ease;
+  }
+  .footer-nav a:hover {
+    color: var(--accent);
+  }
+  .footer-casino {
+    display: inline-flex;
+    align-items: center;
+    gap: 12px;
+    padding: 10px 16px;
+    border: 1px solid var(--border);
+    background: var(--bg2);
+    color: var(--muted);
+    text-decoration: none;
+    font-size: 0.8rem;
+    line-height: 1.35;
+    transition:
+      border-color 0.2s ease,
+      color 0.2s ease;
+  }
+  .footer-casino span {
+    display: flex;
+    flex-direction: column;
+  }
+  .footer-casino strong {
+    font-family: var(--font-display);
+    font-weight: 400;
+    font-size: 1.15rem;
+    letter-spacing: 0.02em;
+    color: var(--text);
+  }
+  .footer-casino svg {
+    flex-shrink: 0;
+    color: var(--accent);
+  }
+  .footer-casino:hover {
+    border-color: color-mix(in srgb, var(--accent) 55%, transparent);
+    color: var(--text);
   }
   .footer-logo {
     font-family: var(--font-logo);
@@ -137,10 +222,17 @@ import { Share2, Check } from "@lucide/astro";
   }
 
   @media (max-width: 768px) {
-    footer {
+    .footer-main {
       flex-direction: column;
       gap: 20px;
       text-align: center;
+    }
+    .footer-extra {
+      flex-direction: column;
+      align-items: stretch;
+    }
+    .footer-nav {
+      justify-content: center;
     }
     .footer-meta {
       text-align: center;
@@ -148,6 +240,23 @@ import { Share2, Check } from "@lucide/astro";
     .footer-credit {
       text-align: center;
     }
+  }
+
+  .propus-link {
+    color: inherit;
+    text-decoration: underline;
+    text-decoration-color: transparent;
+    text-underline-offset: 3px;
+    transition: text-decoration-color 0.2s ease, opacity 0.2s ease;
+  }
+  .propus-link:hover {
+    text-decoration-color: currentColor;
+    opacity: 0.85;
+  }
+  .propus-link:focus-visible {
+    outline: 2px solid currentColor;
+    outline-offset: 2px;
+    border-radius: 2px;
   }
 </style>
 

@@ -5,6 +5,7 @@ import Footer from "../components/Footer.astro";
 import HistorialFotos from "../components/HistorialFotos.tsx";
 import { ArrowLeft, Camera, Crown, Heart, History, Images, CalendarDays } from "@lucide/astro";
 import { getCurrentWeek } from "../lib/supabase";
+import { breadcrumbJsonLd } from "../lib/seo";
 import {
   cargarResumen,
   cargarTanda,
@@ -50,8 +51,12 @@ const chipOff = "border-border bg-bg2 text-muted hover:border-accent/60 hover:te
 ---
 
 <Base
-  title="Salón de la fama · Lío El Bonillo"
-  description="Todas las fotos del público en Lío El Bonillo, ordenadas de la más votada a la menos. Las ganadoras de cada finde y el ranking histórico."
+  title="Salón de la fama · Fotos del Lío Music Pub, El Bonillo"
+  description="Todas las fotos del público en el Lío Music Pub de El Bonillo (Albacete): el ranking histórico de la más votada a la menos y las ganadoras de cada semana."
+  jsonLd={breadcrumbJsonLd([
+    { nombre: "Inicio", ruta: "/" },
+    { nombre: "Salón de la fama", ruta: "/fotos/" },
+  ])}
 >
   <Nav />
   <main id="contenido" class="px-5 pt-24 pb-16 md:px-10 md:pt-32">
@@ -69,7 +74,7 @@ const chipOff = "border-border bg-bg2 text-muted hover:border-accent/60 hover:te
         <div>
           <p class="section-label"><History size={14} stroke-width={2} />· Historial</p>
           <h1 class="font-display text-[clamp(3rem,9vw,7rem)] leading-[0.9] tracking-[0.02em] text-text">
-            Salón<br />de la <span class="text-accent">fama</span>
+            Salón <br />de la <span class="text-accent">fama</span>
           </h1>
           <p class="mt-4 max-w-md text-base font-medium text-muted md:text-lg">
             Todas las fotos del Lío, de la más votada a la menos.
@@ -149,9 +154,16 @@ const chipOff = "border-border bg-bg2 text-muted hover:border-accent/60 hover:te
 
       <!-- CTA final -->
       <section class="mt-16 flex flex-col items-start gap-6 border-t border-border pt-12 md:flex-row md:items-end md:justify-between">
-        <h2 class="font-display text-[clamp(2.2rem,5vw,4rem)] leading-[0.92] tracking-[0.02em] text-text">
-          ¿Quieres salir<br />en el ranking?
-        </h2>
+        <div>
+          <h2 class="font-display text-[clamp(2.2rem,5vw,4rem)] leading-[0.92] tracking-[0.02em] text-text">
+            ¿Quieres salir<br />en el ranking?
+          </h2>
+          <p class="mt-4 max-w-md text-sm font-light text-muted">
+            Sube tu foto del finde y entras en el sorteo del premio de la semana
+            siguiente. ¡Y si es de las más votadas, sale en el podio!
+            <a href="/bases-sorteo/" class="text-accent underline-offset-4 hover:underline">Bases del sorteo</a>
+          </p>
+        </div>
         <a
           href="/#subir"
           class="inline-flex items-center gap-2 border border-accent px-6 py-3.5 font-mono text-[0.72rem] font-bold uppercase tracking-[0.12em] text-accent transition-[background-color,color,box-shadow] hover:bg-accent hover:text-bg hover:shadow-[0_0_18px_color-mix(in_srgb,var(--color-accent)_40%,transparent)]"
