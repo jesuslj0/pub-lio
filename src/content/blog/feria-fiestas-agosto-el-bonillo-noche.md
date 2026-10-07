@@ -50,6 +50,6 @@ Todo lo que prepare el Lío para la feria aparecerá en la [agenda de eventos](/
 
 ## Tu foto de feria puede tener premio
 
-Las fotos de feria son las mejores del año, así que no te la guardes. Súbela a la galería de la web y entras en el **sorteo del premio** de la semana siguiente. Si además es de las más votadas, sale en el podio del Lío. Tienes las condiciones en las [bases del sorteo](/bases-sorteo/).
+Las fotos de feria son las mejores del año, así que no te la guardes. Súbela a la galería de la web: si esa semana hay premio publicado, entras en el **sorteo**. Si además es de las más votadas, sale en el podio del Lío. Tienes las condiciones en las [bases del sorteo](/bases-sorteo/).
 
 **Lío Music Pub**, Plaza Mayor, 6, El Bonillo (Albacete). En feria, el centro de la noche está aquí.

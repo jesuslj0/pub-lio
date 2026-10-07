@@ -140,8 +140,9 @@ if (conSorteo) {
   sorteo = data ?? null;
   if (!sorteo && !USAR_ACTUAL) {
     console.error(
-      `✖ La semana ${SEMANA} se resuelve por sorteo y todavía no se ha sorteado.\n` +
-        "  Haz el sorteo en /admin y vuelve a lanzar el script.",
+      `✖ La semana ${SEMANA} no tiene sorteo válido.\n` +
+        "  Puede que esa semana no hubiera premio (solo se sortea cuando lo hay)\n" +
+        "  o que aún no se haya hecho: en ese caso, sortea en /admin y relanza el script.",
     );
     process.exit(1);
   }

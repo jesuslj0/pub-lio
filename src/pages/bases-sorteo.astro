@@ -3,75 +3,100 @@ import Base from "../layouts/Base.astro";
 import Nav from "../components/Nav.astro";
 import Footer from "../components/Footer.astro";
 import Migas from "../components/Migas.astro";
-import { TriangleAlert, Camera, Dices, ScrollText } from "@lucide/astro";
+import { Camera, Gift, ScrollText } from "@lucide/astro";
 import { SEMANA_INICIO_SORTEO } from "../lib/sorteoConfig";
 import { etiquetaSemana } from "../lib/historial";
 import { NEGOCIO, breadcrumbJsonLd } from "../lib/seo";
 
 export const prerender = true;
 
-// Bases redactadas a partir de cómo funciona el sorteo implementado
-// (src/lib/sorteo.ts). Lo marcado como "pendiente" lo tienen que revisar el
-// cliente y su asesor antes de darlo por definitivo.
+// Bases del sorteo. Describen el sorteo tal y como está implementado en
+// src/lib/sorteo.ts (una participación por persona, crypto.randomInt,
+// anulación con motivo). Si cambia la mecánica, hay que actualizar esto.
 const inicio = etiquetaSemana(SEMANA_INICIO_SORTEO);
+const ACTUALIZADO = "7 de octubre de 2026";
 
-const apartados = [
+const apartados: { titulo: string; parrafos: string[] }[] = [
   {
     titulo: "Quién organiza",
     parrafos: [
-      `${NEGOCIO.nombre}, disco pub en la Plaza Mayor, 6, de El Bonillo (Albacete), organiza un sorteo semanal entre quienes suben fotos a la galería de esta web.`,
+      `${NEGOCIO.nombre}, disco pub situado en la Plaza Mayor, 6, de El Bonillo (Albacete), organiza un sorteo entre quienes suben fotos a la galería de esta web las semanas en que hay premio.`,
     ],
   },
   {
-    titulo: "Quién participa",
+    titulo: "Qué semanas hay sorteo",
     parrafos: [
-      "Participan las personas que suben una foto del finde a la galería de liopub.com y cuya foto es aprobada en la moderación. Las fotos deben estar hechas en el Lío o en sus alrededores y no pueden ser ofensivas ni tomadas sin consentimiento.",
-      "Cada persona entra en el sorteo una sola vez por semana, aunque haya subido varias fotos (se pueden subir hasta 3 por dispositivo). Para saber si varias fotos son de la misma persona tenemos en cuenta el dispositivo desde el que se suben y el Instagram indicado.",
-    ],
-    pendiente: "Edad mínima para participar (al ser un pub, probablemente mayores de 18 años).",
-  },
-  {
-    titulo: "Semana de concurso y cuándo se sortea",
-    parrafos: [
-      "Cada semana de concurso va de jueves a miércoles (hora peninsular). Entran en el sorteo las fotos aprobadas de esa semana.",
-      "El sorteo se hace cuando la semana termina, a partir del jueves siguiente, desde el panel de administración. La persona ganadora la elige el servidor con un generador de números aleatorios criptográfico: nadie la elige a mano.",
-      "Cada sorteo queda registrado con la fecha, el número de participantes y una huella digital (SHA-256) de la lista de participaciones, de forma que la lista no se puede cambiar después sin que se note.",
+      "Solo hay sorteo las semanas en que el premio aparece publicado en esta web, en la sección «Premio semanal». Normalmente coincide con las semanas con DJ, aunque no todas.",
+      "Si una semana no aparece ningún premio publicado, esa semana no hay sorteo. Si tienes dudas, también puedes preguntar al personal del Lío.",
     ],
   },
   {
-    titulo: "Cómo nos ponemos en contacto",
+    titulo: "Quién puede participar",
     parrafos: [
-      "La persona ganadora se anuncia en la web (sección de premio de la semana) y le escribimos por mensaje directo al Instagram que indicó al subir la foto. Por eso es importante poner bien tu usuario de Instagram.",
-      "Antes de entregar el premio verificamos que la foto es de quien la subió, a través de esa misma cuenta de Instagram.",
+      "Pueden participar las personas mayores de 18 años. La organización puede pedir que se acredite la edad al entregar el premio.",
     ],
   },
   {
-    titulo: "Plazo para reclamar el premio",
+    titulo: "Cómo se participa",
     parrafos: [
-      "Quien gane debe responder y recoger el premio dentro del plazo indicado. Si no responde en plazo, si no se puede verificar la autoría o si no cumple estas bases, el sorteo se anula (quedando registrado el motivo) y se repite. En la repetición no vuelve a entrar la persona del sorteo anulado.",
-    ],
-    pendiente: "Plazo exacto para responder y para canjear el premio (por ejemplo, 7 días).",
-  },
-  {
-    titulo: "El premio",
-    parrafos: [
-      "El premio es el que se anuncia en la web como «Premio de la semana» y se canjea en el Lío Music Pub dentro de su fecha de validez. El premio no se puede canjear por dinero.",
-    ],
-    pendiente: "Condiciones de canje (días, horario, si es transferible).",
-  },
-  {
-    titulo: "Los votos y el podio",
-    parrafos: [
-      "Los votos de la galería sirven para el podio de «Las más votadas», que es solo por diversión: estar en el podio no da premio ni más opciones en el sorteo.",
-      `Este sistema se aplica desde la semana del ${inicio}. Las semanas anteriores se resolvieron por votos y se mantienen tal cual.`,
+      "Subiendo al menos una foto del fin de semana a la galería de la web, siguiendo las condiciones de subida: sin registro, con tu foto, un nombre y tu usuario de Instagram, y hasta 3 fotos por dispositivo. Cada foto se modera antes de publicarse.",
+      "Hay una participación por persona y semana, aunque subas varias fotos. Para saber si varias fotos son de la misma persona tenemos en cuenta el dispositivo desde el que se suben y el Instagram indicado.",
+      "La semana de concurso va de jueves a miércoles (hora peninsular). Entran en el sorteo las fotos aprobadas de esa semana.",
     ],
   },
   {
-    titulo: "Datos personales",
+    titulo: "Cuándo y cómo se sortea",
     parrafos: [
-      "Usamos el nombre y la foto para mostrarlos en la galería, y el Instagram solo para contactar y verificar a quien gane. Si quieres que retiremos tu foto, escríbenos por Instagram.",
+      "Al cerrar la semana de concurso, desde el panel de administración del Lío, con un sistema aleatorio: la web elige a la persona ganadora y nadie la elige a mano.",
+      "Cada sorteo queda registrado con la fecha, el número de participantes y una huella digital de la lista de participaciones, para que no se pueda cambiar después.",
+      `Las fotos más votadas siguen saliendo en el podio de «Las más votadas», pero los votos no influyen en el sorteo. Este sistema se aplica desde la semana del ${inicio}; las semanas anteriores se resolvieron por votos y se mantienen tal cual.`,
     ],
-    pendiente: "Texto de protección de datos (responsable, finalidad, derechos), a revisar por el asesor.",
+  },
+  {
+    titulo: "Cómo contactamos con quien gana",
+    parrafos: [
+      "Por mensaje privado al Instagram que dejó al subir la foto, así que es importante escribir bien tu usuario. El resultado se publica también en la web.",
+      "Antes de entregar el premio comprobamos, a través de esa misma cuenta de Instagram, que la foto es de quien la subió.",
+    ],
+  },
+  {
+    titulo: "Plazos",
+    parrafos: [
+      "Quien gane tiene 7 días desde que le contactamos para responder, y 7 días más para canjear el premio en el Lío.",
+      "Si no responde o no lo canjea a tiempo, el premio se considera desierto o se repite el sorteo de esa semana, a criterio de la organización. Si se repite, la persona del sorteo anterior ya no entra.",
+    ],
+  },
+  {
+    titulo: "Condiciones del premio",
+    parrafos: [
+      "El premio es el que aparece publicado en la web esa semana. Se canjea en el Lío Music Pub, en su horario de apertura.",
+      "Es personal e intransferible y no se puede cambiar por dinero. Si el premio incluye bebidas alcohólicas, solo se entrega a mayores de 18 años.",
+    ],
+  },
+  {
+    titulo: "Exclusiones",
+    parrafos: [
+      "Quedan fuera del sorteo las fotos rechazadas en la moderación y las que incumplan las normas de subida de la web: fotos con contenido ofensivo, fotos de otras personas sin su consentimiento o fotos que no sean de quien las sube.",
+      "Si la persona ganadora no cumple estas bases, el sorteo de esa semana se anula y se repite.",
+    ],
+  },
+];
+
+const datos = [
+  { nombre: "Responsable", texto: `${NEGOCIO.nombre} (Plaza Mayor, 6, 02610 El Bonillo, Albacete).` },
+  { nombre: "Datos", texto: "La foto, el nombre y el usuario de Instagram que nos facilitas al participar." },
+  {
+    nombre: "Finalidad",
+    texto: "Gestionar el concurso y el sorteo, publicar las fotos en la galería y contactar con quien gane.",
+  },
+  { nombre: "Base legal", texto: "Tu consentimiento, que das al subir la foto." },
+  {
+    nombre: "Conservación",
+    texto: "Mientras la foto esté publicada en la galería o hasta que pidas que la retiremos.",
+  },
+  {
+    nombre: "Tus derechos",
+    texto: `Puedes acceder a tus datos, rectificarlos, suprimirlos o pedir que retiremos tu foto escribiéndonos por mensaje privado a ${NEGOCIO.instagramHandle} en Instagram.`,
   },
 ];
 
@@ -82,8 +107,8 @@ const jsonLd = breadcrumbJsonLd([
 ---
 
 <Base
-  title="Bases del sorteo semanal · Lío Music Pub, El Bonillo"
-  description="Cómo funciona el sorteo semanal del Lío Music Pub de El Bonillo: quién participa, cuándo se sortea, cómo contactamos con quien gana y condiciones del premio."
+  title="Bases del sorteo · Lío Music Pub, El Bonillo"
+  description="Cómo funciona el sorteo del Lío Music Pub de El Bonillo las semanas con premio: quién participa, cuándo se sortea, plazos, condiciones del premio y protección de datos."
   jsonLd={jsonLd}
 >
   <Nav />
@@ -94,21 +119,19 @@ const jsonLd = breadcrumbJsonLd([
       <header class="mb-10">
         <p class="section-label"><ScrollText size={14} stroke-width={2} />· Concurso</p>
         <h1 class="font-display text-[clamp(2.6rem,7vw,4.8rem)] leading-[0.95] tracking-[0.01em] text-text">
-          Bases del sorteo semanal
+          Bases del sorteo
           <span class="mt-3 block font-mono text-[clamp(0.7rem,1.5vw,0.85rem)] font-normal tracking-[0.18em] text-accent uppercase">
             Lío Music Pub · El Bonillo
           </span>
         </h1>
+        <p class="mt-6 text-lg font-light text-muted">
+          Las semanas con premio, entras en el sorteo solo por subir tu foto del finde. Aquí te
+          contamos cómo funciona, sin letra pequeña.
+        </p>
+        <p class="mt-3 font-mono text-[0.62rem] uppercase tracking-[0.18em] text-muted">
+          Actualizadas el {ACTUALIZADO}
+        </p>
       </header>
-
-      <!-- TODO: revisar por el cliente/asesor. Bases provisionales: no son un texto legal definitivo. -->
-      <p class="mb-12 flex items-start gap-3 border border-accent/40 bg-accent/10 px-5 py-4 text-sm text-text">
-        <TriangleAlert size={18} stroke-width={1.75} class="mt-0.5 shrink-0 text-accent" />
-        <span>
-          <strong>Bases provisionales.</strong> Describen cómo funciona el sorteo, pero algunos
-          puntos están pendientes de revisión y pueden cambiar.
-        </span>
-      </p>
 
       <ol class="flex flex-col gap-10">
         {
@@ -122,18 +145,39 @@ const jsonLd = breadcrumbJsonLd([
                 {a.parrafos.map((p) => (
                   <p>{p}</p>
                 ))}
-                {a.pendiente && (
-                  <>
-                    <Fragment set:html={`<!-- TODO: revisar por el cliente/asesor: ${a.pendiente} -->`} />
-                    <p class="border-l-2 border-accent bg-bg2 px-4 py-2.5 font-mono text-[0.72rem] tracking-wide text-muted">
-                      Pendiente de revisión: {a.pendiente}
-                    </p>
-                  </>
-                )}
               </div>
             </li>
           ))
         }
+
+        <li>
+          <h2 class="mb-4 flex items-baseline gap-3 font-display text-[clamp(1.6rem,3.4vw,2.2rem)] leading-none text-text">
+            <span class="font-mono text-sm text-accent">{String(apartados.length + 1).padStart(2, "0")}</span>
+            Protección de datos
+          </h2>
+          <!-- Completar con la razón social y el NIF del titular del Lío cuando el cliente los facilite -->
+          <dl class="divide-y divide-border border border-border bg-bg2">
+            {
+              datos.map((d) => (
+                <div class="grid gap-1 px-5 py-4 sm:grid-cols-[150px_1fr] sm:gap-6">
+                  <dt class="font-mono text-[0.62rem] uppercase tracking-[0.18em] text-accent sm:pt-1">{d.nombre}</dt>
+                  <dd class="text-base leading-relaxed font-light text-text/80">{d.texto}</dd>
+                </div>
+              ))
+            }
+          </dl>
+        </li>
+
+        <li>
+          <h2 class="mb-3 flex items-baseline gap-3 font-display text-[clamp(1.6rem,3.4vw,2.2rem)] leading-none text-text">
+            <span class="font-mono text-sm text-accent">{String(apartados.length + 2).padStart(2, "0")}</span>
+            Aceptación de las bases
+          </h2>
+          <p class="text-base leading-relaxed font-light text-text/80">
+            Participar implica aceptar estas bases. La organización puede modificarlas avisando en
+            esta misma web.
+          </p>
+        </li>
       </ol>
 
       <div class="mt-16 flex flex-wrap gap-3 border-t border-border pt-10">
@@ -148,8 +192,8 @@ const jsonLd = breadcrumbJsonLd([
           href="/#premio"
           class="inline-flex items-center gap-2 border border-border px-5 py-3 font-mono text-[0.7rem] font-bold uppercase tracking-[0.12em] text-text transition-colors hover:border-accent hover:text-accent"
         >
-          <Dices size={15} stroke-width={2} />
-          Premio de la semana
+          <Gift size={15} stroke-width={2} />
+          ¿Hay premio esta semana?
         </a>
       </div>
     </div>

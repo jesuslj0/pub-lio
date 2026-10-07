@@ -42,7 +42,7 @@ La feria atrae a mucha gente que no es del pueblo, y es una alegría. Si es tu p
 
 ## Una foto para el recuerdo (y para el sorteo)
 
-La feria es de las noches más fotogénicas del año: la plaza llena, las luces, las cuadrillas al completo. Si te haces una foto en el Lío o por los alrededores, súbela a la galería de la web. Entras en el **sorteo del premio** de la semana siguiente, y si es de las más votadas, también sale en el podio. Lo tienes todo explicado en las [bases del sorteo](/bases-sorteo/).
+La feria es de las noches más fotogénicas del año: la plaza llena, las luces, las cuadrillas al completo. Si te haces una foto en el Lío o por los alrededores, súbela a la galería de la web. Si esa semana hay premio publicado, entras en el **sorteo**, y si es de las más votadas, también sale en el podio. Lo tienes todo explicado en las [bases del sorteo](/bases-sorteo/).
 
 ## Mira la agenda antes de venir
 

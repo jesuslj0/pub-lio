@@ -250,7 +250,7 @@ export default function Leaderboard({
           <>
             <p style={styles.sorteoPendiente}>
               <Dices size={14} strokeWidth={2} style={iconStyle} />
-              El sorteo del premio se hace en cuanto cierra la semana. ¡Atento/a!
+              Las semanas con premio, el sorteo se hace al cerrar la semana. ¡Atento/a!
             </p>
             {podioMasVotadas(false)}
           </>

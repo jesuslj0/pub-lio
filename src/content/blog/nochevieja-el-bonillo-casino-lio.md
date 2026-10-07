@@ -49,7 +49,7 @@ El cartel de Nochevieja se publicará en la [agenda de eventos del Lío](/evento
 
 ## Y para empezar el año con premio
 
-La primera foto del año también cuenta. Si te haces una en el Lío esa noche, súbela a la galería de la web: entras en el **sorteo del premio** de la semana siguiente. Las más votadas, además, salen en el podio. Tienes todo explicado en las [bases del sorteo](/bases-sorteo/).
+La primera foto del año también cuenta. Si te haces una en el Lío esa noche, súbela a la galería de la web: si esa semana hay premio publicado, entras en el **sorteo**. Las más votadas, además, salen en el podio. Tienes todo explicado en las [bases del sorteo](/bases-sorteo/).
 
 ## Dónde estamos
 

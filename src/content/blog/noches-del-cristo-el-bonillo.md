@@ -46,7 +46,7 @@ Si vienes de fuera para las fiestas, o si quieres hacer de la noche un plan comp
 
 Si el Lío prepara algo especial para el Cristo, aparecerá en la [agenda de eventos](/eventos/) con su fecha y sus detalles. Y como siempre, lo anunciaremos también en Instagram, en [@lioelbonillo](https://www.instagram.com/lioelbonillo/).
 
-Y si esa noche te haces una foto con tu gente, súbela a la galería de la web: entras en el **sorteo semanal** y, si la votan mucho, saldrá en el podio. Lo tienes todo en las [bases del sorteo](/bases-sorteo/).
+Y si esa noche te haces una foto con tu gente, súbela a la galería de la web: si esa semana hay premio publicado, entras en el **sorteo** y, si la votan mucho, saldrá en el podio. Lo tienes todo en las [bases del sorteo](/bases-sorteo/).
 
 ## Dónde estamos
 

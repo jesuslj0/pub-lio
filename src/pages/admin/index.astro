@@ -1,11 +1,16 @@
 ---
 import "../../styles/global.css";
 import { supabaseAdmin } from "../../lib/supabaseAdmin";
-import { getCurrentWeek, getPreviousWeek } from "../../lib/supabase";
+import { getCurrentWeek, getPreviousWeek, getWeekRange } from "../../lib/supabase";
 import { isAdmin } from "../../lib/adminAuth";
 import { Trash2 } from "@lucide/astro";
 import type { Foto, Cartel, Premio } from "../../lib/database.types";
-import { SEMANA_INICIO_SORTEO, estadoSorteo, type EstadoSorteo } from "../../lib/sorteo";
+import {
+  SEMANA_INICIO_SORTEO,
+  estadoSorteo,
+  premioPublicadoEnSemana,
+  type EstadoSorteo,
+} from "../../lib/sorteo";
 import { repoSupabase } from "../../lib/sorteoRepo";
 import { etiquetaSemana } from "../../lib/historial";
 
@@ -102,6 +107,13 @@ if (authed) {
     }
   }
 }
+
+// Solo hay sorteo las semanas con premio publicado. Si no lo había, el panel
+// avisa y pide confirmación (no bloquea: la deducción es aproximada).
+const premioSemanaSorteo =
+  sorteoEnSemanaPasada && !loadError
+    ? premioPublicadoEnSemana(premios, getWeekRange(semanaPasada))
+    : null;
 
 // Datos del sorteo para pintar (nombres y miniaturas, sin Instagram ni fingerprint).
 const fotoPorId = new Map(fotosPasada.map((f) => [f.id, f]));
@@ -246,7 +258,11 @@ const fmt = (iso: string) =>
 
           {/* B2) SEMANA PASADA: sorteo (desde SEMANA_INICIO_SORTEO) o marcado manual (antes) */}
           {sorteoEnSemanaPasada ? (
-            <section id="sorteo" data-semana={semanaPasada}>
+            <section
+              id="sorteo"
+              data-semana={semanaPasada}
+              data-sin-premio={!loadError && !premioSemanaSorteo ? "1" : undefined}
+            >
               <h2>
                 🎲 Sorteo de la semana pasada{" "}
                 <span class="count">{semanaPasada} · {etiquetaSemana(semanaPasada)}</span>
@@ -310,6 +326,18 @@ const fmt = (iso: string) =>
                 </div>
               ) : (
                 <div class="sorteo-panel">
+                  {premioSemanaSorteo ? (
+                    <p class="muted small">
+                      Premio publicado esa semana: <strong>{premioSemanaSorteo.titulo}</strong>
+                    </p>
+                  ) : (
+                    !loadError && (
+                      <p class="sorteo-aviso">
+                        ⚠️ Esta semana no había premio publicado en la web. Solo se sortea las
+                        semanas con premio: si no lo había, no hace falta sortear.
+                      </p>
+                    )
+                  )}
                   <p class="sorteo-cuenta">
                     <strong>{sorteo?.participantes.length ?? 0}</strong>
                     {(sorteo?.participantes.length ?? 0) === 1 ? "persona entra" : "personas entran"} en el bombo
@@ -847,6 +875,11 @@ const fmt = (iso: string) =>
 
             btn?.addEventListener("click", async () => {
               const n = datos.length;
+              // Semana sin premio publicado: se avisa, pero se puede seguir.
+              if (
+                seccion.dataset.sinPremio === "1" &&
+                !confirm("Esta semana no había premio publicado. ¿Seguro que quieres sortear?")
+              ) return;
               if (!confirm(`¿Sortear ahora entre ${n} ${n === 1 ? "persona" : "personas"}? El resultado queda registrado.`)) return;
               btn.disabled = true;
               msg.textContent = "";
@@ -1778,6 +1811,13 @@ const fmt = (iso: string) =>
         padding: 20px;
         background: var(--surface);
         border: 1px solid var(--border);
+      }
+      .sorteo-aviso {
+        padding: 10px 14px;
+        border-left: 2px solid var(--accent);
+        background: var(--bg);
+        color: var(--text);
+        font-size: 0.82rem;
       }
       .sorteo-cuenta {
         display: flex;

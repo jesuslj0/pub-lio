@@ -19,6 +19,7 @@ import {
   estadoSorteo,
   hashParticipantes,
   normalizarInstagram,
+  premioPublicadoEnSemana,
   realizarSorteo,
 } from "../src/lib/sorteo.ts";
 
@@ -201,6 +202,32 @@ test("si falla el marcado de ganadora, no queda un sorteo a medias", async () =>
   };
   await assert.rejects(realizarSorteo(repo, SEMANA, ACTUAL));
   assert.equal(repo.sorteos.length, 0);
+});
+
+test("¿había premio publicado esa semana? (aviso del admin)", () => {
+  // Semana 2026-W41: jueves 8 → miércoles 14 de octubre.
+  const rango = { inicio: new Date("2026-10-08T00:00:00Z"), fin: new Date("2026-10-14T23:59:59.999Z") };
+  const premio = (over) => ({ id: "p", titulo: "Cubo", activo: true, valido_hasta: null, created_at: "2026-10-09T12:00:00Z", ...over });
+
+  assert.equal(premioPublicadoEnSemana([], rango), null, "sin premios");
+  assert.equal(premioPublicadoEnSemana([premio()], rango)?.titulo, "Cubo", "activo y creado esa semana");
+  assert.equal(premioPublicadoEnSemana([premio({ created_at: "2026-10-20T10:00:00Z" })], rango), null, "creado después de la semana");
+  assert.equal(premioPublicadoEnSemana([premio({ activo: false })], rango), null, "retirado a mano y sin sustituto");
+  assert.equal(
+    premioPublicadoEnSemana([premio({ activo: false }), premio({ id: "q", titulo: "Nuevo", created_at: "2026-10-18T10:00:00Z" })], rango)?.titulo,
+    "Cubo",
+    "desactivado porque lo sustituyó uno posterior: sí estaba esa semana",
+  );
+  assert.equal(
+    premioPublicadoEnSemana([premio({ created_at: "2026-09-01T10:00:00Z", valido_hasta: "2026-09-30" })], rango),
+    null,
+    "caducado antes de la semana",
+  );
+  assert.equal(
+    premioPublicadoEnSemana([premio({ created_at: "2026-09-01T10:00:00Z", valido_hasta: "2026-10-10" })], rango)?.titulo,
+    "Cubo",
+    "aún válido durante la semana",
+  );
 });
 
 test("el azar es crypto.randomInt y reparte entre todos", async () => {

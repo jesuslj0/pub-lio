@@ -2,6 +2,7 @@
 title: "Cañas a 1 € los viernes en El Bonillo: el plan del Lío Music Pub"
 description: "Los viernes, cañas a 1 € hasta las 22:00 en el Lío Music Pub, en la Plaza Mayor de El Bonillo. Así es el plan que llena la plaza cada semana."
 pubDate: 2026-10-06
+updatedDate: 2026-10-07
 heroImage: "/img/local.jpeg"
 heroAlt: "Interior del Lío Music Pub en El Bonillo: la barra iluminada en morado, taburetes altos y la diana electrónica al fondo"
 tags: ["viernes", "cañas", "plaza mayor", "plan"]
@@ -45,7 +46,7 @@ Y si el viernes te sabe a poco, el sábado es otra historia. En el Casino lo tie
 
 ## Haz la foto y entra en el sorteo
 
-Una cosa más: si te haces una foto esa noche, en el local o en la plaza, súbela a la galería de la web. Todas las fotos aprobadas de la semana entran en el **sorteo del premio** de la semana siguiente, una participación por persona, y las más votadas salen en el podio. [Sube tu foto aquí](/#subir) y echa un ojo a las [bases del sorteo](/bases-sorteo/).
+Una cosa más: si te haces una foto esa noche, en el local o en la plaza, súbela a la galería de la web. Las semanas con premio publicado en la web, entras en el **sorteo** solo por subirla (una participación por persona), y las más votadas salen en el podio. [Sube tu foto aquí](/#subir) y echa un ojo a las [bases del sorteo](/bases-sorteo/).
 
 ## Dónde está el Lío Music Pub
 

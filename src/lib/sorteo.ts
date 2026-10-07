@@ -1,6 +1,7 @@
-// Sorteo semanal del premio. El premio ya no es para la foto más votada: se
-// sortea entre las personas que suben fotos aprobadas esa semana. El podio de
-// votos se mantiene, pero solo como algo divertido.
+// Sorteo del premio semanal. El premio ya no es para la foto más votada: se
+// sortea entre las personas que suben fotos aprobadas esa semana, y solo las
+// semanas en que hay premio publicado en la web (no todas). El podio de votos
+// se mantiene, pero solo como algo divertido.
 //
 // Este módulo es lógica pura + una interfaz de repositorio (RepoSorteo), sin
 // dependencias de Astro ni de Supabase, para poder probarlo en local con datos
@@ -8,7 +9,7 @@
 // está en lib/sorteoRepo.ts.
 
 import { createHash, randomInt } from "node:crypto";
-import type { Foto, Sorteo } from "./database.types";
+import type { Foto, Premio, Sorteo } from "./database.types";
 import { SEMANA_INICIO_SORTEO } from "./sorteoConfig.ts";
 
 export { SEMANA_INICIO_SORTEO };
@@ -124,6 +125,39 @@ export function hashParticipantes(ids: string[]): string {
 export function elegirGanador<T>(participantes: T[], aleatorio: (max: number) => number = randomInt): T {
   if (participantes.length === 0) throw new ErrorSorteo("sin-participantes", "No hay participantes");
   return participantes[aleatorio(participantes.length)];
+}
+
+// ─── ¿Había premio esa semana? ────────────────────────────────────────────────
+
+export type PremioCandidato = Pick<Premio, "id" | "titulo" | "activo" | "valido_hasta" | "created_at">;
+
+/**
+ * El premio que la web estaba mostrando durante una semana, o null si no había.
+ *
+ * La tabla no guarda un histórico de qué premio estuvo activo y cuándo, así que
+ * se deduce igual que lo muestra la web (el premio activo más reciente; activar
+ * uno nuevo desactiva los demás):
+ * - Se toma el último premio creado antes de que acabe la semana que siga
+ *   activo o que fuera sustituido después por otro más nuevo. Uno desactivado
+ *   y no sustituido se retiró a mano: no cuenta.
+ * - Si su `valido_hasta` es anterior al inicio de la semana, ya había caducado.
+ *
+ * Es una aproximación: sirve para avisar en el admin, no para bloquear.
+ */
+export function premioPublicadoEnSemana(
+  premios: PremioCandidato[],
+  rango: { inicio: Date; fin: Date },
+): PremioCandidato | null {
+  // created_at llega como "2026-10-09T12:00:00.123456+00:00": se compara como fecha.
+  const t = (p: PremioCandidato) => Date.parse(p.created_at);
+  const porFecha = [...premios].sort((a, b) => t(a) - t(b));
+  const previos = porFecha.filter((p) => t(p) <= rango.fin.getTime());
+  const sustituido = (p: PremioCandidato) => porFecha.some((o) => t(o) > t(p));
+  const candidato = [...previos].reverse().find((p) => p.activo || sustituido(p)) ?? null;
+  if (!candidato) return null;
+  const inicioDia = rango.inicio.toISOString().slice(0, 10);
+  if (candidato.valido_hasta && candidato.valido_hasta < inicioDia) return null;
+  return candidato;
 }
 
 // ─── Reglas de semana ─────────────────────────────────────────────────────────
