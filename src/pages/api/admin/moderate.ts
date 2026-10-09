@@ -1,6 +1,7 @@
 import type { APIRoute } from "astro";
 import { supabaseAdmin } from "../../../lib/supabaseAdmin";
 import { isAdmin } from "../../../lib/adminAuth";
+import { detalleError } from "../../../lib/detalleError";
 
 export const prerender = false;
 
@@ -31,7 +32,7 @@ export const POST: APIRoute = async ({ request, cookies }) => {
     return jsonResponse({ success: true });
   } catch (err) {
     console.error("[admin/moderate]", err);
-    return jsonResponse({ success: false, error: "Error interno" }, 500);
+    return jsonResponse({ success: false, error: detalleError(err) }, 500);
   }
 };
 

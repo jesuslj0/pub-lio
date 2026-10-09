@@ -195,7 +195,7 @@ const fmt = (iso: string) =>
             )}
             <div class="foto-list">
               {pendientes.map((foto) => (
-                <div class="foto-row" data-foto-id={foto.id}>
+                <div class="foto-row pending-row" data-foto-id={foto.id}>
                   <img src={foto.cloudinary_url} alt="thumbnail" class="thumb" />
                   <div class="foto-info">
                     <strong>{foto.nombre_autor ?? "Anónimo"}</strong>
@@ -305,16 +305,17 @@ const fmt = (iso: string) =>
                       Anular sorteo
                     </button>
                     <form id="sorteo-anular-form" class="sorteo-anular" hidden>
-                      <label>
-                        Motivo de la anulación *
+                      <div class="campo">
+                        <label for="sorteo-anular-motivo">Motivo de la anulación *</label>
                         <textarea
+                          id="sorteo-anular-motivo"
                           name="motivo"
                           rows="2"
                           required
                           minlength="3"
                           placeholder="Ej.: no responde por Instagram en el plazo / no cumple las bases"
                         ></textarea>
-                      </label>
+                      </div>
                       <p class="muted small">
                         Quedará registrado. Después podrás repetir el sorteo, y esta persona
                         no volverá a entrar en el bombo de esta semana.
@@ -460,8 +461,8 @@ const fmt = (iso: string) =>
             <p class="aviso-eventos">
               💡 Consejo: no borres los carteles pasados, desactívalos («Quitar»). Así siguen
               en <a href="/eventos/" target="_blank" rel="noopener">/eventos</a> y ayudan a que
-              Google encuentre el Lío. Pon siempre la <strong>fecha de inicio</strong>: sin ella
-              el cartel no tiene página propia.
+              Google encuentre el Lío. La <strong>fecha de inicio es obligatoria</strong>: sin ella
+              el cartel no tiene página propia. Si es de un solo día, deja la fecha de fin vacía.
             </p>
             <div id="cartel-form-wrap" hidden>
             <div class="section-head form-subhead">
@@ -477,21 +478,21 @@ const fmt = (iso: string) =>
               data-imagen-url=""
               data-media-tipo="imagen"
             >
-              <label>
-                Título *
-                <input name="titulo" type="text" required value="" />
-              </label>
-              <label>
-                Descripción del evento
-                <textarea name="subtitulo" rows="4" placeholder="Cuenta de qué va el finde…"></textarea>
-              </label>
-              <label>
-                Imagen o vídeo del cartel
+              <div class="campo">
+                <label for="cartel-titulo-input">Título *</label>
+                <input id="cartel-titulo-input" name="titulo" type="text" required value="" />
+              </div>
+              <div class="campo">
+                <label for="cartel-subtitulo">Descripción del evento</label>
+                <textarea id="cartel-subtitulo" name="subtitulo" rows="4" placeholder="Cuenta de qué va el finde…"></textarea>
+              </div>
+              <div class="campo">
+                <label for="cartel-imagen">Imagen o vídeo del cartel *</label>
                 <span id="cartel-media-hint" class="muted small" hidden>
                   Hay un medio actual. Sube uno nuevo solo si quieres reemplazarlo.
                 </span>
                 <input id="cartel-imagen" name="imagen" type="file" accept="image/*,video/*" />
-              </label>
+              </div>
               <img
                 id="cartel-preview"
                 class="cartel-preview"
@@ -507,17 +508,17 @@ const fmt = (iso: string) =>
                 hidden
               ></video>
               <div class="row">
-                <label>
-                  Fecha inicio
-                  <input name="fecha_inicio" type="date" value="" />
-                </label>
-                <label>
-                  Fecha fin
-                  <input name="fecha_fin" type="date" value="" />
-                </label>
+                <div class="campo">
+                  <label for="cartel-fecha-inicio">Fecha inicio *</label>
+                  <input id="cartel-fecha-inicio" name="fecha_inicio" type="date" required value="" />
+                </div>
+                <div class="campo">
+                  <label for="cartel-fecha-fin">Fecha fin (opcional)</label>
+                  <input id="cartel-fecha-fin" name="fecha_fin" type="date" value="" />
+                </div>
               </div>
               <label class="checkbox">
-                <input name="activo" type="checkbox" checked />
+                <input id="cartel-activo" name="activo" type="checkbox" checked />
                 Mostrar este cartel en la web (pueden mostrarse varios a la vez)
               </label>
               <button type="submit" class="btn btn-primary">
@@ -604,23 +605,23 @@ const fmt = (iso: string) =>
               data-id={premioActivo?.id ?? ""}
               data-imagen-url={premioActivo?.imagen_url ?? ""}
             >
-              <label>
-                Título *
-                <input name="titulo" type="text" required value={premioActivo?.titulo ?? ""} />
-              </label>
-              <label>
-                Descripción
-                <textarea name="descripcion" rows="3">{premioActivo?.descripcion ?? ""}</textarea>
-              </label>
-              <label>
-                Imagen del premio
+              <div class="campo">
+                <label for="premio-titulo-input">Título *</label>
+                <input id="premio-titulo-input" name="titulo" type="text" required value={premioActivo?.titulo ?? ""} />
+              </div>
+              <div class="campo">
+                <label for="premio-descripcion">Descripción</label>
+                <textarea id="premio-descripcion" name="descripcion" rows="3">{premioActivo?.descripcion ?? ""}</textarea>
+              </div>
+              <div class="campo">
+                <label for="premio-imagen">Imagen del premio</label>
                 {premioActivo?.imagen_url && (
                   <span class="muted small">
                     Hay una imagen actual. Sube una nueva solo si quieres reemplazarla.
                   </span>
                 )}
                 <input id="premio-imagen" name="imagen" type="file" accept="image/*" />
-              </label>
+              </div>
               <img
                 id="premio-preview"
                 class="cartel-preview"
@@ -628,12 +629,12 @@ const fmt = (iso: string) =>
                 src={premioActivo?.imagen_url ?? undefined}
                 hidden={!premioActivo?.imagen_url}
               />
-              <label>
-                Válido hasta
-                <input name="valido_hasta" type="date" value={premioActivo?.valido_hasta ?? ""} />
-              </label>
+              <div class="campo">
+                <label for="premio-valido-hasta">Válido hasta</label>
+                <input id="premio-valido-hasta" name="valido_hasta" type="date" value={premioActivo?.valido_hasta ?? ""} />
+              </div>
               <label class="checkbox">
-                <input name="activo" type="checkbox" checked={premioActivo?.activo ?? true} />
+                <input id="premio-activo" name="activo" type="checkbox" checked={premioActivo?.activo ?? true} />
                 Activar este premio (desactiva los demás)
               </label>
               <button type="submit" class="btn btn-primary">
@@ -757,9 +758,26 @@ const fmt = (iso: string) =>
       authed && (
         <script is:inline define:vars={{ cloudName, uploadPreset }}>
           {/* Las llamadas usan la cookie httpOnly automáticamente; no hay secreto en el cliente. */}
+          // Mensaje legible de un error cualquiera (en vez de un "Error de red" ciego).
+          function mensajeError(err) {
+            return err instanceof Error && err.message
+              ? err.message
+              : "Error de red";
+          }
+          // Si la subida a Cloudinary falla, lee el motivo real (preset, tamaño, cuota…).
+          async function comprobarCloudinary(up) {
+            if (up.ok) return;
+            let motivo = "HTTP " + up.status;
+            try {
+              const j = await up.json();
+              if (j && j.error && j.error.message) motivo = j.error.message;
+            } catch {}
+            throw new Error("Cloudinary: " + motivo);
+          }
+
           // ─── Moderación de fotos pendientes ───
           document
-            .querySelectorAll(".foto-row:not(.winner-row):not(.hist-row)")
+            .querySelectorAll(".pending-row")
             .forEach((row) => {
               row.querySelectorAll(".btn").forEach((btn) => {
                 btn.addEventListener("click", async () => {
@@ -978,11 +996,24 @@ const fmt = (iso: string) =>
             const fd = new FormData(form);
             msg.className = "msg";
 
+            // Si no se sube un medio nuevo, se conserva el actual (edición).
+            let imagenUrl = form.dataset.imagenUrl || null;
+            let mediaTipo = form.dataset.mediaTipo || "imagen";
+            const file = fd.get("imagen");
+
+            // Cartel nuevo (o sin medio guardado): hace falta elegir un archivo.
+            if (!imagenUrl && !(file && file.size > 0)) {
+              msg.textContent = "Elige una imagen o un vídeo para el cartel";
+              msg.className = "msg err";
+              return;
+            }
+            if (!fd.get("fecha_inicio")) {
+              msg.textContent = "Falta la fecha de inicio";
+              msg.className = "msg err";
+              return;
+            }
+
             try {
-              // Si no se sube un medio nuevo, se conserva el actual (edición).
-              let imagenUrl = form.dataset.imagenUrl || null;
-              let mediaTipo = form.dataset.mediaTipo || "imagen";
-              const file = fd.get("imagen");
               if (file && file.size > 0) {
                 const esVideo = file.type.startsWith("video/");
                 msg.textContent = esVideo
@@ -996,7 +1027,7 @@ const fmt = (iso: string) =>
                   "https://api.cloudinary.com/v1_1/" + cloudName + "/auto/upload",
                   { method: "POST", body: cloudData },
                 );
-                if (!up.ok) throw new Error("cloudinary");
+                await comprobarCloudinary(up);
                 const upJson = await up.json();
                 imagenUrl = upJson.secure_url;
                 mediaTipo =
@@ -1033,8 +1064,8 @@ const fmt = (iso: string) =>
                   "Error: " + (data.error || "no se pudo guardar");
                 msg.className = "msg err";
               }
-            } catch {
-              msg.textContent = "Error de red";
+            } catch (err) {
+              msg.textContent = "Error: " + mensajeError(err);
               msg.className = "msg err";
             }
           });
@@ -1190,7 +1221,7 @@ const fmt = (iso: string) =>
                   "https://api.cloudinary.com/v1_1/" + cloudName + "/image/upload",
                   { method: "POST", body: cloudData },
                 );
-                if (!up.ok) throw new Error("cloudinary");
+                await comprobarCloudinary(up);
                 const upJson = await up.json();
                 imagenUrl = upJson.secure_url;
               }
@@ -1221,8 +1252,8 @@ const fmt = (iso: string) =>
                   "Error: " + (data.error || "no se pudo guardar");
                 premioMsg.className = "msg err";
               }
-            } catch {
-              premioMsg.textContent = "Error de red";
+            } catch (err) {
+              premioMsg.textContent = "Error: " + mensajeError(err);
               premioMsg.className = "msg err";
             }
           });
@@ -1478,7 +1509,7 @@ const fmt = (iso: string) =>
         border: 1px solid var(--border);
         color: var(--text);
         padding: 12px 14px;
-        font-size: 0.95rem;
+        font-size: 16px;
       }
       .head {
         display: flex;
@@ -1746,18 +1777,24 @@ const fmt = (iso: string) =>
         border: 1px solid var(--border);
         object-fit: cover;
       }
-      label {
+      /* Etiqueta + control como hermanos (nunca anidados: en iOS un control
+         dentro de <label> se activa dos veces y el selector de fecha se cierra). */
+      .campo {
         display: flex;
         flex-direction: column;
         gap: 6px;
+      }
+      label {
         font-size: 0.8rem;
         color: var(--muted);
       }
       label.checkbox {
+        display: flex;
         flex-direction: row;
         align-items: center;
         gap: 10px;
         color: var(--text);
+        min-height: 44px;
       }
       input[type="text"],
       input[type="url"],
@@ -1767,7 +1804,28 @@ const fmt = (iso: string) =>
         border: 1px solid var(--border);
         color: var(--text);
         padding: 10px 12px;
-        font-size: 0.9rem;
+        /* 16px absolutos: por debajo, iOS hace zoom al enfocar. */
+        font-size: 16px;
+        width: 100%;
+        box-sizing: border-box;
+      }
+      input[type="text"],
+      input[type="date"] {
+        min-height: 44px;
+      }
+      input[type="date"] {
+        -webkit-appearance: none;
+        appearance: none;
+      }
+      input[type="date"]::-webkit-date-and-time-value {
+        text-align: left;
+      }
+      input[type="file"] {
+        max-width: 100%;
+        font-size: 16px;
+      }
+      .cartel-form .btn {
+        min-height: 44px;
       }
       textarea {
         font-family: inherit;
@@ -1777,8 +1835,9 @@ const fmt = (iso: string) =>
         display: flex;
         gap: 16px;
       }
-      .row label {
+      .row .campo {
         flex: 1;
+        min-width: 0;
       }
       .msg {
         font-size: 0.85rem;
@@ -1907,9 +1966,6 @@ const fmt = (iso: string) =>
         display: none;
       }
       .sorteo-anular label {
-        display: flex;
-        flex-direction: column;
-        gap: 6px;
         font-size: 0.8rem;
       }
       .sorteo-anular textarea {
@@ -1918,6 +1974,7 @@ const fmt = (iso: string) =>
         border: 1px solid var(--border);
         padding: 8px;
         font: inherit;
+        font-size: 16px;
       }
       .sorteo-anulados,
       .emergencia {

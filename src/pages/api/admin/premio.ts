@@ -1,6 +1,7 @@
 import type { APIRoute } from "astro";
 import { supabaseAdmin } from "../../../lib/supabaseAdmin";
 import { isAdmin } from "../../../lib/adminAuth";
+import { detalleError } from "../../../lib/detalleError";
 import { deleteFromCloudinary } from "../../../lib/cloudinaryAdmin";
 
 export const prerender = false;
@@ -63,7 +64,7 @@ export const POST: APIRoute = async ({ request, cookies }) => {
     return jsonResponse({ success: true });
   } catch (err) {
     console.error("[admin/premio]", err);
-    return jsonResponse({ success: false, error: "Error interno" }, 500);
+    return jsonResponse({ success: false, error: detalleError(err) }, 500);
   }
 };
 
@@ -94,7 +95,7 @@ export const PATCH: APIRoute = async ({ request, cookies }) => {
     return jsonResponse({ success: true });
   } catch (err) {
     console.error("[admin/premio PATCH]", err);
-    return jsonResponse({ success: false, error: "Error interno" }, 500);
+    return jsonResponse({ success: false, error: detalleError(err) }, 500);
   }
 };
 
@@ -126,7 +127,7 @@ export const DELETE: APIRoute = async ({ request, cookies }) => {
     return jsonResponse({ success: true });
   } catch (err) {
     console.error("[admin/premio DELETE]", err);
-    return jsonResponse({ success: false, error: "Error interno" }, 500);
+    return jsonResponse({ success: false, error: detalleError(err) }, 500);
   }
 };
 
