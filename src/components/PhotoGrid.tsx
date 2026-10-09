@@ -173,7 +173,7 @@ export default function PhotoGrid({
         <p style={styles.empty}>
           Aún no hay fotos esta semana. ¡Sé el primero en subir la tuya!
         </p>
-        <a href="#subir" style={styles.emptyBtn}>
+        <a href="#subir-foto" style={styles.emptyBtn}>
           <ImagePlus size={16} strokeWidth={2} />
           Subir foto
         </a>

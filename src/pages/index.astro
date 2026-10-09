@@ -156,6 +156,41 @@ const descripcion =
   <Footer />
 </Base>
 
+<script>
+  // Todos los «Subir foto» enlazan a #subir-foto y deben aterrizar siempre en el
+  // cartel «¡Participa aquí!» con los botones. El navegador calcula el salto al
+  // cargar, pero las islas de arriba (premio, ranking...) cargan datos después y
+  // cambian el alto de la página: sin este reajuste el destino se queda fuera de
+  // pantalla. Se reajusta unos instantes y se para en cuanto la persona toca.
+  const OBJETIVO = "#subir-foto";
+  let interaccion = 0;
+  for (const ev of ["wheel", "touchmove", "keydown"]) {
+    window.addEventListener(ev, () => (interaccion = Date.now()), { passive: true });
+  }
+
+  function alinear(desde: number) {
+    if (interaccion > desde) return;
+    const el = document.querySelector<HTMLElement>(OBJETIVO);
+    if (!el) return;
+    const margen = parseFloat(getComputedStyle(el).scrollMarginTop) || 0;
+    if (Math.abs(el.getBoundingClientRect().top - margen) > 6) {
+      el.scrollIntoView({ block: "start", behavior: "instant" });
+    }
+  }
+
+  function programar(esperas: number[]) {
+    const desde = Date.now();
+    esperas.forEach((ms) => window.setTimeout(() => alinear(desde), ms));
+  }
+
+  // Llegada desde otra página (o recarga) con la ancla ya puesta.
+  if (location.hash === OBJETIVO) programar([300, 900, 1800, 3500]);
+  // Clic en un «Subir foto» estando ya en la home.
+  window.addEventListener("hashchange", () => {
+    if (location.hash === OBJETIVO) programar([900, 2000]);
+  });
+</script>
+
 <style>
   .cartel-wrap {
     max-width: 1100px;
@@ -373,6 +408,9 @@ const descripcion =
     gap: 24px;
   }
   .upload-uploader {
+    /* Destino de todos los «Subir foto» (#subir-foto): sin este margen el menú
+       fijo (56px) tapa la parte de arriba del cartel y los botones. */
+    scroll-margin-top: 84px;
     display: flex;
     flex-direction: row;
     justify-content: center;

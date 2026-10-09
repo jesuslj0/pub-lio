@@ -103,7 +103,7 @@ export default function HistorialFotos({
             : "No hay fotos en esta semana."}
         </p>
         <a
-          href="/#subir"
+          href="/#subir-foto"
           className="inline-flex items-center gap-2 bg-accent px-5 py-3 font-mono text-[0.7rem] font-bold uppercase tracking-[0.12em] text-bg"
         >
           <ImagePlus size={16} strokeWidth={2} />

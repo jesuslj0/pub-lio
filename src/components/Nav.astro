@@ -16,7 +16,7 @@ const enHistorial = Astro.url.pathname.replace(/\/$/, "") === "/fotos";
     <li><a href={`${base}#local`}>Local</a></li>
     <li><a href={`${base}#info`}>Info</a></li>
   </ul>
-  <a href={`${base}#subir`} class="nav-cta">Subir foto</a>
+  <a href={`${base}#subir-foto`} class="nav-cta">Subir foto</a>
 
   <!-- CTA solo móvil: acceso directo al uploader (cámara/galería) -->
   <a href={`${base}#subir-foto`} class="nav-cta-mobile" aria-label="Subir foto: usar cámara o galería">
@@ -48,7 +48,7 @@ const enHistorial = Astro.url.pathname.replace(/\/$/, "") === "/fotos";
     <li><a href={`${base}#local`} data-nav-link>Local</a></li>
     <li><a href={`${base}#info`} data-nav-link>Info</a></li>
   </ul>
-  <a href={`${base}#subir`} class="mobile-menu-cta" data-nav-link>Subir foto</a>
+  <a href={`${base}#subir-foto`} class="mobile-menu-cta" data-nav-link>Subir foto</a>
 </div>
 
 <script>

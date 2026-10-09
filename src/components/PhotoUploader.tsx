@@ -138,22 +138,29 @@ export default function PhotoUploader() {
       />
 
       {estado === "idle" && (
-        <div style={styles.buttonRow}>
-          <button
-            style={styles.primaryBtn}
-            onClick={() => camaraRef.current?.click()}
-          >
-            <Camera size={28} strokeWidth={1.5} />
-            Usar cámara
-          </button>
-          <button
-            style={styles.secondaryBtn}
-            onClick={() => galeriaRef.current?.click()}
-          >
-            <Images size={28} strokeWidth={1.5} />
-            Subir de galería
-          </button>
-        </div>
+        <>
+          {/* Cartelito: deja claro que la participación empieza en estos botones. */}
+          <div style={styles.cartelWrap}>
+            <p style={styles.cartel}>¡Participa aquí!</p>
+            <span style={styles.cartelPico} aria-hidden="true" />
+          </div>
+          <div style={styles.buttonRow}>
+            <button
+              style={styles.primaryBtn}
+              onClick={() => camaraRef.current?.click()}
+            >
+              <Camera size={28} strokeWidth={1.5} />
+              Usar cámara
+            </button>
+            <button
+              style={styles.secondaryBtn}
+              onClick={() => galeriaRef.current?.click()}
+            >
+              <Images size={28} strokeWidth={1.5} />
+              Subir de galería
+            </button>
+          </div>
+        </>
       )}
 
       {estado === "previewing" && (
@@ -243,7 +250,10 @@ export default function PhotoUploader() {
         </div>
       )}
 
-      <style>{`@keyframes lio-spin { to { transform: rotate(360deg); } }`}</style>
+      <style>{`
+        @keyframes lio-spin { to { transform: rotate(360deg); } }
+        @keyframes lio-cartel { 0%, 100% { transform: translateY(0); } 50% { transform: translateY(4px); } }
+      `}</style>
     </div>
   );
 }
@@ -272,6 +282,36 @@ const styles: Record<string, CSSProperties> = {
     display: "flex",
     gap: "12px",
     flexWrap: "wrap",
+  },
+  // Cartelito rosa con pico hacia abajo, que "señala" los botones. Se mece un
+  // poco para llamar la atención (Base.astro lo frena con movimiento reducido).
+  cartelWrap: {
+    display: "flex",
+    flexDirection: "column",
+    alignItems: "center",
+    marginBottom: "14px",
+    animation: "lio-cartel 1.8s ease-in-out infinite",
+  },
+  cartel: {
+    background: "var(--accent)",
+    color: "var(--bg)",
+    padding: "9px 16px",
+    maxWidth: "100%",
+    fontFamily: "var(--font-mono)",
+    fontSize: "0.78rem",
+    fontWeight: 700,
+    letterSpacing: "0.1em",
+    textTransform: "uppercase",
+    whiteSpace: "nowrap",
+    lineHeight: 1,
+    boxShadow: "0 0 22px color-mix(in srgb, var(--accent) 45%, transparent)",
+  },
+  cartelPico: {
+    width: 0,
+    height: 0,
+    borderLeft: "9px solid transparent",
+    borderRight: "9px solid transparent",
+    borderTop: "9px solid var(--accent)",
   },
   primaryBtn: {
     flex: 1,

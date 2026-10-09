@@ -46,7 +46,7 @@ Y si el viernes te sabe a poco, el sábado es otra historia. En el Casino lo tie
 
 ## Haz la foto y entra en el sorteo
 
-Una cosa más: si te haces una foto esa noche, en el local o en la plaza, súbela a la galería de la web. Las semanas con premio publicado en la web, entras en el **sorteo** solo por subirla (una participación por persona), y las más votadas salen en el podio. [Sube tu foto aquí](/#subir) y echa un ojo a las [bases del sorteo](/bases-sorteo/).
+Una cosa más: si te haces una foto esa noche, en el local o en la plaza, súbela a la galería de la web. Las semanas con premio publicado en la web, entras en el **sorteo** solo por subirla (una participación por persona), y las más votadas salen en el podio. [Sube tu foto aquí](/#subir-foto) y echa un ojo a las [bases del sorteo](/bases-sorteo/).
 
 ## Dónde está el Lío Music Pub
 
