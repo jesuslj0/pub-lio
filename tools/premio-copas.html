@@ -1,0 +1,248 @@
+<!--
+  PLANTILLA IMAGEN DE PREMIO · Lío El Bonillo  (1200×1200, cuadrada)
+
+  Es la imagen que se sube en /admin → «Nuevo premio semanal». La web la pinta
+  con `object-fit: cover` en la tarjeta «Premio de la semana» (PremioSemanal.tsx)
+  y se recorta distinto según el dispositivo:
+    · móvil:     caja 16:10 → se ve el 100 % del ancho y el ~62 % central del alto
+    · escritorio: columna vertical (~0,64) → se ve el ~64 % central del ancho
+  Por eso lo importante (título y copas) vive en la caja central de 768×750 px
+  (x 216-984, y 225-975). La etiqueta de arriba y el pie de abajo quedan fuera
+  en vertical (en móvil no se ven; al compartir la imagen entera, sí), pero en
+  escritorio sí se ve el alto completo: deben caber en 768 px de ancho.
+
+  Cambia los textos en el bloque CONFIG de abajo y renderiza con Edge headless
+  (PowerShell en Windows; la ruta de salida debe ser de C:, no \\wsl.localhost):
+
+    & "C:\Program Files (x86)\Microsoft\Edge\Application\msedge.exe" `
+      --headless=new --window-size=1200,1200 --force-device-scale-factor=1 `
+      --hide-scrollbars --virtual-time-budget=10000 `
+      --screenshot="C:\ruta\premio.png" "file:///C:/ruta/premio-copas.html"
+-->
+<!doctype html>
+<html lang="es">
+<head>
+<meta charset="utf-8" />
+<title>Premio · Copas · Lío El Bonillo</title>
+
+<!-- Mismas fuentes que la web -->
+<link rel="preconnect" href="https://fonts.googleapis.com" />
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+<link
+  href="https://fonts.googleapis.com/css2?family=Anton&family=Space+Grotesk:wght@300;400;500;700&family=Space+Mono:wght@400;700&display=swap"
+  rel="stylesheet"
+/>
+
+<style>
+  :root {
+    --bg: #080810;
+    --accent: #f22c8f;
+    --accent2: #00e5a8;
+    --accent3: #00cfff;
+    --text: #e8e8f0;
+    --font-display: "Anton", sans-serif;
+    --font-body: "Space Grotesk", sans-serif;
+    --font-mono: "Space Mono", monospace;
+  }
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  html, body { background: #000; }
+
+  #premio {
+    position: relative;
+    width: 1200px;
+    height: 1200px;
+    overflow: hidden;
+    background: var(--bg);
+    color: var(--text);
+  }
+  /* Resplandores de fondo, como la "liquid aurora" de la web */
+  #premio::before {
+    content: "";
+    position: absolute;
+    inset: 0;
+    background:
+      radial-gradient(circle at 18% 12%, rgba(242, 44, 143, 0.42), transparent 46%),
+      radial-gradient(circle at 88% 28%, rgba(0, 207, 255, 0.20), transparent 42%),
+      radial-gradient(circle at 70% 100%, rgba(0, 229, 168, 0.18), transparent 44%);
+  }
+  /* Ruido sutil */
+  #premio::after {
+    content: "";
+    position: absolute;
+    inset: 0;
+    background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 256 256' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)' opacity='1'/%3E%3C/svg%3E");
+    opacity: 0.035;
+  }
+
+  .tag {
+    position: absolute;
+    top: 96px;
+    left: 50%;
+    transform: translateX(-50%);
+    z-index: 3;
+    font-family: var(--font-mono);
+    font-weight: 700;
+    font-size: 26px;
+    letter-spacing: 0.22em;
+    text-transform: uppercase;
+    background: var(--accent);
+    color: var(--bg);
+    padding: 10px 24px;
+    white-space: nowrap;
+    box-shadow: 0 0 36px rgba(242, 44, 143, 0.55);
+  }
+
+  /* «3 COPAS»: contorno rosa con relleno oscuro, como el «LÍO» del OG */
+  .titulo {
+    position: absolute;
+    top: 270px;
+    left: 0;
+    right: 0;
+    z-index: 1;
+    text-align: center;
+    font-family: var(--font-display);
+    font-size: 212px;
+    line-height: 1;
+    letter-spacing: 0.015em;
+    text-transform: uppercase;
+    color: rgba(242, 44, 143, 0.16);
+    -webkit-text-stroke: 4px var(--accent);
+    text-shadow: 0 0 46px rgba(242, 44, 143, 0.55);
+    white-space: nowrap;
+  }
+
+  /* Charco de luz bajo las copas */
+  .suelo {
+    position: absolute;
+    left: 50%;
+    bottom: 232px;
+    width: 800px;
+    height: 110px;
+    transform: translateX(-50%);
+    z-index: 1;
+    background: radial-gradient(ellipse at center, rgba(242, 44, 143, 0.50), transparent 68%);
+    filter: blur(6px);
+  }
+
+  .copas {
+    position: absolute;
+    left: 0;
+    right: 0;
+    bottom: 275px;
+    z-index: 2;
+    display: flex;
+    justify-content: center;
+    align-items: flex-end;
+    gap: 6px;
+  }
+  .glass { display: block; overflow: visible; }
+  .glass.lado { width: 205px; height: 358px; }
+  .glass.centro { width: 256px; height: 448px; }
+  .glass.izq { transform: rotate(-5deg); transform-origin: 50% 100%; }
+  .glass.der { transform: rotate(5deg); transform-origin: 50% 100%; }
+
+  .pie {
+    position: absolute;
+    bottom: 96px;
+    left: 0;
+    right: 0;
+    z-index: 3;
+    text-align: center;
+    font-family: var(--font-mono);
+    font-size: 22px;
+    letter-spacing: 0.3em;
+    text-transform: uppercase;
+    color: rgba(232, 232, 240, 0.62);
+  }
+  .pie b { color: var(--accent); font-weight: 700; }
+</style>
+</head>
+<body>
+<div id="premio">
+  <span class="tag" id="tag"></span>
+  <div class="titulo" id="titulo"></div>
+  <div class="suelo"></div>
+  <div class="copas" id="copas"></div>
+  <div class="pie" id="pie"></div>
+</div>
+
+<script>
+  // ── CONFIG: lo único que cambia de una semana a otra ──
+  const CONFIG = {
+    tag: "Sorteo del finde",
+    titulo: "3 Copas",
+    // Debe caber en la franja central (≈768 px): en escritorio se ve el alto completo.
+    pie: "<b>Sube tu foto</b> · liopub.com",
+  };
+
+  document.getElementById("tag").textContent = CONFIG.tag;
+  document.getElementById("titulo").textContent = CONFIG.titulo;
+  document.getElementById("pie").innerHTML = CONFIG.pie;
+
+  // Copa de balón en línea de neón. `c` = color de la copa, `d` = ese mismo color
+  // oscurecido (fondo del líquido).
+  const BOWL =
+    "M40 28 C8 70 4 135 52 176 C72 193 88 200 94 202 L106 202 C112 200 128 193 148 176 C196 135 192 70 160 28 Z";
+
+  function copa(id, c, d, clase, tamano) {
+    const glow = `drop-shadow(0 0 10px ${c}) drop-shadow(0 0 34px ${c}66)`;
+    return `
+    <svg class="glass ${tamano} ${clase}" viewBox="0 0 200 350" style="filter:${glow}" aria-hidden="true">
+      <defs>
+        <linearGradient id="liq-${id}" x1="0" y1="0" x2="0" y2="1">
+          <stop offset="0" stop-color="${c}" stop-opacity="0.95"/>
+          <stop offset="1" stop-color="${d}" stop-opacity="0.95"/>
+        </linearGradient>
+        <linearGradient id="vid-${id}" x1="0" y1="0" x2="1" y2="0">
+          <stop offset="0" stop-color="#fff" stop-opacity="0.13"/>
+          <stop offset="0.5" stop-color="#fff" stop-opacity="0.02"/>
+          <stop offset="1" stop-color="#fff" stop-opacity="0.10"/>
+        </linearGradient>
+        <clipPath id="bowl-${id}"><path d="${BOWL}"/></clipPath>
+      </defs>
+
+      <!-- Base y pie -->
+      <path d="M40 336 C40 326 70 322 100 322 C130 322 160 326 160 336 C160 344 130 348 100 348 C70 348 40 344 40 336Z"
+            fill="url(#vid-${id})" stroke="${c}" stroke-width="3"/>
+      <rect x="94" y="200" width="12" height="126" fill="url(#vid-${id})" stroke="${c}" stroke-width="2.5"/>
+
+      <!-- Copa (fondo oscuro: tapa limpio lo que quede detrás, p. ej. el título) -->
+      <path d="${BOWL}" fill="#080810" fill-opacity="0.9"/>
+      <path d="${BOWL}" fill="url(#vid-${id})"/>
+      <g clip-path="url(#bowl-${id})">
+        <path d="M0 84 Q50 74 100 84 T200 84 L200 230 L0 230 Z" fill="url(#liq-${id})"/>
+        <path d="M0 84 Q50 74 100 84 T200 84" fill="none" stroke="#fff" stroke-opacity="0.55" stroke-width="2"/>
+        <!-- Hielos -->
+        <rect x="60" y="92" width="36" height="36" rx="7" transform="rotate(-14 78 110)"
+              fill="#fff" fill-opacity="0.20" stroke="#fff" stroke-opacity="0.6" stroke-width="2"/>
+        <rect x="104" y="104" width="32" height="32" rx="6" transform="rotate(12 120 120)"
+              fill="#fff" fill-opacity="0.16" stroke="#fff" stroke-opacity="0.55" stroke-width="2"/>
+        <rect x="86" y="62" width="34" height="34" rx="7" transform="rotate(8 103 79)"
+              fill="#fff" fill-opacity="0.22" stroke="#fff" stroke-opacity="0.65" stroke-width="2"/>
+        <!-- Burbujas -->
+        <circle cx="72" cy="150" r="3.5" fill="#fff" fill-opacity="0.5"/>
+        <circle cx="118" cy="160" r="2.5" fill="#fff" fill-opacity="0.5"/>
+        <circle cx="96" cy="176" r="3" fill="#fff" fill-opacity="0.45"/>
+      </g>
+      <path d="${BOWL}" fill="none" stroke="${c}" stroke-width="3.5" stroke-linejoin="round"/>
+      <!-- Brillo del cristal -->
+      <path d="M27 62 C15 98 20 132 42 158" fill="none" stroke="#fff" stroke-opacity="0.6" stroke-width="5" stroke-linecap="round"/>
+      <!-- Borde -->
+      <ellipse cx="100" cy="28" rx="60" ry="8" fill="#0d0d18" stroke="${c}" stroke-width="3.5"/>
+      <!-- Rodaja en el borde -->
+      <g transform="translate(160 30) rotate(-18)">
+        <circle r="23" fill="${c}" fill-opacity="0.25" stroke="${c}" stroke-width="3"/>
+        <circle r="16" fill="none" stroke="#fff" stroke-opacity="0.65" stroke-width="1.5"/>
+        <path d="M0 -16 V16 M-16 0 H16 M-11 -11 L11 11 M11 -11 L-11 11" stroke="#fff" stroke-opacity="0.55" stroke-width="1.5"/>
+      </g>
+    </svg>`;
+  }
+
+  // Una copa por cada acento de la marca (los tres puntos del OG).
+  document.getElementById("copas").innerHTML =
+    copa("a", "#00cfff", "#00526f", "izq", "lado") +
+    copa("b", "#f22c8f", "#7a0e4a", "", "centro") +
+    copa("c", "#00e5a8", "#00583f", "der", "lado");
+</script>
+</body>
+</html>
