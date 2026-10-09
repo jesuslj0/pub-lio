@@ -25,8 +25,12 @@ export const NEGOCIO = {
 
 export const CASINO_URL = "https://www.casinoelbonillo.com/";
 
-/** Imagen OG por defecto (1200×630, PNG). */
-export const OG_DEFAULT = "/img/og-default.png";
+/**
+ * Imagen OG por defecto (1200×630, JPEG ligero, logo centrado; plantilla en
+ * tools/og-lio.html). Si se cambia, usar un nombre de archivo nuevo: WhatsApp y
+ * las redes guardan en caché la vista previa por URL de imagen.
+ */
+export const OG_DEFAULT = "/img/og-lio.jpg";
 
 /**
  * URL absoluta y canónica de una ruta interna. Todas las páginas (salvo la

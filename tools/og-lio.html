@@ -1,0 +1,113 @@
+<!--
+  PLANTILLA IMAGEN OG · Lío El Bonillo  (1200×630)
+
+  Es la vista previa que sale al pegar el enlace de la web en WhatsApp, Instagram,
+  Facebook, etc. (`/img/og-lio.jpg`, ver src/lib/seo.ts).
+
+  Todo lo importante está CENTRADO (horizontal y vertical): WhatsApp unas veces
+  enseña la tarjeta ancha (1,91:1) y otras una miniatura cuadrada recortada al
+  centro (630×630); el logo debe verse entero en las dos.
+
+  El logo sale de public/favicon/android-chrome-512x512.png (el logo "Lío." oficial).
+
+  Render (PowerShell en Windows; la salida debe estar en C:, no en \\wsl.localhost):
+
+    & "C:\Program Files (x86)\Microsoft\Edge\Application\msedge.exe" `
+      --headless=new --window-size=1200,630 --force-device-scale-factor=1 `
+      --hide-scrollbars --virtual-time-budget=10000 `
+      --screenshot="C:\ruta\og.png" "file:///C:/ruta/pub-lio/tools/og-lio.html"
+
+  Después, a JPEG ligero (WhatsApp descarta imágenes pesadas; objetivo < 200 KB):
+    sharp(og.png).jpeg({ quality: 88, mozjpeg: true, chromaSubsampling: "4:4:4" })
+-->
+<!doctype html>
+<html lang="es">
+<head>
+<meta charset="utf-8" />
+<title>OG · Lío El Bonillo</title>
+
+<link rel="preconnect" href="https://fonts.googleapis.com" />
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+<link
+  href="https://fonts.googleapis.com/css2?family=Space+Mono:wght@400;700&display=swap"
+  rel="stylesheet"
+/>
+
+<style>
+  :root {
+    --bg: #080810;
+    --accent: #f22c8f;
+    --accent2: #00e5a8;
+    --accent3: #00cfff;
+    --text: #e8e8f0;
+    --font-mono: "Space Mono", monospace;
+  }
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  html, body { background: #000; }
+
+  #og {
+    position: relative;
+    width: 1200px;
+    height: 630px;
+    overflow: hidden;
+    background: var(--bg);
+  }
+  /* Resplandores de marca, simétricos para no descentrar la composición */
+  #og::before {
+    content: "";
+    position: absolute;
+    inset: 0;
+    background:
+      radial-gradient(ellipse 520px 380px at 16% 22%, rgba(242, 44, 143, 0.34), transparent 70%),
+      radial-gradient(ellipse 520px 380px at 84% 22%, rgba(0, 207, 255, 0.20), transparent 70%),
+      radial-gradient(ellipse 760px 260px at 50% 108%, rgba(0, 229, 168, 0.16), transparent 70%);
+  }
+  /* Ruido sutil (evita bandas al comprimir a JPEG) */
+  #og::after {
+    content: "";
+    position: absolute;
+    inset: 0;
+    background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 256 256' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)' opacity='1'/%3E%3C/svg%3E");
+    opacity: 0.05;
+  }
+
+  .logo {
+    position: absolute;
+    left: 50%;
+    top: 50%;
+    width: 760px;
+    height: 760px;
+    /* El logo del PNG no está centrado en su recuadro (medido: +11 px en x,
+       +5 px en y): se compensa para que el bloque quede en el centro real,
+       un pelín por encima para dejar sitio al pie. */
+    transform: translate(calc(-50% - 11px), calc(-50% - 12px));
+    z-index: 1;
+    /* El PNG del logo trae su propio fondo oscuro: se funde con el de la marca. */
+    mix-blend-mode: screen;
+    -webkit-mask-image: radial-gradient(closest-side, #000 58%, transparent 100%);
+            mask-image: radial-gradient(closest-side, #000 58%, transparent 100%);
+  }
+
+  .pie {
+    position: absolute;
+    left: 0;
+    right: 0;
+    bottom: 38px;
+    z-index: 2;
+    text-align: center;
+    font-family: var(--font-mono);
+    font-size: 17px;
+    letter-spacing: 0.42em;
+    text-indent: 0.42em; /* compensa el espacio final para centrar de verdad */
+    text-transform: uppercase;
+    color: rgba(232, 232, 240, 0.55);
+  }
+</style>
+</head>
+<body>
+<div id="og">
+  <img class="logo" src="../public/favicon/android-chrome-512x512.png" alt="Lío Music Pub" />
+  <div class="pie">El Bonillo · Albacete</div>
+</div>
+</body>
+</html>
