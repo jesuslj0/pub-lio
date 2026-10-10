@@ -4,6 +4,7 @@ import { supabaseAdmin } from "../../lib/supabaseAdmin";
 import { getCurrentWeek, getPreviousWeek, getWeekRange } from "../../lib/supabase";
 import { isAdmin } from "../../lib/adminAuth";
 import { Trash2 } from "@lucide/astro";
+import SelectorFecha from "../../components/admin/SelectorFecha.astro";
 import type { Foto, Cartel, Premio } from "../../lib/database.types";
 import {
   SEMANA_INICIO_SORTEO,
@@ -508,14 +509,8 @@ const fmt = (iso: string) =>
                 hidden
               ></video>
               <div class="row">
-                <div class="campo">
-                  <label for="cartel-fecha-inicio">Fecha inicio *</label>
-                  <input id="cartel-fecha-inicio" name="fecha_inicio" type="date" required value="" />
-                </div>
-                <div class="campo">
-                  <label for="cartel-fecha-fin">Fecha fin (opcional)</label>
-                  <input id="cartel-fecha-fin" name="fecha_fin" type="date" value="" />
-                </div>
+                <SelectorFecha id="cartel-fecha-inicio" name="fecha_inicio" label="Fecha inicio" required />
+                <SelectorFecha id="cartel-fecha-fin" name="fecha_fin" label="Fecha fin (opcional)" />
               </div>
               <label class="checkbox">
                 <input id="cartel-activo" name="activo" type="checkbox" checked />
@@ -629,10 +624,7 @@ const fmt = (iso: string) =>
                 src={premioActivo?.imagen_url ?? undefined}
                 hidden={!premioActivo?.imagen_url}
               />
-              <div class="campo">
-                <label for="premio-valido-hasta">Válido hasta</label>
-                <input id="premio-valido-hasta" name="valido_hasta" type="date" value={premioActivo?.valido_hasta ?? ""} />
-              </div>
+              <SelectorFecha id="premio-valido-hasta" name="valido_hasta" label="Válido hasta" value={premioActivo?.valido_hasta} />
               <label class="checkbox">
                 <input id="premio-activo" name="activo" type="checkbox" checked={premioActivo?.activo ?? true} />
                 Activar este premio (desactiva los demás)
@@ -773,6 +765,134 @@ const fmt = (iso: string) =>
               if (j && j.error && j.error.message) motivo = j.error.message;
             } catch {}
             throw new Error("Cloudinary: " + motivo);
+          }
+
+          // ─── Selector de fecha propio (día / mes / año + atajos) ───
+          // No usa input[type=date]: en algunos móviles el picker nativo no se abre.
+          // El valor real vive en un <input type="hidden"> en formato YYYY-MM-DD.
+          const DIAS_CORTOS = ["Dom", "Lun", "Mar", "Mié", "Jue", "Vie", "Sáb"];
+          const DIAS_LARGOS = ["domingo", "lunes", "martes", "miércoles", "jueves", "viernes", "sábado"];
+          const MESES_LARGOS = [
+            "enero", "febrero", "marzo", "abril", "mayo", "junio",
+            "julio", "agosto", "septiembre", "octubre", "noviembre", "diciembre",
+          ];
+          function isoFecha(a, m, d) {
+            return a + "-" + String(m).padStart(2, "0") + "-" + String(d).padStart(2, "0");
+          }
+          // Último día del mes m (1-12). Sin año se asume bisiesto (29/feb permitido).
+          function diasDelMes(m, a) {
+            return new Date(a || 2000, m, 0).getDate();
+          }
+          // Recalcula el valor oculto y el texto a partir de los tres desplegables.
+          function pintarFecha(raiz, emitir = true) {
+            const dia = raiz.querySelector(".fs-dia");
+            const mes = raiz.querySelector(".fs-mes");
+            const anio = raiz.querySelector(".fs-anio");
+            const hidden = raiz.querySelector('input[type="hidden"]');
+            const texto = raiz.querySelector("[data-fs-texto]");
+            let d = Number(dia.value);
+            const m = Number(mes.value);
+            const a = Number(anio.value);
+            // 31 de febrero → último día válido del mes.
+            if (d && m && d > diasDelMes(m, a)) {
+              d = diasDelMes(m, a);
+              dia.value = String(d);
+            }
+            if (d && m && a) {
+              hidden.value = isoFecha(a, m, d);
+              const dow = DIAS_LARGOS[new Date(a, m - 1, d).getDay()];
+              texto.textContent =
+                dow.charAt(0).toUpperCase() + dow.slice(1) + " " + d + " de " + MESES_LARGOS[m - 1] + " de " + a;
+            } else {
+              hidden.value = "";
+              texto.textContent = d || m || a ? "Completa día, mes y año." : "";
+            }
+            texto.classList.remove("err");
+            raiz.querySelectorAll(".fs-chip[data-iso]").forEach((c) => {
+              c.classList.toggle("is-on", c.dataset.iso === hidden.value);
+            });
+            if (emitir) raiz.dispatchEvent(new CustomEvent("fecha-cambiada", { bubbles: true }));
+          }
+          // Pone una fecha ISO (o la vacía con "") en los desplegables.
+          function setFecha(raiz, iso) {
+            const dia = raiz.querySelector(".fs-dia");
+            const mes = raiz.querySelector(".fs-mes");
+            const anio = raiz.querySelector(".fs-anio");
+            const p = /^(\d{4})-(\d{2})-(\d{2})/.exec(iso || "");
+            if (!p) {
+              dia.value = "";
+              mes.value = "";
+              anio.value = "";
+            } else {
+              const a = String(Number(p[1]));
+              // Año fuera de la lista (cartel antiguo, atajo en enero…): se añade ordenado.
+              if (![...anio.options].some((o) => o.value === a)) {
+                anio.add(new Option(a, a));
+                [...anio.options]
+                  .slice(1)
+                  .sort((x, y) => Number(x.value) - Number(y.value))
+                  .forEach((o) => anio.add(o));
+              }
+              dia.value = String(Number(p[3]));
+              mes.value = String(Number(p[2]));
+              anio.value = a;
+            }
+            pintarFecha(raiz);
+          }
+          // Engancha un selector: atajos (Hoy / próximo vie-sáb-dom) y cambios de los select.
+          function initSelectorFecha(raiz) {
+            const chips = raiz.querySelector("[data-fs-chips]");
+            const hoy = new Date();
+            hoy.setHours(0, 0, 0, 0);
+            const isoHoy = isoFecha(hoy.getFullYear(), hoy.getMonth() + 1, hoy.getDate());
+            const atajos = [{ txt: "Hoy", iso: isoHoy }];
+            [5, 6, 0].forEach((dow) => {
+              const f = new Date(hoy);
+              f.setDate(hoy.getDate() + ((dow - hoy.getDay() + 7) % 7));
+              const iso = isoFecha(f.getFullYear(), f.getMonth() + 1, f.getDate());
+              if (iso !== isoHoy) {
+                atajos.push({ txt: DIAS_CORTOS[dow] + " " + f.getDate() + "/" + (f.getMonth() + 1), iso });
+              }
+            });
+            // "Hoy" primero y el resto por fecha (si hoy es sábado, el domingo va antes que el viernes).
+            atajos.sort((x, y) => (x.iso < y.iso ? -1 : 1));
+            atajos.forEach(({ txt, iso }) => {
+              const b = document.createElement("button");
+              b.type = "button";
+              b.className = "fs-chip";
+              b.textContent = txt;
+              b.dataset.iso = iso;
+              b.addEventListener("click", () => setFecha(raiz, iso));
+              chips.appendChild(b);
+            });
+            // Las fechas opcionales (fin del cartel, válido hasta) se pueden vaciar.
+            if (!raiz.hasAttribute("data-required")) {
+              const q = document.createElement("button");
+              q.type = "button";
+              q.className = "fs-chip";
+              q.textContent = "Quitar";
+              q.addEventListener("click", () => setFecha(raiz, ""));
+              chips.appendChild(q);
+            }
+            raiz.querySelectorAll("select").forEach((s) => s.addEventListener("change", () => pintarFecha(raiz)));
+            pintarFecha(raiz, false);
+          }
+          document.querySelectorAll("[data-fecha-selector]").forEach(initSelectorFecha);
+
+          // Avisa si la fecha de fin del cartel es anterior a la de inicio.
+          function avisoRango(formEl) {
+            const ini = formEl.querySelector('[name="fecha_inicio"]');
+            const fin = formEl.querySelector('[name="fecha_fin"]');
+            const raizFin = fin.closest("[data-fecha-selector]");
+            const texto = raizFin.querySelector("[data-fs-texto]");
+            const mal = !!(ini.value && fin.value && fin.value < ini.value);
+            if (mal) {
+              texto.textContent = "La fecha de fin es anterior a la de inicio";
+              texto.classList.add("err");
+            } else if (texto.classList.contains("err")) {
+              pintarFecha(raizFin, false);
+            }
+            return !mal;
           }
 
           // ─── Moderación de fotos pendientes ───
@@ -991,6 +1111,7 @@ const fmt = (iso: string) =>
           // ─── Formulario de cartel ───
           const form = document.getElementById("cartel-form");
           const msg = document.getElementById("cartel-msg");
+          form?.addEventListener("fecha-cambiada", () => avisoRango(form));
           form?.addEventListener("submit", async (e) => {
             e.preventDefault();
             const fd = new FormData(form);
@@ -1008,7 +1129,16 @@ const fmt = (iso: string) =>
               return;
             }
             if (!fd.get("fecha_inicio")) {
-              msg.textContent = "Falta la fecha de inicio";
+              msg.textContent = "Falta la fecha de inicio (elige día, mes y año)";
+              msg.className = "msg err";
+              document
+                .getElementById("cartel-fecha-inicio")
+                ?.closest("[data-fecha-selector]")
+                ?.scrollIntoView({ behavior: "smooth", block: "center" });
+              return;
+            }
+            if (!avisoRango(form)) {
+              msg.textContent = "La fecha de fin es anterior a la de inicio";
               msg.className = "msg err";
               return;
             }
@@ -1076,6 +1206,9 @@ const fmt = (iso: string) =>
               if (el.type === "checkbox") el.checked = true;
               else el.value = "";
             });
+            form
+              .querySelectorAll("[data-fecha-selector]")
+              .forEach((r) => setFecha(r, ""));
             form.dataset.id = "";
             form.dataset.imagenUrl = "";
             form.dataset.mediaTipo = "imagen";
@@ -1094,9 +1227,14 @@ const fmt = (iso: string) =>
           function cargarCartelEnFormulario(data) {
             form.querySelector('[name="titulo"]').value = data.titulo || "";
             form.querySelector('[name="subtitulo"]').value = data.subtitulo || "";
-            form.querySelector('[name="fecha_inicio"]').value =
-              data.fecha_inicio || "";
-            form.querySelector('[name="fecha_fin"]').value = data.fecha_fin || "";
+            setFecha(
+              form.querySelector('[name="fecha_inicio"]').closest("[data-fecha-selector]"),
+              data.fecha_inicio,
+            );
+            setFecha(
+              form.querySelector('[name="fecha_fin"]').closest("[data-fecha-selector]"),
+              data.fecha_fin,
+            );
             form.querySelector('[name="activo"]').checked = !!data.activo;
             form.dataset.id = data.id || "";
             form.dataset.imagenUrl = data.imagen_url || "";
@@ -1264,6 +1402,9 @@ const fmt = (iso: string) =>
               if (el.type === "checkbox") el.checked = true;
               else el.value = "";
             });
+            premioForm
+              .querySelectorAll("[data-fecha-selector]")
+              .forEach((r) => setFecha(r, ""));
             premioForm.dataset.id = "";
             premioForm.dataset.imagenUrl = "";
             premioPreview.hidden = true;
@@ -1798,7 +1939,6 @@ const fmt = (iso: string) =>
       }
       input[type="text"],
       input[type="url"],
-      input[type="date"],
       textarea {
         background: var(--bg);
         border: 1px solid var(--border);
@@ -1809,16 +1949,8 @@ const fmt = (iso: string) =>
         width: 100%;
         box-sizing: border-box;
       }
-      input[type="text"],
-      input[type="date"] {
+      input[type="text"] {
         min-height: 44px;
-      }
-      input[type="date"] {
-        -webkit-appearance: none;
-        appearance: none;
-      }
-      input[type="date"]::-webkit-date-and-time-value {
-        text-align: left;
       }
       input[type="file"] {
         max-width: 100%;

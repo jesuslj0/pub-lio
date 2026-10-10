@@ -1,0 +1,147 @@
+---
+/**
+ * Selector de fecha del panel /admin que NO depende del picker nativo del
+ * navegador (en algunos móviles `input[type="date"]` no abre nada).
+ *
+ * Marcado: un <input type="hidden" name={name}> con la fecha ISO (YYYY-MM-DD) —
+ * lo que leen FormData y los endpoints — más tres <select> (día / mes / año)
+ * y atajos (Hoy, próximo viernes/sábado/domingo).
+ *
+ * La lógica vive en el <script> inline de `pages/admin/index.astro`
+ * (`initSelectorFecha`, `setFecha`, `getFecha`), que engancha todos los `.fecha-selector`.
+ */
+interface Props {
+  id: string;
+  name: string;
+  label: string;
+  /** Fecha inicial en ISO (YYYY-MM-DD). */
+  value?: string | null;
+  /** Solo pinta el asterisco: la validación real es la del script del formulario. */
+  required?: boolean;
+}
+
+const { id, name, label, value = "", required = false } = Astro.props;
+
+const MESES = [
+  "ene", "feb", "mar", "abr", "may", "jun",
+  "jul", "ago", "sep", "oct", "nov", "dic",
+];
+
+// Años disponibles: el pasado, el actual y el siguiente (+ el del valor inicial).
+const hoy = new Date();
+const anioActual = hoy.getFullYear();
+// slice(0, 10): por si llega un timestamp ISO completo.
+const valorIso = (value ?? "").slice(0, 10);
+const iso = /^(\d{4})-(\d{2})-(\d{2})$/.exec(valorIso);
+const anios = new Set([anioActual - 1, anioActual, anioActual + 1]);
+if (iso) anios.add(Number(iso[1]));
+const listaAnios = [...anios].sort((a, b) => a - b);
+
+const dia = iso ? Number(iso[3]) : 0;
+const mes = iso ? Number(iso[2]) : 0;
+const anio = iso ? Number(iso[1]) : 0;
+---
+
+<div class="fecha-selector" data-fecha-selector data-required={required ? "1" : undefined} role="group" aria-labelledby={`${id}-lbl`}>
+  <span class="fs-lbl" id={`${id}-lbl`}>{label}{required ? " *" : ""}</span>
+  <input type="hidden" id={id} name={name} value={iso ? valorIso : ""} />
+
+  <div class="fs-chips" data-fs-chips></div>
+
+  <div class="fs-selects">
+    <select class="fs-dia" aria-label={`${label}: día`}>
+      <option value="" selected={!dia}>Día</option>
+      {Array.from({ length: 31 }, (_, i) => i + 1).map((d) => (
+        <option value={d} selected={d === dia}>{d}</option>
+      ))}
+    </select>
+    <select class="fs-mes" aria-label={`${label}: mes`}>
+      <option value="" selected={!mes}>Mes</option>
+      {MESES.map((m, i) => (
+        <option value={i + 1} selected={i + 1 === mes}>{m}</option>
+      ))}
+    </select>
+    <select class="fs-anio" aria-label={`${label}: año`}>
+      <option value="" selected={!anio}>Año</option>
+      {listaAnios.map((a) => (
+        <option value={a} selected={a === anio}>{a}</option>
+      ))}
+    </select>
+  </div>
+
+  <span class="fs-texto" data-fs-texto aria-live="polite"></span>
+</div>
+
+<style>
+  /* Mismo comportamiento que .campo / .row .campo del admin (su CSS está scoped a la página). */
+  .fecha-selector {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+    flex: 1;
+    min-width: 0;
+  }
+  .fs-lbl {
+    font-size: 0.8rem;
+    color: var(--muted);
+  }
+  .fs-chips {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 8px;
+  }
+  .fs-chips:empty {
+    display: none;
+  }
+  .fs-selects {
+    display: grid;
+    grid-template-columns: 1fr 1.4fr 1.2fr;
+    gap: 8px;
+  }
+  .fs-selects select {
+    background: var(--bg);
+    border: 1px solid var(--border);
+    color: var(--text);
+    /* 16px absolutos: por debajo, iOS hace zoom al enfocar. */
+    font-size: 16px;
+    font-family: inherit;
+    min-height: 44px;
+    width: 100%;
+    min-width: 0;
+    padding: 8px 10px;
+    box-sizing: border-box;
+    border-radius: 0;
+    cursor: pointer;
+  }
+  .fs-selects select:focus-visible {
+    outline: 1px solid var(--accent);
+    outline-offset: 1px;
+  }
+  .fs-texto {
+    min-height: 1.2em;
+    font-size: 0.75rem;
+    color: var(--muted);
+  }
+  .fs-texto.err {
+    color: var(--red);
+  }
+  /* Chips (los crea el script) */
+  .fs-chips :global(.fs-chip) {
+    min-height: 44px;
+    padding: 0 14px;
+    background: transparent;
+    border: 1px solid var(--border);
+    color: var(--text);
+    font-family: inherit;
+    font-size: 0.8rem;
+    cursor: pointer;
+  }
+  .fs-chips :global(.fs-chip.is-on) {
+    border-color: var(--accent);
+    color: var(--accent);
+  }
+  .fs-chips :global(.fs-chip:focus-visible) {
+    outline: 1px solid var(--accent);
+    outline-offset: 1px;
+  }
+</style>
